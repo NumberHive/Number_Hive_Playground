@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Number Hive Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#4A3618;--honey:#F5A623;--honey-dark:#C77B12;--cream:#FFFDF7;--line:#E7D6B0;
+    --p-strat:#F5A623;--p-space:#4A78D6;--p-num:#2E9E5B;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%;font-family:"Baloo 2",ui-rounded,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
+  body{
+    background:url('playground-bg.png') center top/cover no-repeat fixed, #F6E7C4;
+    min-height:100vh;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:26px 16px 40px;display:flex;flex-direction:column;min-height:100vh}
+
+  /* ---- header / logo ---- */
+  .brand{display:flex;flex-direction:column;align-items:center;gap:2px;margin:6px 0 4px;text-align:center}
+  .logo-img{width:min(180px,36vw);height:auto;filter:drop-shadow(0 4px 10px rgba(120,90,30,.22))}
+  .playground{font-family:"Fredoka";font-weight:700;font-size:clamp(40px,9vw,74px);line-height:.95;letter-spacing:.5px;
+    color:#fff;-webkit-text-stroke:3px var(--honey-dark);paint-order:stroke fill;
+    text-shadow:0 6px 0 rgba(199,123,18,.35), 0 10px 24px rgba(0,0,0,.15);margin-top:6px}
+  .sub{font-family:"Fredoka";font-weight:500;font-size:15px;color:#6b5326;background:rgba(255,255,255,.7);
+    padding:5px 14px;border-radius:999px;margin-top:10px}
+
+  /* ---- game grid ---- */
+  .panel{background:rgba(255,253,247,.86);border:1px solid var(--line);border-radius:22px;
+    padding:16px;margin:20px 0 16px;backdrop-filter:blur(3px);box-shadow:0 10px 30px rgba(120,90,30,.15)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:640px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  @media(max-width:400px){ .grid{grid-template-columns:1fr} }
+  a.card{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--ink);
+    background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 14px 13px;position:relative;overflow:hidden;
+    transition:transform .12s, box-shadow .12s;min-height:104px}
+  a.card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(120,90,30,.18)}
+  a.card:active{transform:translateY(0)}
+  .card .ic{font-size:26px;line-height:1}
+  .card .nm{font-family:"Fredoka";font-weight:600;font-size:18px;margin-top:4px}
+  .card .ds{font-size:12.5px;color:#8a7a63;line-height:1.35}
+  .card .tagpill{position:absolute;top:10px;right:10px;font-size:9.5px;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;padding:3px 7px;border-radius:999px;color:#fff}
+  .t-strat{background:var(--p-strat)} .t-space{background:var(--p-space)} .t-num{background:var(--p-num)}
+  .card::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--accent,var(--honey))}
+  .card.strat{--accent:var(--p-strat)} .card.space{--accent:var(--p-space)} .card.num{--accent:var(--p-num)}
+
+  /* ---- CTA ---- */
+  .cta{margin-top:auto;text-align:center;padding-top:8px}
+  .cta a{display:inline-flex;align-items:center;gap:8px;font-family:"Fredoka";font-weight:600;font-size:17px;
+    text-decoration:none;color:#fff;background:var(--honey-dark);padding:13px 26px;border-radius:999px;
+    box-shadow:0 6px 0 #9c5f0e, 0 10px 20px rgba(0,0,0,.15);transition:transform .1s, box-shadow .1s}
+  .cta a:hover{transform:translateY(-2px)} .cta a:active{transform:translateY(3px);box-shadow:0 3px 0 #9c5f0e}
+  .cta .small{display:block;margin-top:10px;font-size:12px;color:#6b5326;font-family:"Baloo 2"}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <img class="logo-img" src="nh-logo.png" alt="Number Hive">
+    <div class="playground">Playground</div>
+    <div class="sub">🐝 nine little games to play with numbers</div>
+  </div>
+
+  <div class="panel">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="cta">
+    <a href="https://play.numberhive.org" target="_blank" rel="noopener" onclick="window.nhTrack&&nhTrack('play_app_click')">Play the full Number Hive app →</a>
+    <span class="small">play.numberhive.org</span>
+  </div>
+
+</div>
+
+<script>
+const GAMES=[
+  {nm:"Hive-doku", file:"hive-doku.html", ic:"🍯", ds:"Multiplication Sudoku on a honeycomb", cat:"num", tag:"Logic"},
+  {nm:"Hive-Streaks", file:"hive-streaks.html", ic:"🐝", ds:"Claim cells, score lines — vs a friend or bot", cat:"strat", tag:"Strategy"},
+  {nm:"Hive-Tiles", file:"hive-tiles.html", ic:"▦", ds:"Pack rectangles for the most area", cat:"space", tag:"Spatial"},
+  {nm:"Hive-Territory", file:"hive-territory.html", ic:"🗺️", ds:"Plant seeds on powerful numbers, rule the hive", cat:"strat", tag:"Strategy"},
+  {nm:"Hive-Stacks", file:"hive-heaps.html", ic:"🧱", ds:"Prime Nim — take the last block to win", cat:"strat", tag:"Strategy"},
+  {nm:"Factor Finder", file:"hive-factor-finder.html", ic:"🌳", ds:"Split numbers into their prime factors", cat:"num", tag:"Number"},
+  {nm:"Top Cell", file:"hive-topcell.html", ic:"🔺", ds:"Each cell is the product of the two below", cat:"num", tag:"Number"},
+  {nm:"Griddle", file:"hive-product-grid.html", ic:"✖️", ds:"Cross out cells so each line hits its product", cat:"num", tag:"Number"},
+  {nm:"Hive Maze", file:"hive-maze-campaign.html", ic:"🧭", ds:"Steer through the times-table, one factor at a time", cat:"space", tag:"Maze"},
+];
+const grid=document.getElementById("grid");
+GAMES.forEach(g=>{
+  const a=document.createElement("a");
+  a.className="card "+g.cat; a.href=g.file;
+  a.innerHTML=`<span class="tagpill t-${g.cat}">${g.tag}</span>`+
+              `<span class="ic">${g.ic}</span>`+
+              `<span class="nm">${g.nm}</span>`+
+              `<span class="ds">${g.ds}</span>`;
+  a.addEventListener("click",()=>{ window.nhTrack&&nhTrack('game_open',{game:g.nm}); });
+  grid.appendChild(a);
+});
+</script>
+</body>
+</html>

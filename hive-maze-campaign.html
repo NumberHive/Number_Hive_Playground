@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Hive Maze</title>
+<style>
+  :root{
+    --honey:#F5A623; --honey-dark:#C77B12; --honey-light:#FDE7BD; --honey-pale:#FFF6E5;
+    --cream:#FFFDF7; --ink:#3B2E1A; --muted:#8A7A63; --goal:#2E9E5B; --goal-light:#D8F0E2;
+    --line:#E7DBC5;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0; background:var(--cream); color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;}
+  .wrap{max-width:780px; margin:0 auto; padding:14px 14px 40px;}
+
+  header{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+  h1{font-size:22px; margin:0; letter-spacing:-.02em}
+  h1 span{color:var(--honey-dark)}
+  .levelpick{display:flex; align-items:center; gap:8px}
+  select{font:inherit; font-size:14px; padding:8px 10px; min-height:38px; border-radius:10px;
+    border:1px solid var(--line); background:#fff; color:var(--ink)}
+  .tier{font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    padding:4px 9px; border-radius:999px; background:var(--honey-pale); color:var(--honey-dark)}
+  .stats{display:flex; gap:16px; font-size:14px; color:var(--muted); margin-left:auto}
+  .stats b{color:var(--ink); font-variant-numeric:tabular-nums}
+
+  .boardbox{background:#fff; border:1px solid var(--line); border-radius:16px; padding:6px; position:relative}
+  svg{display:block; width:100%; height:auto}
+  .hexfill{fill:#fff; stroke:var(--line); stroke-width:1.5; transition:fill .18s}
+  .hexfill.visited{fill:var(--honey-light); stroke:var(--honey)}
+  .hexfill.current{fill:var(--honey); stroke:var(--honey-dark); stroke-width:3}
+  .hexfill.goal{fill:var(--goal-light); stroke:var(--goal); stroke-width:2.5}
+  .hexfill.goal.current{fill:var(--goal); stroke:#1d6e3e}
+  .hexlabel{font-size:14px; font-weight:600; text-anchor:middle; dominant-baseline:central; fill:var(--ink); pointer-events:none}
+  .hexlabel.on-current{fill:#fff}
+  .badge{font-size:7.5px; font-weight:700; letter-spacing:.08em; text-anchor:middle; fill:var(--muted); pointer-events:none}
+  .badge.goal{fill:var(--goal)}
+  .trailline{fill:none; stroke:var(--honey-dark); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; opacity:.45}
+
+  .banner{position:absolute; inset:auto 10px 10px; background:var(--ink); color:#fff; border-radius:12px;
+    padding:12px 14px; font-size:14px; display:none; align-items:center; gap:10px; justify-content:space-between}
+  .banner.show{display:flex}
+  .banner.win{background:var(--goal)}
+  .banner .btns{display:flex; gap:6px; flex-shrink:0}
+  .banner button{border:0; background:rgba(255,255,255,.2); color:#fff; font:inherit; font-size:13px;
+    padding:7px 12px; border-radius:8px; cursor:pointer; min-height:36px}
+
+  .pads{display:flex; gap:12px; align-items:center; justify-content:center; margin-top:14px; flex-wrap:wrap}
+  .pad{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; flex:1 1 240px; max-width:280px}
+  .pad button{font:inherit; font-size:16px; font-weight:600; min-height:46px; border-radius:10px;
+    border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; transition:transform .08s}
+  .pad button:active{transform:scale(.94)}
+  .pad button.sel{background:var(--honey); border-color:var(--honey-dark); color:#fff}
+  .readout{flex:0 0 auto; text-align:center; min-width:104px; font-variant-numeric:tabular-nums}
+  .readout .eq{font-size:12px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase}
+  .readout .val{font-size:34px; font-weight:700; color:var(--honey-dark); line-height:1.1}
+  .shake{animation:sh .28s}
+  @keyframes sh{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  .actions{display:flex; gap:8px; justify-content:center; margin-top:14px}
+  .actions button{font:inherit; font-size:14px; padding:10px 18px; min-height:44px; border-radius:10px;
+    border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer}
+  .actions button:disabled{opacity:.4; cursor:default}
+
+  .help{margin-top:18px; font-size:13px; line-height:1.6; color:var(--muted);
+    border-top:1px solid var(--line); padding-top:14px}
+  .help b{color:var(--ink)}
+  .credit{margin-top:16px; text-align:center; font-size:12px; color:var(--muted); letter-spacing:.02em}
+  .credit a{color:var(--honey-dark); text-decoration:none}
+  .credit a:hover{text-decoration:underline}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Hive <span>Maze</span></h1>
+    <div class="levelpick">
+      <select id="pick" aria-label="choose maze"></select>
+      <span class="tier" id="tier">Gentle</span>
+    </div>
+    <div class="stats">
+      <span>Moves <b id="moves">0</b></span>
+      <span>Best route <b id="par">–</b></span>
+      <span>Your best <b id="best">–</b></span>
+    </div>
+  </header>
+
+  <div class="boardbox">
+    <svg id="svg" role="img" aria-label="Hive Maze board"></svg>
+    <div class="banner" id="banner">
+      <span id="bannertext"></span>
+      <span class="btns" id="bannerbtns"></span>
+    </div>
+  </div>
+
+  <div class="pads">
+    <div class="pad" id="padA" aria-label="left factor"></div>
+    <div class="readout">
+      <div class="eq">product</div>
+      <div class="val" id="prod">–</div>
+    </div>
+    <div class="pad" id="padB" aria-label="right factor"></div>
+  </div>
+
+  <div class="actions">
+    <button id="undo">Undo</button>
+    <button id="reset">Reset maze</button>
+  </div>
+
+  <div class="help">
+    <b>How to play.</b> Start on the amber hex (bottom right); your two factor pads multiply to
+    its value. A move changes <b>exactly one</b> pad — the new product must match a hex
+    <b>touching</b> the one you're on. Reach the green goal (top left).
+    You can wander freely, revisit hexes and take wrong turns — every board is built so the
+    goal always stays reachable, so you can never get permanently stuck. Undo takes back a
+    step; the counter rewards a short route. Solve a maze to unlock the next. There are 100,
+    getting harder as you climb.
+  </div>
+
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+/* ==== 100 mazes, fixed order, difficulty ascending. Each = [a,b,bestRoute, ...59 values]. ==== */
+/* Start is always the very bottom-right hex, goal the very top-left. Every board is
+   "never-stranded": from any reachable state the goal is still reachable (verified).      */
+const MAZES=[[6,7,10,70,80,22,11,81,90,72,10,1,63,77,9,108,45,7,14,84,66,5,88,120,96,132,55,50,121,33,110,16,32,48,27,100,49,21,3,20,64,24,30,35,2,56,25,60,18,15,6,4,28,44,40,54,99,8,144,12,36,42],[6,7,10,81,54,121,9,1,100,110,99,36,44,35,64,70,108,120,132,22,10,56,27,18,40,32,15,3,72,14,8,4,80,50,66,96,84,144,24,28,60,5,30,48,7,11,2,16,6,45,90,21,88,55,49,12,77,33,25,20,63,42],[1,2,9,14,27,64,56,32,6,63,36,8,18,77,16,70,110,28,48,66,121,90,99,42,100,80,132,21,45,22,12,60,20,144,33,50,10,7,120,54,1,88,5,30,55,44,96,72,11,40,15,25,4,49,84,24,9,35,3,108,81,2],[3,9,10,66,99,16,80,1,10,88,4,22,2,72,60,110,30,24,96,54,144,70,56,3,21,64,45,132,44,77,100,18,14,35,50,9,121,5,90,42,49,63,33,40,55,25,20,11,81,15,120,48,36,28,7,108,12,8,6,32,84,27],[11,12,12,42,66,8,2,1,63,81,80,64,22,121,3,21,120,110,54,144,44,5,60,84,72,48,108,6,10,16,35,25,20,32,36,28,12,14,15,45,18,4,55,50,96,49,70,56,24,33,40,88,77,30,11,7,27,100,90,9,99,132],[8,8,11,72,121,33,48,88,132,42,70,110,55,56,36,60,66,9,2,80,21,99,16,120,54,3,20,40,45,63,50,27,15,28,100,84,7,25,144,90,35,49,77,4,5,1,12,30,24,44,14,8,22,11,96,6,32,10,18,81,108,64],[12,12,13,88,80,63,28,48,64,56,32,96,4,24,84,2,49,108,77,6,18,14,10,100,42,81,66,33,30,5,15,45,99,121,7,44,25,16,72,54,8,1,9,27,132,110,120,12,36,55,35,50,20,90,21,60,11,70,22,40,3,144],[11,12,12,60,8,11,70,7,30,18,27,5,1,110,33,44,48,32,50,77,42,81,90,4,12,25,121,45,63,16,120,3,40,55,15,49,20,96,24,28,80,6,21,9,84,2,22,64,54,10,100,35,66,88,72,56,14,99,108,144,36,132],[11,11,11,7,21,30,77,35,4,56,15,70,132,8,48,49,99,80,44,64,20,120,1,9,81,22,54,16,25,110,3,24,18,14,12,45,36,90,10,5,100,6,60,27,32,108,40,50,66,42,33,28,84,63,55,11,2,144,96,72,88,121],[1,2,12,50,25,108,54,55,10,32,45,90,4,99,44,144,20,120,24,110,132,100,40,48,21,27,96,84,60,1,8,72,49,42,28,12,15,66,36,64,63,80,56,5,18,88,30,81,7,16,121,70,22,3,35,6,11,77,14,33,9,2],[7,11,12,22,32,21,55,45,121,16,14,63,49,99,54,24,120,80,7,90,5,81,84,33,30,28,72,6,50,42,56,132,4,36,8,20,18,48,2,3,1,12,11,9,15,64,44,96,144,27,10,110,40,88,60,35,70,25,100,66,108,77],[10,10,12,50,25,110,14,8,44,20,10,28,6,30,11,3,42,48,7,45,27,2,22,21,49,132,77,5,81,1,9,63,108,99,84,96,60,40,70,18,54,32,15,56,66,80,24,36,4,12,35,33,144,64,121,120,16,55,90,72,88,100],[11,11,11,144,16,80,88,11,20,132,33,96,32,6,60,45,27,120,4,81,12,1,15,30,66,25,63,42,24,8,2,90,50,9,14,36,18,64,72,100,10,99,7,70,54,56,5,35,40,84,21,28,3,44,110,49,108,77,48,22,55,121],[7,7,14,66,25,30,88,21,16,48,42,1,8,36,6,14,22,96,40,20,84,55,45,63,108,144,4,28,27,10,12,121,99,90,44,33,81,60,120,50,100,18,64,132,72,54,32,5,35,70,80,2,56,15,77,110,7,3,24,11,9,49],[10,10,10,66,99,64,80,81,44,11,88,20,49,18,54,2,42,121,33,63,7,30,50,10,70,28,60,32,6,15,4,35,90,108,96,3,132,9,1,14,55,12,72,27,84,21,22,25,77,48,120,24,110,45,56,40,144,8,16,36,5,100],[12,12,11,2,11,77,121,12,9,33,64,96,132,1,8,30,14,49,84,22,20,16,21,32,55,70,63,56,7,36,81,44,40,27,72,99,80,120,45,108,50,35,28,110,54,66,42,90,60,5,100,48,18,3,88,24,10,15,25,4,6,144],[2,8,10,6,12,20,2,96,11,49,44,1,108,144,28,7,5,4,120,27,54,8,35,40,10,80,22,21,90,18,81,30,110,63,14,25,9,15,48,66,121,132,50,55,45,60,3,24,33,70,100,72,32,99,77,56,64,36,42,88,84,16],[9,9,13,30,1,44,120,28,24,4,132,33,84,40,56,96,48,9,64,7,66,60,55,14,12,16,8,110,88,25,36,108,45,21,50,72,35,20,32,144,3,15,100,70,42,49,80,90,2,77,27,11,99,121,10,18,63,22,54,6,5,81],[1,5,13,18,45,32,14,100,24,8,35,96,70,80,42,49,15,84,56,77,54,21,132,1,28,7,55,12,25,36,121,2,3,11,66,40,108,27,6,120,20,63,50,48,22,16,9,4,10,90,110,64,72,33,144,60,81,88,99,44,30,5],[6,7,12,11,1,24,27,84,90,4,40,120,60,55,100,81,44,45,144,54,77,35,63,20,10,80,32,36,70,99,2,88,14,49,64,7,121,9,22,30,50,25,3,8,110,5,18,6,48,12,56,28,15,108,132,96,33,21,16,72,66,42],[5,10,17,5,6,81,132,72,88,22,18,24,27,3,99,120,96,28,20,32,7,56,12,110,84,144,30,35,64,49,2,16,108,8,11,40,100,14,4,44,1,66,63,15,70,48,60,45,121,77,55,36,25,9,10,90,33,21,54,42,80,50],[7,8,10,80,1,6,72,12,45,60,2,64,18,33,3,25,36,4,90,42,7,10,120,144,24,21,50,54,35,63,99,66,5,100,48,81,84,11,121,55,132,22,49,27,9,77,88,15,30,8,14,96,16,44,40,28,32,108,110,20,70,56],[1,1,10,60,40,121,54,2,24,132,72,99,8,96,32,6,15,45,48,100,80,7,21,14,12,144,120,64,16,81,27,70,20,42,30,90,10,66,44,22,35,18,55,25,110,56,88,77,28,4,50,5,33,36,49,63,9,11,3,108,84,1],[7,11,13,28,54,99,24,32,42,7,132,60,144,80,5,15,35,6,30,100,84,9,3,40,16,2,1,120,72,108,4,90,10,48,96,64,50,63,49,25,66,44,36,20,45,88,27,55,121,81,21,12,33,110,70,8,56,18,22,14,11,77],[1,2,14,56,42,88,77,110,70,100,66,14,22,60,55,81,54,1,120,132,30,25,63,72,6,48,99,36,96,45,20,24,11,144,21,7,27,28,64,32,108,33,8,4,3,9,40,90,35,50,18,15,121,16,84,49,10,12,44,80,5,2],[3,5,12,66,54,99,48,24,18,42,3,108,144,121,132,96,9,44,120,80,55,33,35,8,20,70,100,30,22,56,7,32,16,28,49,11,60,64,4,1,40,25,77,110,90,88,84,14,2,10,21,72,5,12,6,63,45,50,81,27,36,15],[2,9,12,20,14,5,56,64,50,32,10,16,15,100,120,90,24,21,3,60,40,30,99,25,55,108,88,28,6,63,84,144,132,96,66,12,27,72,81,9,1,33,44,48,54,36,70,80,7,42,4,45,110,49,77,8,2,35,121,11,22,18],[9,11,12,36,84,48,16,60,144,4,42,54,6,80,8,28,21,25,5,108,120,1,7,15,14,40,44,96,30,45,9,77,2,56,33,32,35,49,63,22,24,121,66,64,81,90,72,3,100,110,132,27,50,70,10,18,20,12,88,11,55,99],[1,9,13,7,28,48,99,81,90,1,4,36,45,54,110,88,2,27,35,56,42,72,24,66,18,40,11,12,10,80,63,84,3,32,22,144,21,70,64,100,16,8,33,6,77,121,96,50,55,15,25,49,120,20,14,60,108,30,44,5,132,9],[5,11,13,9,11,110,64,56,25,50,60,54,35,40,6,2,48,44,18,42,99,3,96,16,1,4,77,144,72,132,24,5,10,22,66,36,88,32,8,7,90,100,21,12,27,14,28,84,80,120,33,63,70,30,108,81,121,20,49,45,15,55],[1,2,11,42,54,77,20,10,99,24,132,110,1,25,22,81,4,45,18,8,3,100,88,121,5,108,120,96,15,30,16,44,72,49,60,27,9,90,84,28,7,12,48,66,80,56,35,70,33,6,11,63,55,21,50,32,14,144,36,40,64,2],[5,10,10,66,77,7,24,4,11,20,84,144,36,64,3,8,22,110,42,72,60,2,40,16,120,63,12,55,48,21,18,1,56,32,88,25,100,10,6,33,121,80,132,96,28,54,5,30,44,108,14,35,15,99,90,70,49,9,27,81,45,50],[7,12,11,121,120,132,144,72,99,1,20,90,60,100,35,11,10,30,24,12,7,21,40,15,42,49,16,4,5,64,81,8,18,45,2,25,55,27,22,36,48,50,14,96,33,44,9,3,88,70,80,6,66,63,56,77,108,54,110,32,28,84],[8,11,10,15,21,2,45,99,144,25,30,5,14,11,77,132,40,10,49,7,33,108,36,35,1,44,55,96,121,24,63,3,6,32,8,84,28,48,72,64,90,66,12,9,42,81,80,4,100,60,27,110,120,20,16,70,54,22,50,18,56,88],[5,10,13,8,25,144,132,27,64,9,5,15,36,99,80,54,1,7,45,120,16,110,3,10,96,63,30,20,60,100,55,84,14,35,32,56,24,88,21,11,77,12,18,66,6,22,4,2,33,48,121,70,42,49,28,72,44,108,81,90,40,50],[1,1,12,24,80,11,44,21,48,66,55,15,27,84,64,50,10,18,2,42,49,88,120,100,90,45,144,99,70,20,72,63,30,25,36,132,32,3,108,110,5,81,33,60,96,6,8,22,54,35,40,12,4,121,16,14,77,28,56,9,7,1],[5,10,12,3,42,70,56,14,55,30,90,28,81,27,22,100,63,6,24,72,120,66,54,2,108,21,33,11,84,77,18,144,36,48,16,8,49,88,64,9,99,132,10,40,35,80,20,44,25,15,110,7,32,5,45,60,121,12,4,1,96,50],[2,11,14,2,49,18,81,54,40,20,56,27,12,63,100,70,108,84,36,60,5,7,35,42,132,21,80,24,144,99,121,66,8,77,28,6,9,33,88,110,14,72,4,1,120,25,50,90,44,32,45,30,10,3,15,11,55,96,16,48,64,22],[4,8,15,48,100,108,60,22,66,120,45,77,44,7,27,110,55,10,4,12,14,54,72,25,20,6,84,30,33,15,18,42,35,50,21,144,56,40,99,1,5,63,36,81,96,8,24,88,49,90,70,11,64,9,28,2,3,132,121,80,16,32],[9,11,10,63,81,16,60,120,7,27,6,90,45,72,11,54,40,21,30,20,9,10,2,144,80,96,88,25,108,100,1,12,5,32,18,36,70,121,48,132,28,49,42,3,84,44,50,55,33,56,14,4,66,22,110,64,8,24,15,35,77,99],[9,11,14,88,11,25,81,144,110,1,3,45,60,8,121,100,7,90,32,96,56,5,50,63,10,42,16,2,22,28,20,36,21,84,54,108,80,40,66,9,120,24,6,132,33,4,18,48,44,64,70,12,30,72,27,77,14,15,49,35,55,99],[2,9,12,20,6,121,60,40,1,77,33,99,66,80,42,2,88,27,25,22,8,16,14,108,144,54,55,110,10,35,132,81,36,45,11,4,49,5,12,30,63,56,21,3,9,84,90,7,32,44,120,96,70,28,72,24,48,100,50,15,64,18],[1,7,9,35,40,15,96,80,50,10,90,36,1,64,33,110,100,24,8,25,55,20,21,70,2,132,99,14,22,30,27,120,18,45,6,16,3,121,88,144,42,48,28,32,66,108,44,12,84,60,5,49,54,81,4,77,11,56,63,72,9,7],[5,10,11,121,63,54,12,2,77,96,16,18,25,10,70,99,132,36,80,72,21,14,66,45,32,144,90,60,84,3,27,6,24,33,81,42,5,15,108,88,55,11,9,48,28,20,22,49,7,4,44,64,40,30,100,35,56,120,8,1,110,50],[8,12,13,54,45,56,32,30,14,10,28,48,21,20,50,63,132,70,80,90,25,100,35,120,44,99,27,33,5,77,88,55,81,108,110,11,15,7,3,144,8,18,121,16,60,6,36,12,42,2,22,24,64,84,9,72,66,40,4,49,1,96],[6,11,14,1,3,18,15,35,63,7,2,50,88,25,45,110,5,144,24,55,22,49,28,11,10,33,12,121,90,14,77,96,100,32,120,27,70,84,8,36,4,40,108,9,64,6,54,21,30,20,72,80,42,56,132,48,44,60,16,99,81,66],[7,11,13,88,45,144,120,2,80,32,10,12,5,3,30,8,20,48,55,18,110,100,64,99,54,35,36,11,1,44,66,132,50,33,42,22,40,108,27,90,96,24,14,121,49,84,4,16,25,15,9,81,6,72,60,21,7,63,56,28,70,77],[7,9,12,35,16,96,108,2,50,21,77,48,20,4,132,49,28,120,22,66,12,84,42,32,80,33,40,24,56,9,110,11,8,44,30,100,7,72,121,1,14,54,3,6,90,70,88,99,27,60,144,81,45,64,55,18,10,36,25,5,15,63],[8,8,10,50,80,120,63,8,60,81,11,90,88,49,15,9,3,1,110,121,42,56,70,7,28,72,55,33,54,12,5,6,100,30,16,108,4,27,21,35,18,24,84,99,25,10,14,45,20,96,66,44,22,2,48,32,36,40,144,132,77,64],[9,10,11,64,4,5,7,1,88,22,12,42,21,56,55,96,3,10,18,77,120,25,121,32,132,2,36,110,60,50,33,11,14,27,48,108,35,6,54,9,80,40,45,100,49,66,8,84,72,20,70,99,28,63,24,30,16,81,44,144,15,90],[8,8,11,120,14,28,144,10,40,15,84,108,11,30,70,100,60,110,80,5,66,56,77,96,20,2,12,121,7,3,132,25,45,36,6,63,4,33,21,49,16,88,72,99,48,35,54,81,90,1,24,44,42,18,27,9,32,50,55,22,8,64],[1,3,12,21,80,20,5,48,30,90,10,28,25,42,100,120,110,40,81,49,12,84,72,108,64,99,56,50,22,132,14,7,32,36,35,88,11,55,1,15,8,144,60,70,44,16,9,66,4,18,45,121,27,63,24,2,54,77,33,96,6,3],[9,12,14,32,28,120,20,132,84,24,54,30,40,66,7,2,3,36,144,15,121,49,35,18,50,33,110,10,77,25,48,60,88,100,5,14,45,90,72,27,81,16,55,42,70,44,11,96,80,22,21,63,6,64,56,4,9,99,1,12,8,108],[1,9,13,54,63,121,77,72,64,56,88,49,24,50,110,30,70,144,84,90,99,100,32,28,35,14,120,132,48,2,33,42,8,18,20,108,27,6,96,16,36,12,5,81,21,11,80,3,60,40,55,10,66,4,25,15,45,7,44,22,1,9],[9,11,15,49,28,81,7,12,3,4,36,27,21,80,42,72,110,35,15,70,66,54,84,90,63,9,1,77,11,22,56,64,32,20,10,2,24,14,25,33,108,45,8,48,60,40,30,144,6,5,55,120,16,121,96,88,50,100,44,132,18,99],[6,7,13,25,18,108,96,1,50,60,120,64,36,6,24,10,55,35,16,121,12,48,9,132,33,70,100,11,30,8,80,144,27,3,15,7,72,49,110,21,56,32,66,99,81,84,88,5,20,14,44,22,77,28,90,2,4,63,45,40,54,42],[9,9,12,50,100,15,44,88,90,70,28,40,121,56,96,54,84,144,60,10,2,24,18,6,22,8,25,63,45,64,20,36,108,99,27,30,120,48,16,3,110,33,14,49,5,12,1,80,55,132,21,72,32,35,42,7,77,66,11,4,9,81],[2,9,12,90,132,88,120,30,110,66,56,70,9,54,5,55,49,24,6,16,81,144,15,3,100,50,7,20,80,48,33,2,40,42,77,14,96,121,21,22,32,10,45,60,84,35,4,99,44,28,27,25,8,11,12,72,108,64,1,36,63,18],[1,4,15,24,8,100,50,22,66,72,3,30,96,6,77,45,121,28,54,84,14,5,11,108,44,15,55,88,56,1,120,90,99,132,81,63,21,2,9,33,144,25,48,42,18,36,20,32,10,80,64,110,60,49,27,40,16,7,35,70,12,4],[8,12,12,42,49,7,66,48,35,27,56,60,24,15,50,90,21,32,144,54,9,81,63,1,6,33,30,80,5,64,8,2,45,25,110,121,11,22,70,100,16,55,12,120,99,10,28,44,77,132,88,72,20,4,36,18,40,84,14,108,3,96],[3,11,14,28,4,63,3,15,50,5,64,45,42,55,121,2,24,30,120,66,12,22,14,11,16,44,132,100,8,99,88,40,25,77,110,60,81,7,36,56,1,20,72,48,10,49,70,9,18,32,144,90,96,80,6,27,108,54,35,21,84,33],[7,9,16,18,66,90,30,1,20,27,6,108,36,2,70,32,99,45,40,12,11,8,88,132,42,120,22,50,77,21,64,24,60,25,110,80,7,56,9,81,35,48,96,84,3,121,4,28,5,144,14,33,15,55,10,100,49,44,54,72,16,63],[7,7,12,42,24,99,121,44,84,50,28,54,108,35,55,25,56,96,12,3,5,1,11,7,22,2,132,16,64,88,80,6,48,18,20,100,32,15,10,8,60,4,90,36,66,40,27,72,77,63,81,110,144,14,30,9,21,120,70,33,45,49],[1,4,13,60,70,80,44,11,54,132,45,72,32,14,5,10,108,36,16,100,22,35,15,25,96,66,110,99,81,42,30,21,20,64,40,12,49,55,48,88,24,120,144,7,50,121,27,18,8,90,77,33,2,6,56,63,28,9,3,84,1,4],[3,9,14,88,22,121,132,99,66,33,24,40,32,20,8,16,42,77,10,14,55,2,11,4,44,6,50,80,72,1,49,70,28,12,63,81,21,120,36,110,90,7,144,18,15,3,48,54,100,35,84,96,64,60,108,9,30,56,25,45,5,27],[5,12,14,9,11,10,28,1,44,54,121,49,5,3,20,8,33,42,2,88,15,77,14,110,70,84,64,66,45,80,56,21,16,27,18,90,108,24,144,7,6,30,36,81,4,48,99,96,100,22,132,32,35,63,72,55,12,40,50,25,120,60],[1,10,16,72,27,63,64,25,42,88,99,36,32,60,7,11,70,14,110,80,96,8,132,56,30,100,2,15,6,121,49,20,1,5,40,33,18,50,120,9,45,54,3,144,4,44,90,21,108,66,24,22,28,81,84,12,48,55,35,77,16,10],[8,8,15,2,15,7,20,36,55,11,21,99,44,120,121,25,9,27,28,22,144,60,45,66,42,49,80,12,16,96,110,88,40,8,72,35,6,18,81,77,5,108,54,63,14,32,132,33,90,84,10,56,4,3,1,24,70,100,50,30,48,64],[4,10,14,28,20,11,7,1,110,45,108,22,88,16,99,25,35,12,2,48,10,54,33,144,24,121,100,80,15,9,132,6,55,32,14,50,18,42,4,5,63,56,60,84,27,30,36,96,90,64,70,21,49,44,72,81,120,3,77,8,66,40],[4,12,15,88,64,108,45,32,121,110,18,132,42,56,8,2,90,70,54,80,7,15,30,20,144,60,84,3,22,25,66,16,35,27,9,10,96,12,21,5,77,4,14,50,24,81,40,1,44,6,49,11,63,72,28,100,120,33,55,99,36,48],[5,11,13,28,84,32,44,99,4,42,77,1,8,16,3,2,121,14,36,110,6,40,20,88,21,49,120,70,9,22,96,18,90,30,5,12,66,54,27,35,63,7,50,15,72,144,132,64,10,45,24,60,48,80,56,11,25,100,108,81,33,55],[4,12,13,24,110,60,88,4,55,44,108,45,22,100,5,49,28,132,33,32,80,3,27,81,120,9,36,96,144,2,8,7,11,15,54,42,21,72,66,121,10,1,35,84,6,90,30,63,77,56,64,16,12,70,50,99,18,20,14,25,40,48],[5,10,15,18,60,84,42,72,9,132,144,24,108,40,11,44,70,64,8,10,100,36,3,66,56,96,7,2,80,49,77,16,14,20,4,90,1,32,6,54,110,99,63,45,5,28,12,81,30,88,48,35,25,22,55,120,33,15,21,27,121,50],[3,12,15,84,48,100,20,50,120,80,42,40,49,35,110,66,72,64,132,25,77,14,10,4,90,1,108,121,55,144,18,15,12,24,32,5,56,60,45,54,70,21,8,6,63,27,7,88,11,3,81,30,33,2,96,28,9,22,99,16,44,36],[11,11,18,63,36,16,22,99,88,48,120,64,14,27,21,33,80,144,18,54,12,4,70,77,11,2,45,35,49,10,72,56,24,1,40,5,84,96,55,132,44,50,7,15,9,25,30,32,20,81,66,6,60,100,8,90,110,3,42,28,108,121],[10,12,16,56,7,42,132,96,64,8,66,108,121,88,33,4,1,84,60,77,49,81,44,99,144,36,27,14,63,72,16,10,54,30,25,5,55,32,22,50,20,2,100,110,11,12,28,80,45,70,21,6,9,18,3,40,24,15,35,48,90,120],[1,8,18,25,5,2,15,3,24,60,77,55,1,50,14,16,35,7,40,110,45,84,6,99,48,132,80,9,12,81,63,32,64,121,100,108,21,33,28,30,88,120,96,54,44,18,70,22,144,27,56,20,11,66,42,72,49,10,90,36,4,8],[4,8,13,27,81,45,50,30,54,42,55,20,63,6,64,18,36,144,70,99,49,16,22,132,66,90,84,108,77,121,14,8,80,10,15,28,120,44,35,100,25,48,40,9,12,72,2,110,33,3,24,11,1,5,60,21,4,7,88,96,56,32],[10,11,18,144,84,99,24,63,20,77,72,120,5,70,56,14,96,27,21,30,108,28,15,33,81,64,32,36,54,45,6,16,48,12,1,7,90,42,22,121,4,2,11,8,35,25,88,100,44,3,18,49,40,50,132,80,55,10,9,66,60,110],[1,6,14,22,132,49,36,48,32,96,77,63,54,4,24,45,42,66,120,10,30,3,20,5,28,14,11,9,12,100,88,44,70,144,15,55,50,108,121,110,84,33,35,21,60,90,81,27,1,40,25,56,80,7,99,8,64,16,2,18,72,6],[8,8,15,144,84,77,20,4,121,5,40,56,120,96,30,55,88,32,132,10,6,50,27,16,28,35,25,54,14,110,108,12,18,1,42,70,60,90,81,45,100,9,49,11,48,15,63,80,2,36,44,66,21,72,99,22,24,33,3,7,8,64],[3,12,20,45,40,11,5,12,96,30,20,88,4,27,6,48,120,64,66,110,56,42,1,90,81,99,3,77,22,144,14,49,21,35,9,63,108,84,18,70,8,55,33,15,50,80,100,28,132,2,25,54,60,121,32,24,16,10,7,44,72,36],[2,8,15,54,121,80,48,55,12,24,22,96,100,33,27,63,64,32,10,50,66,56,8,9,11,2,1,84,77,35,25,90,7,5,28,4,42,99,120,110,45,70,3,144,81,44,21,49,20,60,72,132,40,18,30,6,14,88,15,108,36,16],[12,12,11,24,54,27,50,100,121,6,4,90,80,66,33,56,49,84,120,28,132,9,55,20,16,5,70,77,1,63,8,21,96,40,64,7,72,32,42,10,45,14,2,11,99,110,30,44,60,12,3,15,35,108,48,81,36,25,22,18,88,144],[2,7,15,10,40,35,63,49,120,15,110,54,18,27,5,20,12,144,9,25,8,2,24,44,60,88,45,28,77,11,90,121,72,55,66,33,99,50,100,32,1,96,132,21,81,30,42,36,6,3,108,56,70,22,16,4,7,64,48,80,84,14],[1,5,14,4,64,45,99,121,108,44,40,54,3,120,35,96,32,20,7,70,9,80,10,110,77,14,81,90,1,55,49,28,132,2,24,8,88,6,27,144,21,56,25,48,16,63,36,72,12,33,50,42,66,84,60,100,30,15,18,22,11,5],[6,12,19,42,14,28,66,16,81,48,63,84,88,5,27,40,132,50,30,8,100,18,45,20,35,22,1,80,3,33,2,55,15,6,96,9,25,36,121,4,44,120,99,90,60,21,32,77,49,110,108,12,54,7,10,70,144,24,56,64,11,72],[1,5,14,66,4,40,16,28,48,6,72,14,64,25,77,132,24,45,54,8,30,49,20,2,33,42,9,80,50,144,90,22,21,15,120,32,84,100,10,44,121,60,70,7,96,110,1,55,11,35,27,88,56,36,12,18,3,108,99,81,63,5],[4,10,14,84,44,42,100,80,63,14,77,6,120,16,7,3,9,54,66,108,18,4,20,70,49,144,15,132,1,50,33,21,48,96,36,11,88,99,22,27,5,56,25,121,45,35,81,60,110,24,55,2,28,72,30,90,10,12,8,64,32,40],[1,6,14,80,64,108,60,144,120,99,63,72,96,8,66,110,121,9,27,15,11,16,56,40,21,81,42,28,77,22,88,48,30,54,7,84,4,1,12,70,32,20,25,45,50,49,55,100,132,44,36,5,14,35,10,3,33,2,90,18,24,6],[9,10,13,60,50,100,120,12,27,55,18,99,72,6,49,15,44,54,32,10,21,25,56,63,48,14,5,7,77,35,84,3,16,30,1,70,4,132,33,2,42,64,40,36,11,9,121,66,8,45,108,110,88,24,144,96,81,22,20,28,80,90],[2,7,10,2,7,77,22,44,3,16,24,121,108,120,70,20,28,6,9,132,60,33,100,5,36,21,11,40,18,66,50,48,35,64,25,42,54,1,12,15,49,56,8,32,99,81,144,10,30,84,4,88,27,45,80,63,90,55,96,72,110,14],[7,8,16,81,3,63,4,2,90,72,12,9,28,21,99,54,64,80,35,27,14,7,132,40,5,20,55,24,8,10,60,100,22,32,120,1,66,25,42,48,50,108,30,15,44,11,77,45,36,84,18,110,49,6,96,88,144,121,33,16,70,56],[1,4,18,77,22,18,88,56,84,6,120,10,55,80,7,15,1,25,12,121,33,100,20,99,11,24,90,27,72,96,50,54,110,66,48,81,2,8,9,64,144,36,30,45,16,32,40,132,44,21,3,108,28,42,35,49,14,63,70,60,5,4],[5,10,13,121,81,49,56,64,6,55,108,14,80,11,27,5,1,120,84,8,30,45,35,70,132,54,7,12,3,110,42,100,9,88,22,28,66,77,144,36,16,33,44,60,2,63,99,21,24,18,90,4,96,15,20,48,10,32,72,40,25,50],[1,12,15,60,5,40,45,42,55,32,64,11,30,10,121,81,4,6,35,54,15,2,28,36,24,144,33,25,21,14,90,100,72,110,27,84,88,56,50,44,99,80,22,77,16,63,108,66,49,7,132,18,48,9,8,1,3,120,96,70,20,12],[8,11,16,24,14,49,9,63,27,54,144,28,70,25,11,66,96,48,55,44,60,5,56,8,2,40,64,36,81,3,110,30,42,108,99,72,21,120,6,77,22,18,33,12,84,35,20,16,50,45,10,7,100,4,80,32,15,90,1,121,132,88],[1,2,23,60,18,66,42,49,72,25,3,84,90,40,120,15,22,24,4,54,110,144,48,32,77,36,7,45,81,11,35,132,14,20,50,70,33,30,21,44,64,55,8,16,88,99,28,121,80,100,10,63,108,96,56,1,6,27,5,9,12,2],[3,9,12,96,16,8,1,44,21,84,108,5,30,20,70,45,2,81,54,100,4,120,144,25,10,50,99,28,14,15,35,7,60,88,24,80,121,11,110,132,6,32,90,66,63,72,77,42,64,55,18,49,36,12,33,22,9,56,48,40,3,27],[11,11,17,5,11,72,45,108,44,20,70,25,80,32,3,84,35,15,64,9,4,88,24,6,120,56,54,16,96,99,18,90,144,50,12,21,81,100,60,55,40,110,28,48,49,7,10,42,30,27,63,77,14,132,22,36,8,2,1,33,66,121]];
+
+/* ---------- geometry ---------- */
+const ROWS=[5,6,7,8,7,8,7,6,5];
+const SIZE=30, W=Math.sqrt(3)*SIZE;
+const CENTERS=[];
+ROWS.forEach((L,r)=>{ const x0=-(L-1)/2*W;
+  for(let c=0;c<L;c++) CENTERS.push({x:x0+c*W, y:1.5*SIZE*r}); });
+const N=CENTERS.length; // 59
+const NBR=CENTERS.map(()=>[]);
+for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){
+  const dx=CENTERS[i].x-CENTERS[j].x, dy=CENTERS[i].y-CENTERS[j].y;
+  if(Math.hypot(dx,dy) < SIZE*1.9){ NBR[i].push(j); NBR[j].push(i); }
+}
+const START=58, GOAL=0;
+function corners(i){const c=CENTERS[i],p=[];
+  for(let k=0;k<6;k++){const ang=Math.PI/180*(60*k-30);
+    p.push((c.x+SIZE*Math.cos(ang)).toFixed(2)+","+(c.y+SIZE*Math.sin(ang)).toFixed(2));}
+  return p.join(" ");}
+
+/* ---------- progress (saved locally) ---------- */
+const SAVE="hiveMazeProgress.v1";
+function loadProgress(){
+  try{ return JSON.parse(localStorage.getItem(SAVE)) || {unlocked:1,best:{}}; }
+  catch(e){ return {unlocked:1,best:{}}; }
+}
+function saveProgress(){ try{ localStorage.setItem(SAVE, JSON.stringify(progress)); }catch(e){} }
+let progress=loadProgress();
+
+/* ---------- state ---------- */
+let level=1, VALS=[], a=1, b=1, here=START, trail=[], history=[], par=0;
+
+function tierName(n){ return n<=33 ? "Gentle" : n<=66 ? "Tricky" : "Fiendish"; }
+
+/* Free re-entry: a move is legal if a neighbour's value matches the new product.
+   Revisiting is allowed, so the "never-stranded" guarantee holds with no dead ends. */
+function legalMoves(a,b,h){
+  const out=[];
+  for(let k=1;k<=12;k++){
+    if(k!==a) for(const m of NBR[h]) if(VALS[m]===k*b) out.push({a:k,b:b,h:m});
+    if(k!==b) for(const m of NBR[h]) if(VALS[m]===a*k) out.push({a:a,b:k,h:m});
+  }
+  return out;
+}
+const visitedSet=()=>new Set(trail);
+const anyMoves=()=>legalMoves(a,b,here).length>0;
+
+/* ---------- rendering ---------- */
+const svg=document.getElementById("svg");
+let hexEls=[], labelEls=[], lineEl=null;
+function buildBoard(){
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  CENTERS.forEach(c=>{ minX=Math.min(minX,c.x-W/2); maxX=Math.max(maxX,c.x+W/2);
+                       minY=Math.min(minY,c.y-SIZE); maxY=Math.max(maxY,c.y+SIZE); });
+  const pad=10;
+  svg.setAttribute("viewBox",[minX-pad,minY-pad,(maxX-minX)+pad*2,(maxY-minY)+pad*2].join(" "));
+  svg.innerHTML="";
+  lineEl=document.createElementNS(svg.namespaceURI,"polyline");
+  lineEl.setAttribute("class","trailline"); svg.appendChild(lineEl);
+  hexEls=[]; labelEls=[];
+  for(let i=0;i<N;i++){
+    const g=document.createElementNS(svg.namespaceURI,"g");
+    const p=document.createElementNS(svg.namespaceURI,"polygon");
+    p.setAttribute("points",corners(i)); p.setAttribute("class","hexfill");
+    const c=CENTERS[i];
+    const t=document.createElementNS(svg.namespaceURI,"text");
+    t.setAttribute("x",c.x); t.setAttribute("y",c.y); t.setAttribute("class","hexlabel");
+    const bd=document.createElementNS(svg.namespaceURI,"text");
+    bd.setAttribute("x",c.x); bd.setAttribute("y",c.y+16); bd.setAttribute("class","badge");
+    g.appendChild(p); g.appendChild(t); g.appendChild(bd); svg.appendChild(g);
+    hexEls.push(p); labelEls.push({t,bd});
+  }
+}
+
+function draw(){
+  const vis=visitedSet();
+  hexEls.forEach((p,i)=>{
+    const cls=["hexfill"];
+    if(vis.has(i)) cls.push("visited");
+    if(i===here) cls.push("current");
+    if(i===GOAL) cls.push("goal");
+    p.setAttribute("class",cls.join(" "));
+    const {t,bd}=labelEls[i];
+    t.textContent=VALS[i];
+    t.setAttribute("class","hexlabel"+(i===here?" on-current":""));
+    bd.textContent = i===GOAL ? "GOAL" : (i===START ? "START" : "");
+    bd.setAttribute("class","badge"+(i===GOAL?" goal":""));
+    if(i===here) bd.setAttribute("fill","#fff"); else bd.removeAttribute("fill");
+  });
+  lineEl.setAttribute("points", trail.map(i=>CENTERS[i].x.toFixed(1)+","+CENTERS[i].y.toFixed(1)).join(" "));
+  document.getElementById("prod").textContent=a*b;
+  document.getElementById("moves").textContent=history.length;
+  document.getElementById("par").textContent=par;
+  const yourBest=progress.best[level];
+  document.getElementById("best").textContent = yourBest ? yourBest : "–";
+  document.getElementById("tier").textContent = tierName(level);
+  [["padA",a],["padB",b]].forEach(([id,v])=>{
+    [...document.getElementById(id).children].forEach(btn=>
+      btn.classList.toggle("sel", +btn.dataset.k===v));
+  });
+  document.getElementById("undo").disabled = history.length===0;
+
+  const won = here===GOAL;
+  const stuck = !won && !anyMoves();
+  const banner=document.getElementById("banner");
+  const btns=document.getElementById("bannerbtns");
+  banner.className="banner"+(won?" show win":(stuck?" show":""));
+  if(won){
+    document.getElementById("bannertext").textContent =
+      (history.length<=par ? `Maze ${level} solved in ${history.length} — the best route!`
+                           : `Maze ${level} solved in ${history.length} moves (best route ${par}).`);
+    btns.innerHTML="";
+    const brag=document.createElement("button"); brag.textContent="Brag";
+    brag.onclick=doBrag; btns.appendChild(brag);
+    if(level<100){
+      const nx=document.createElement("button"); nx.textContent="Next maze ▸";
+      nx.onclick=()=>go(level+1); btns.appendChild(nx);
+    }
+  } else if(stuck){
+    document.getElementById("bannertext").textContent =
+      "Every neighbour from here is already visited — undo a step and try another way.";
+    btns.innerHTML="";
+    const u=document.createElement("button"); u.textContent="Undo"; u.onclick=undo; btns.appendChild(u);
+  }
+}
+
+/* ---------- moves ---------- */
+function attempt(which,k){
+  if(here===GOAL) return;
+  const na = which==="A" ? k : a, nb = which==="B" ? k : b;
+  if(na===a && nb===b) return bad(which);
+  const target=NBR[here].find(m=>VALS[m]===na*nb);   // unique product => one match
+  if(target===undefined) return bad(which);
+  history.push({a,b,here});
+  a=na; b=nb; here=target; trail.push(target);
+  const justWon = here===GOAL;
+  draw();
+  if(justWon) recordWin();
+}
+function bad(which){
+  const el=document.getElementById(which==="A"?"padA":"padB");
+  el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
+}
+function undo(){
+  if(!history.length) return;
+  const s=history.pop(); a=s.a; b=s.b; here=s.here; trail.pop(); draw();
+}
+function recordWin(){
+  const m=history.length;
+  window.nhTrack&&nhTrack('game_complete',{game:'Hive Maze', level:level, moves:m});
+  if(!progress.best[level] || m<progress.best[level]) progress.best[level]=m;
+  if(level<100 && progress.unlocked<level+1) progress.unlocked=level+1;
+  saveProgress();
+  buildPicker();
+  document.getElementById("pick").value=level;
+}
+function doBrag(){
+  const msg=`I solved Hive Maze #${level} in ${history.length} moves — can you beat that?`;
+  const done=()=>{ const t=document.getElementById("bannertext");
+    const old=t.textContent; t.textContent="Copied! "+msg;
+    setTimeout(()=>{ if(here===GOAL) t.textContent=old; },1800); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(msg).then(done,done);
+  } else done();
+}
+
+/* ---------- load a maze ---------- */
+function loadLevel(n){
+  level=n;
+  const row=MAZES[n-1];
+  a=row[0]; b=row[1]; par=row[2]; VALS=row.slice(3);
+  here=START; trail=[here]; history=[];
+  draw();
+}
+function go(n){
+  if(n<1||n>100) return;
+  if(n>progress.unlocked) n=progress.unlocked;   // can't skip ahead
+  loadLevel(n);
+  document.getElementById("pick").value=n;
+}
+
+/* ---------- chrome ---------- */
+function buildPads(){
+  [["padA","A"],["padB","B"]].forEach(([id,which])=>{
+    const el=document.getElementById(id); el.innerHTML="";
+    for(let k=1;k<=12;k++){
+      const btn=document.createElement("button");
+      btn.textContent=k; btn.dataset.k=k;
+      btn.addEventListener("click",()=>attempt(which,k));
+      el.appendChild(btn);
+    }
+  });
+}
+function buildPicker(){
+  const sel=document.getElementById("pick"); sel.innerHTML="";
+  for(let i=1;i<=progress.unlocked;i++){
+    const o=document.createElement("option"); o.value=i;
+    const done=progress.best[i] ? " ✓" : "";
+    o.textContent=`Maze ${i} / 100 · ${tierName(i)}${done}`;
+    sel.appendChild(o);
+  }
+  sel.onchange=()=>go(+sel.value);
+}
+document.getElementById("undo").onclick=undo;
+document.getElementById("reset").onclick=()=>loadLevel(level);
+document.addEventListener("keydown",e=>{
+  if((e.key==="z"&&(e.metaKey||e.ctrlKey))||e.key==="Backspace"){e.preventDefault();undo();}
+});
+
+buildBoard(); buildPads(); buildPicker();
+go(progress.unlocked);           // resume at the furthest unlocked maze
+document.getElementById("pick").value=level;
+</script>
+</body>
+</html>

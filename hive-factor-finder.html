@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Factor Finder</title>
+<style>
+  :root{
+    --cream:#FFFDF7;--ink:#3B2E1A;--muted:#8A7A63;--line:#E7DBC5;
+    --honey:#F5A623;--honey-dark:#C77B12;--honey-pale:#FFF6E5;--honey-light:#FDE7BD;
+    --prime:#2E9E5B;--prime-l:#D8F0E2;--sel:#C77B12;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--cream);color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+  .wrap{max-width:640px;margin:0 auto;padding:14px 14px 40px}
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em}
+  h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px;color:var(--muted)}
+
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  .seg{display:flex;background:var(--honey-pale);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:transparent;padding:8px 14px;font:inherit;font-size:14px;color:var(--muted);cursor:pointer;min-height:40px}
+  .seg button.on{background:var(--honey);color:#fff;font-weight:600}
+  .bar .sp{margin-left:auto}
+  .bar .cnt{font-size:13px;color:var(--muted)} .bar .cnt b{color:var(--ink)}
+
+  .boardbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:8px;position:relative;min-height:280px}
+  svg{display:block;width:100%;height:auto}
+  .branch{stroke:var(--honey);stroke-width:2.2}
+  .node{cursor:pointer}
+  .node circle{fill:var(--honey-light);stroke:var(--honey-dark);stroke-width:2}
+  .node.prime circle{fill:var(--prime-l);stroke:var(--prime);stroke-width:2.5}
+  .node.internal circle{fill:#F3ECDD;stroke:var(--line);cursor:default}
+  .node.sel circle{stroke:var(--sel);stroke-width:4}
+  .node text{text-anchor:middle;dominant-baseline:central;font-weight:800;pointer-events:none;fill:var(--ink)}
+  .node.prime text{fill:#1d6e3e}
+  .hint{fill:var(--muted);font-size:11px;text-anchor:middle}
+
+  .banner{position:absolute;inset:auto 10px 10px;background:var(--prime);color:#fff;border-radius:12px;
+    padding:12px 14px;font-size:15px;font-weight:700;display:none;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
+  .banner.show{display:flex}
+  .banner .fac{font-size:18px} .banner .fac sup{font-size:11px}
+  .banner button{border:0;background:rgba(255,255,255,.25);color:#fff;font:inherit;font-size:13px;padding:7px 12px;border-radius:8px;cursor:pointer;min-height:36px}
+
+  .prompt{text-align:center;font-size:13px;color:var(--muted);margin:12px 0 8px;min-height:18px} .prompt b{color:var(--ink)}
+  .pad{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;max-width:340px;margin:0 auto}
+  .pad button{font:inherit;font-size:17px;font-weight:700;height:46px;border-radius:11px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .07s}
+  .pad button:disabled{opacity:.3}
+  .pad button:active{transform:scale(.92)}
+  .pad.shake{animation:sh .28s} @keyframes sh{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  .answer{max-width:440px;margin:0 auto;text-align:center}
+  .answer.shake{animation:sh .32s}
+  .qprompt{font-size:14px;color:var(--muted);margin-bottom:10px} .qprompt b{color:var(--ink)}
+  .opts{display:flex;flex-direction:column;gap:8px}
+  .opt{font:inherit;font-size:20px;font-weight:700;padding:12px;border-radius:11px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .07s}
+  .opt sup{font-size:12px} .opt:active{transform:scale(.97)}
+  .fillrow{display:flex;align-items:flex-start;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .fx{color:var(--muted);font-size:20px;align-self:center}
+  .expwrap{display:inline-flex;align-items:flex-start}
+  .expwrap .base{font-size:30px;font-weight:800}
+  .dropbox{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:30px;margin:-8px 0 0 3px;
+    border:2px dashed var(--honey);border-radius:8px;font-size:19px;font-weight:800;color:var(--honey-dark);background:var(--honey-pale);padding:0 4px;touch-action:none;cursor:pointer}
+  .tiles{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+  .tile{width:40px;height:44px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:20px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;user-select:none}
+  .tile.ghost{position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:50;box-shadow:0 6px 16px rgba(0,0,0,.2);opacity:.95}
+  .check{font:inherit;font-size:15px;font-weight:700;padding:10px 24px;border-radius:11px;border:0;background:var(--prime);color:#fff;cursor:pointer;min-height:44px}
+  .miss{color:var(--honey-dark);font-size:12px;min-height:16px;margin-top:8px}
+  .tickbox rect{fill:#fff;stroke:var(--honey-dark);stroke-width:1.6;cursor:pointer}
+  .tickbox.on rect{fill:var(--prime);stroke:var(--prime)}
+  .tickbox .ck{fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  svg.shakeb{animation:sh .3s}
+
+  .actions{display:flex;gap:8px;justify-content:center;margin-top:14px}
+  .actions button{font:inherit;font-size:14px;padding:9px 16px;min-height:42px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+
+  .help{margin-top:18px;font-size:13px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+  .help b{color:var(--ink)}
+  .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
+  .credit a{color:var(--honey-dark);text-decoration:none}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Factor <span>Finder</span></h1>
+    <span class="tag">find the prime factors — split until every branch is prime</span>
+  </header>
+
+  <div class="bar">
+    <div class="seg" id="seg"></div>
+    <span class="sp"></span>
+    <span class="cnt">Moves <b id="moves">0</b> · fewest <b id="min">–</b></span>
+  </div>
+
+  <div class="boardbox">
+    <svg id="svg" role="img" aria-label="Factor tree"></svg>
+    <div class="banner" id="banner"><span><span id="bannertext">Complete! 🌳</span> <span class="fac" id="fac"></span></span><button id="again">Next number</button></div>
+  </div>
+
+  <div class="prompt" id="prompt"></div>
+  <div class="pad" id="pad"></div>
+  <div class="answer" id="answer" style="display:none"></div>
+
+  <div class="actions">
+    <button id="hint">Hint</button>
+    <button id="undo">Undo</button>
+    <button id="newp">New number</button>
+  </div>
+
+  <div class="help">
+    <b>Goal: find the prime factors.</b> Tap a number, then tap one of its <b>factors</b> to split it
+    into two branches (split 60 into 2 and 30). Keep splitting the amber numbers until every branch is
+    a green <b>prime</b> — those are the answer. On <b>Easy</b> the buttons show you which factors work;
+    on <b>Medium</b> and <b>Hard</b> you have to pick the right factor yourself, and a wrong pick costs
+    a move. Try to match the <b>fewest possible</b> moves shown up top. Stuck? <b>Hint</b> splits one for you.
+  </div>
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+const PRIMESET={easy:[2,3,5],medium:[2,3,5,7],hard:[2,3,5,7,11]};
+const OMEGA={easy:[2,3],medium:[3,4],hard:[4,5]};
+let tier="easy", tree=null, sel=null, uid=0, history=[], moves=0, hintUsed=false, done=false;
+let phase="build";                 // build -> answer -> solved
+let bases=[], trueExps=[], entered=[], mcOptions=[];
+
+function isPrime(n){ if(n<2)return false; for(let d=2;d*d<=n;d++) if(n%d===0) return false; return true; }
+function smallestFactor(n){ for(let d=2;d*d<=n;d++) if(n%d===0) return d; return n; }
+function primeFactors(n){ const f={}; let x=n; while(x>1){ const d=smallestFactor(x); f[d]=(f[d]||0)+1; x/=d; } return f; }
+
+function genNumber(){
+  const primes=PRIMESET[tier], [lo,hi]=OMEGA[tier];
+  for(let tries=0;tries<200;tries++){
+    const k=lo+Math.floor(Math.random()*(hi-lo+1));
+    let n=1; for(let i=0;i<k;i++) n*=primes[Math.floor(Math.random()*primes.length)];
+    if(!isPrime(n) && n<=2000) return n;
+  }
+  return 60;
+}
+function newNumber(){
+  const n=genNumber();
+  tree={id:uid++, v:n, children:null, prime:isPrime(n), primeMarked:false};
+  sel=null; history=[]; moves=0; hintUsed=false; done=false; phase="build";
+  draw();
+}
+function findNode(node,id){ if(node.id===id) return node; if(node.children) for(const c of node.children){ const r=findNode(c,id); if(r) return r; } return null; }
+function leaves(node,acc){ acc=acc||[]; if(!node.children) acc.push(node); else node.children.forEach(c=>leaves(c,acc)); return acc; }
+function complete(){ return leaves(tree).every(l=>l.primeMarked); }   // student must mark every prime
+
+function split(node,d){
+  if(node.children || node.prime) return false;
+  if(d<=1 || d>=node.v || node.v%d!==0) return false;
+  const o=node.v/d;
+  node.children=[{id:uid++,v:d,children:null,prime:isPrime(d),primeMarked:false},{id:uid++,v:o,children:null,prime:isPrime(o),primeMarked:false}];
+  history.push(node.id);
+  if(complete()){ done=true; phase="answer"; prepareAnswer(); }
+  return true;
+}
+/* ---- the "state the factorisation" step ---- */
+function vecEq(a,b){ return a.length===b.length && a.every((x,i)=>x===b[i]); }
+function idxForm(bs,ex){ return bs.map((b,i)=> ex[i]>1?`${b}<sup>${ex[i]}</sup>`:`${b}`).join(" × "); }
+function prepareAnswer(){
+  const f=primeFactors(tree.v);
+  bases=Object.keys(f).map(Number).sort((a,b)=>a-b);
+  trueExps=bases.map(b=>f[b]);
+  entered=bases.map(()=>null);
+  if(tier==="easy") mcOptions=makeOptions();
+}
+function makeOptions(){
+  const opts=[trueExps.slice()]; let guard=0;
+  while(opts.length<3 && guard++<300){
+    const v=trueExps.slice();
+    if(v.length<2 || Math.random()<0.55){ const i=Math.random()*v.length|0; v[i]=Math.max(1, v[i]+(Math.random()<0.5?1:-1)); if(v[i]===trueExps[i]) v[i]=trueExps[i]+1; }
+    else { const i=Math.random()*v.length|0; let j=Math.random()*v.length|0; while(j===i) j=Math.random()*v.length|0; [v[i],v[j]]=[v[j],v[i]]; }
+    if(!opts.some(o=>vecEq(o,v))) opts.push(v);
+  }
+  for(let i=opts.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [opts[i],opts[j]]=[opts[j],opts[i]]; }
+  return opts;
+}
+function renderAnswer(){
+  const el=document.getElementById("answer");
+  if(tier==="easy"){
+    let h=`<div class="qprompt">Which is the prime factorisation of <b>${tree.v}</b>?</div><div class="opts">`;
+    mcOptions.forEach((o,i)=>{ h+=`<button class="opt" data-i="${i}">${idxForm(bases,o)}</button>`; });
+    h+=`</div><div class="miss" id="miss"></div>`; el.innerHTML=h;
+    el.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>{
+      if(vecEq(mcOptions[+b.dataset.i],trueExps)) solveNow(); else { shakeAns(); document.getElementById("miss").textContent="Not quite — count each prime again."; }
+    }));
+  } else {
+    let h=`<div class="qprompt">Drag the powers in to write <b>${tree.v}</b> in prime factors:</div><div class="fillrow">`;
+    bases.forEach((base,i)=>{
+      if(i>0) h+=`<span class="fx">×</span>`;
+      h+=`<span class="expwrap"><span class="base">${base}</span><span class="dropbox" data-box="${i}">${entered[i]==null?"":entered[i]}</span></span>`;
+    });
+    h+=`</div><div class="tiles" id="tiles"></div><div class="miss" id="miss"></div>`; el.innerHTML=h;
+    const trow=document.getElementById("tiles");
+    for(let d=1;d<=10;d++){ const t=document.createElement("div"); t.className="tile"; t.textContent=(d===10?0:d); t.dataset.d=(d===10?0:d);
+      t.addEventListener("pointerdown",e=>startDrag(t,e)); trow.appendChild(t); }
+    el.querySelectorAll(".dropbox").forEach(b=>b.addEventListener("click",()=>{ const i=+b.dataset.box; entered[i]=null; b.textContent=""; }));
+  }
+}
+/* pointer-based drag (works mouse + touch) */
+let dragGhost=null, dragVal=null;
+function startDrag(tile,e){
+  e.preventDefault(); dragVal=+tile.dataset.d;
+  dragGhost=tile.cloneNode(true); dragGhost.className="tile ghost"; document.body.appendChild(dragGhost);
+  moveGhost(e.clientX,e.clientY);
+  document.addEventListener("pointermove",onDragMove);
+  document.addEventListener("pointerup",onDragUp,{once:true});
+}
+function moveGhost(x,y){ if(dragGhost){ dragGhost.style.left=x+"px"; dragGhost.style.top=y+"px"; } }
+function onDragMove(e){ moveGhost(e.clientX,e.clientY); }
+function onDragUp(e){
+  document.removeEventListener("pointermove",onDragMove);
+  const under=document.elementFromPoint(e.clientX,e.clientY);
+  const box=under && under.closest ? under.closest(".dropbox") : null;
+  if(box){ const i=+box.dataset.box; entered[i]=dragVal; box.textContent=dragVal; checkFill(); }
+  if(dragGhost){ dragGhost.remove(); dragGhost=null; } dragVal=null;
+}
+function checkFill(){
+  if(entered.every(v=>v!=null)){
+    if(vecEq(entered,trueExps)) solveNow();
+    else { shakeAns(); const m=document.getElementById("miss"); if(m) m.textContent="Not quite — recount how many of each prime."; }
+  }
+}
+function shakeAns(){ const el=document.getElementById("answer"); el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
+function solveNow(){ phase="solved"; window.nhTrack&&nhTrack('game_complete',{game:'Factor Finder'}); draw(); }
+/* every factor tap (right or wrong) counts as a move; wrong ones just shake */
+function attemptSplit(node,d){
+  if(done || !node || node.children || node.primeMarked) return;
+  moves++;
+  if(node.v%d===0 && d>1 && d<node.v){ split(node,d); sel=null; }
+  else shake();
+  draw();
+}
+
+/* ---- layout ---- */
+const R=22, XS=64, YS=74;
+function layout(){
+  let leaf=0, maxD=0;
+  (function rec(node,depth){ node.depth=depth; maxD=Math.max(maxD,depth);
+    if(!node.children){ node.gx=leaf++; }
+    else { node.children.forEach(c=>rec(c,depth+1)); node.gx=(node.children[0].gx+node.children[node.children.length-1].gx)/2; }
+  })(tree,0);
+  return {leaves:leaf, depth:maxD};
+}
+const svg=document.getElementById("svg");
+function draw(){
+  const dim=layout();
+  const W=Math.max(dim.leaves,1)*XS, H=(dim.depth+1)*YS;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const px=n=>(n.gx+0.5)*XS, py=n=>(n.depth+0.5)*YS;
+  let lines="", nodes="";
+  (function rec(node){
+    if(node.children){ node.children.forEach(c=>{ lines+=`<line class="branch" x1="${px(node)}" y1="${py(node)}" x2="${px(c)}" y2="${py(c)}"></line>`; rec(c); }); }
+  })(tree);
+  let ticks="";
+  (function rec(node){
+    const internal=!!node.children, marked=node.primeMarked && !internal;
+    let cls="node"+(internal?" internal":"")+(marked?" prime":"")+(sel===node.id?" sel":"");
+    nodes+=`<g class="${cls}" data-id="${node.id}"><circle cx="${px(node)}" cy="${py(node)}" r="${R}"></circle>`+
+           `<text x="${px(node)}" y="${py(node)}" font-size="${node.v>=100?15:18}">${node.v}</text></g>`;
+    if(!internal && phase==="build"){                       // a tick-box on every leaf: "I say it's prime"
+      const cx=px(node)+R*0.82, cy=py(node)-R*0.82, on=node.primeMarked;
+      ticks+=`<g class="tickbox ${on?'on':''}" data-id="${node.id}">`+
+             `<rect x="${cx-9}" y="${cy-9}" width="18" height="18" rx="4"></rect>`+
+             (on?`<path class="ck" d="M ${cx-5} ${cy+0.5} L ${cx-1} ${cy+4.5} L ${cx+6} ${cy-4}"/>`:``)+`</g>`;
+    }
+    if(node.children) node.children.forEach(rec);
+  })(tree);
+  svg.innerHTML=lines+nodes+ticks;
+  svg.querySelectorAll(".node").forEach(el=>el.addEventListener("click",()=>tapNode(+el.dataset.id)));
+  svg.querySelectorAll(".tickbox").forEach(el=>el.addEventListener("click",(e)=>{ e.stopPropagation(); declarePrime(+el.dataset.id); }));
+
+  // panels by phase
+  const inAnswer = phase==="answer";
+  document.getElementById("pad").style.display = inAnswer?"none":"grid";
+  document.getElementById("answer").style.display = inAnswer?"block":"none";
+  document.getElementById("hint").disabled = phase!=="build";
+  const promptEl=document.getElementById("prompt");
+  if(phase!=="build"){ promptEl.innerHTML=""; }
+  else if(sel!=null){ const node=findNode(tree,sel); promptEl.innerHTML=`Split <b>${node.v}</b> — tap a factor · or tick its ☐ if it's prime`; }
+  else promptEl.innerHTML="Tap an amber number to split it · tick a number's ☐ when it's prime";
+  buildPad();
+  if(inAnswer) renderAnswer();
+  const omega=Object.values(primeFactors(tree.v)).reduce((a,b)=>a+b,0), minMoves=Math.max(omega-1,0);
+  document.getElementById("moves").textContent=moves;
+  document.getElementById("min").textContent=minMoves;
+  document.getElementById("undo").disabled=history.length===0;
+  const banner=document.getElementById("banner");
+  banner.className="banner"+(phase==="solved"?" show":"");
+  if(phase==="solved"){ const f=primeFactors(tree.v);
+    const parts=Object.keys(f).map(p=> f[p]>1?`${p}<sup>${f[p]}</sup>`:`${p}`);
+    document.getElementById("fac").innerHTML=`${tree.v} = ${parts.join(" × ")}`;
+    const perfect = moves===minMoves && !hintUsed;
+    document.getElementById("bannertext").textContent =
+      perfect ? "Perfect — fewest moves! 🌳"
+      : hintUsed ? "Found the prime factors! 🌳"
+      : `Found them in ${moves} moves (fewest is ${minMoves}) 🌳`; }
+}
+function buildPad(){
+  const pad=document.getElementById("pad"); pad.innerHTML="";
+  const node = sel!=null ? findNode(tree,sel) : null;
+  const helper = (tier==="easy");   // Easy highlights the real factors; Medium/Hard make you choose
+  for(let d=2;d<=12;d++){ const b=document.createElement("button"); b.textContent=d;
+    const divides = node && !node.children && !node.primeMarked && node.v%d===0 && d<node.v;
+    b.disabled = done || !node || (helper ? !divides : false);
+    b.onclick=()=>attemptSplit(node,d);
+    pad.appendChild(b);
+  }
+}
+function shake(){ const p=document.getElementById("pad"); p.classList.remove("shake"); void p.offsetWidth; p.classList.add("shake"); }
+function tapNode(id){
+  if(phase!=="build") return;
+  const node=findNode(tree,id);
+  if(!node || node.children || node.primeMarked) return;   // pick an unmarked leaf to split
+  sel = (sel===id)?null:id; draw();
+}
+function shakeTree(){ const el=document.getElementById("svg"); el.classList.remove("shakeb"); void el.getBBox; el.classList.add("shakeb"); setTimeout(()=>el.classList.remove("shakeb"),320); }
+/* student declares a leaf prime by ticking its box */
+function declarePrime(id){
+  if(phase!=="build") return;
+  const node=findNode(tree,id);
+  if(!node || node.children) return;
+  if(node.primeMarked){ node.primeMarked=false; sel=null; draw(); return; }   // untick
+  if(isPrime(node.v)){ node.primeMarked=true; sel=null; if(complete()){ done=true; phase="answer"; prepareAnswer(); } draw(); }
+  else { moves++; shakeTree(); sel=null; draw(); }                            // wrong: it still has factors
+}
+function undo(){
+  if(!history.length) return;
+  const id=history.pop(); const node=findNode(tree,id); if(node){ node.children=null; }
+  moves=Math.max(0,moves-1); done=false; phase="build"; sel=null; draw();
+}
+function hint(){
+  if(phase!=="build") return;
+  const comp=leaves(tree).find(l=>!l.primeMarked && !isPrime(l.v));   // a composite leaf to split
+  if(comp){ moves++; hintUsed=true; split(comp, smallestFactor(comp.v)); sel=null; draw(); return; }
+  const unmarked=leaves(tree).find(l=>!l.primeMarked && isPrime(l.v)); // else mark a prime
+  if(unmarked){ hintUsed=true; unmarked.primeMarked=true; if(complete()){ done=true; phase="answer"; prepareAnswer(); } sel=null; draw(); }
+}
+function buildSeg(){
+  const seg=document.getElementById("seg"); seg.innerHTML="";
+  [["Easy","easy"],["Medium","medium"],["Hard","hard"]].forEach(([label,t])=>{
+    const b=document.createElement("button"); b.textContent=label; b.className=tier===t?"on":"";
+    b.onclick=()=>{ tier=t; buildSeg(); newNumber(); }; seg.appendChild(b);
+  });
+}
+document.getElementById("undo").onclick=undo;
+document.getElementById("hint").onclick=hint;
+document.getElementById("newp").onclick=newNumber;
+document.getElementById("again").onclick=newNumber;
+buildSeg(); newNumber();
+</script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Number Hive Tiles</title>
+<style>
+  :root{
+    --cream:#FFFDF7; --ink:#3B2E1A; --muted:#8A7A63; --line:#E7DBC5;
+    --honey:#F5A623; --honey-dark:#C77B12; --honey-pale:#FFF6E5;
+    --p1:#F5A623; --p1-dark:#C77B12; --p1-light:#FBDFA6;
+    --p2:#4A78D6; --p2-dark:#2F55A6; --p2-light:#C9D8F6;
+    --ok:#2E9E5B; --no:#D6534A;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; background:var(--cream); color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;}
+  .wrap{max-width:640px; margin:0 auto; padding:14px 14px 40px}
+
+  header{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+  h1{font-size:22px; margin:0; letter-spacing:-.02em}
+  h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px; color:var(--muted)}
+  .goalchip{font-size:12px; font-weight:800; color:var(--honey-dark);
+    background:var(--honey-pale); border:1px solid var(--p1-light); border-radius:999px; padding:4px 10px}
+
+  .modebar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .modelabel{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .seg{display:flex;background:var(--honey-pale);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:transparent;padding:8px 12px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;min-height:38px}
+  .seg button.on{background:var(--honey);color:#fff;font-weight:600}
+
+  .score{display:flex; gap:10px; margin-bottom:10px}
+  .card{flex:1; border:1px solid var(--line); border-radius:12px; padding:9px 12px; background:#fff;
+    display:flex; align-items:center; gap:10px; transition:box-shadow .15s,border-color .15s}
+  .card .dot{width:14px;height:14px;border-radius:4px}
+  .card.p1 .dot{background:var(--p1)} .card.p2 .dot{background:var(--p2)}
+  .card.p1{--ac:var(--p1)} .card.p2{--ac:var(--p2)}
+  .card .who{font-size:13px;color:var(--muted)}
+  .card .pts{margin-left:auto;font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+  .card .target{font-size:14px;color:var(--muted);align-self:flex-end;margin:0 0 3px 3px}
+  .card.turn{border-color:var(--ac); box-shadow:0 0 0 2px var(--ac)}
+  .card.turn .who{color:var(--ink);font-weight:600}
+
+  .boardbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px;position:relative}
+  svg{display:block;width:100%;height:auto;touch-action:none}
+  .cell{fill:#fff;stroke:var(--line);stroke-width:.03}
+  .cell.p1{fill:var(--p1-light)} .cell.p2{fill:var(--p2-light)}
+  .ghost{fill-opacity:.5;stroke-width:.12;pointer-events:none}
+  .ghost.ok{stroke:var(--ok)} .ghost.no{stroke:var(--no);fill:var(--no)!important;fill-opacity:.25}
+
+  .banner{position:absolute;inset:auto 10px 10px;background:var(--ink);color:#fff;border-radius:12px;
+    padding:12px 14px;font-size:15px;font-weight:600;display:none;align-items:center;gap:10px;justify-content:space-between}
+  .banner.show{display:flex}
+  .banner.p1{background:var(--p1-dark)} .banner.p2{background:var(--p2-dark)}
+  .banner button{border:0;background:rgba(255,255,255,.22);color:#fff;font:inherit;font-size:13px;padding:7px 12px;border-radius:8px;cursor:pointer;min-height:36px}
+
+  .piece{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 6px;flex-wrap:wrap}
+  .piece .lbl{font-size:14px;color:var(--muted)}
+  .piece .dims{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+  .piece .dims b{color:var(--honey-dark)}
+  .piece button{font:inherit;font-size:14px;padding:9px 14px;min-height:42px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+  .turnline{text-align:center;font-size:13px;color:var(--muted);margin:2px 0 10px;min-height:18px}
+  .turnline b{color:var(--ink)}
+
+  .pads{display:flex;gap:12px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+  .padwrap{flex:1 1 250px;max-width:300px}
+  .padlabel{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;margin-bottom:5px}
+  .pad{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+  .pad button{font:inherit;font-size:15px;font-weight:600;min-height:42px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .08s}
+  .pad button:active{transform:scale(.93)}
+  .pad button.sel{background:var(--honey);border-color:var(--honey-dark);color:#fff}
+  .pad button.inh{outline:2px dashed var(--line);outline-offset:-4px}
+
+  .actions{display:flex;gap:8px;justify-content:center;margin-top:14px}
+  .actions button{font:inherit;font-size:14px;padding:10px 18px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+
+  .help{margin-top:18px;font-size:13px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+  .help b{color:var(--ink)}
+  .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
+  .credit a{color:var(--honey-dark);text-decoration:none}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Number Hive <span>Tiles</span></h1>
+    <span class="tag">two players · one screen</span>
+    <span class="goalchip" id="goalchip">🏁 Most squares wins</span>
+  </header>
+
+  <div class="modebar"><span class="modelabel">Opponent</span><div class="seg" id="modeseg"></div></div>
+
+  <div class="score">
+    <div class="card p1" id="card1"><span class="dot"></span><span class="who" id="who1">Player 1</span><span class="pts" id="pts1">0</span><span class="target" id="tgt1">sq</span></div>
+    <div class="card p2" id="card2"><span class="dot"></span><span class="who" id="who2">Player 2</span><span class="pts" id="pts2">0</span><span class="target" id="tgt2">sq</span></div>
+  </div>
+
+  <div class="boardbox">
+    <svg id="svg" viewBox="0 0 15 15" role="img" aria-label="15 by 15 board"></svg>
+    <div class="banner" id="banner"><span id="bannertext"></span><span style="display:flex;gap:6px" id="bannerbtns"></span></div>
+  </div>
+
+  <div class="piece">
+    <span class="lbl">Your piece</span>
+    <span class="dims" id="dims">1 × 1 <b id="area">= 1</b></span>
+    <button id="rotate">↻ Rotate</button>
+  </div>
+  <div class="turnline" id="turnline"></div>
+
+  <div class="pads">
+    <div class="padwrap"><div class="padlabel">Width</div><div class="pad" id="padA"></div></div>
+    <div class="padwrap"><div class="padlabel">Height</div><div class="pad" id="padB"></div></div>
+  </div>
+
+  <div class="actions"><button id="reset">New game</button></div>
+
+  <div class="help">
+    <b>How to play.</b> You share two number pads. On your turn, <b>change exactly one</b> pad to
+    resize your rectangle (the other side stays as your opponent left it), optionally <b>Rotate</b> it,
+    then move it over the board and <b>click / tap to drop</b> it. It must sit on empty squares, fully
+    inside the grid — you can't cover a piece that's already down. The pads then pass to your opponent.
+    Play until no more pieces fit anywhere; <b>whoever has covered the most squares wins.</b>
+  </div>
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+const GRID=15, MAXF=12;
+
+/* ---------- state ---------- */
+let cells, area, turn, over, ia, ib, a, b, rot, firstMove, ghost;
+let botMode=null; const BOT=2;   // null = 2 players; else "easy"|"medium"|"hard"; bot is Player 2
+function pieceW(){ return rot ? b : a; }
+function pieceH(){ return rot ? a : b; }
+
+function newGame(){
+  cells=new Array(GRID*GRID).fill(0);
+  area=[0,0,0]; turn=1; over=0;
+  ia=1; ib=1; a=1; b=1; rot=false; firstMove=true; ghost=null;
+  draw();
+}
+
+/* selection must differ from the inherited pair in exactly one slot (first move exempt) */
+function changedSlots(){ return (a!==ia?1:0)+(b!==ib?1:0); }
+function selectionValid(){ return firstMove ? changedSlots()<=1 : changedSlots()===1; }
+
+function canPlaceAt(col,row){
+  const w=pieceW(), h=pieceH();
+  if(col<0||row<0||col+w>GRID||row+h>GRID) return false;
+  for(let r=row;r<row+h;r++) for(let c=col;c<col+w;c++) if(cells[r*GRID+c]!==0) return false;
+  return true;
+}
+function fitsAnywhere(w,h){
+  for(let row=0;row+h<=GRID;row++) for(let col=0;col+w<=GRID;col++){
+    let ok=true;
+    for(let r=row;r<row+h&&ok;r++) for(let c=col;c<col+w;c++) if(cells[r*GRID+c]!==0){ok=false;break;}
+    if(ok) return true;
+  }
+  return false;
+}
+/* a legal move exists if any one-factor change of the inherited pair fits (either rotation) */
+function hasAnyMove(){
+  for(const [pa,pb] of candidatePairs(ia,ib,firstMove)){
+    if(fitsAnywhere(pa,pb) || fitsAnywhere(pb,pa)) return true;
+  }
+  return false;
+}
+
+function place(col,row){
+  if(over || !selectionValid() || !canPlaceAt(col,row)) return false;
+  const w=pieceW(), h=pieceH(), pl=turn;
+  for(let r=row;r<row+h;r++) for(let c=col;c<col+w;c++) cells[r*GRID+c]=pl;
+  area[pl]+=w*h;
+  // pass the pads on: opponent inherits the placed pair
+  ia=a; ib=b; turn=pl===1?2:1; a=ia; b=ib; rot=false; ghost=null; firstMove=false;
+  draw();
+  maybeBot();
+  return true;
+}
+
+/* ---------- rendering ---------- */
+const svg=document.getElementById("svg");
+let cellEls=[], ghostEl=null;
+function buildBoard(){
+  svg.innerHTML=""; cellEls=[];
+  for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++){
+    const rect=document.createElementNS(svg.namespaceURI,"rect");
+    rect.setAttribute("x",c); rect.setAttribute("y",r);
+    rect.setAttribute("width",1); rect.setAttribute("height",1);
+    rect.setAttribute("class","cell");
+    svg.appendChild(rect); cellEls.push(rect);
+  }
+  ghostEl=document.createElementNS(svg.namespaceURI,"rect");
+  ghostEl.setAttribute("class","ghost"); ghostEl.setAttribute("rx",".08");
+  ghostEl.style.display="none";
+  svg.appendChild(ghostEl);
+}
+function pcol(){ return turn===1?"var(--p1)":"var(--p2)"; }
+function draw(){
+  cellEls.forEach((el,i)=> el.setAttribute("class","cell"+(cells[i]===1?" p1":cells[i]===2?" p2":"")));
+  document.getElementById("pts1").textContent=area[1];
+  document.getElementById("pts2").textContent=area[2];
+  const p1name = botMode ? "You" : "Player 1";
+  const p2name = botMode ? "Bot · "+botMode.charAt(0).toUpperCase()+botMode.slice(1) : "Player 2";
+  document.getElementById("who1").textContent=p1name;
+  document.getElementById("who2").textContent=p2name;
+  document.getElementById("card1").className="card p1"+(turn===1&&!over?" turn":"");
+  document.getElementById("card2").className="card p2"+(turn===2&&!over?" turn":"");
+  const w=pieceW(), h=pieceH();
+  document.getElementById("dims").innerHTML=`${w} × ${h} <b id="area">= ${w*h}</b>`;
+  // pads
+  [["padA",a,"A"],["padB",b,"B"]].forEach(([id,val,which])=>{
+    [...document.getElementById(id).children].forEach(btn=>{
+      const k=+btn.dataset.k;
+      btn.className=""; if(k===val) btn.classList.add("sel");
+      if(!firstMove && ((which==="A"&&k===ia&&a!==ia)||(which==="B"&&k===ib&&b!==ib))) {}
+    });
+  });
+  updateGhost();
+  // board jam? the pair is shared, so if the player to move can't fit a piece, neither can -> game over
+  if(!over && !hasAnyMove()){ over = area[1]>area[2]?1 : area[2]>area[1]?2 : 3; window.nhTrack&&nhTrack('game_complete',{game:'Hive-Tiles',winner:over}); }   // 3 = draw
+  // turn line
+  const tl=document.getElementById("turnline");
+  const nm = turn===1 ? p1name : p2name;
+  if(!over){
+    if(botMode && turn===BOT) tl.innerHTML=`<b>${p2name}</b> is thinking…`;
+    else if(!selectionValid()) tl.innerHTML=`<b>${nm}</b> — change one factor to resize your piece`;
+    else tl.innerHTML=`<b>${nm}</b> — move your ${w}×${h} piece and click the board to drop it`;
+  } else tl.innerHTML="";
+  // banner
+  const banner=document.getElementById("banner"), btns=document.getElementById("bannerbtns");
+  if(over){
+    banner.className="banner show"+(over===1?" p1":over===2?" p2":"");
+    document.getElementById("bannertext").textContent = over===3
+       ? `Draw — ${area[1]} squares each!`
+       : `${over===1?p1name:p2name} wins — ${area[over]} squares to ${area[over===1?2:1]}!`;
+    btns.innerHTML=""; const nb=document.createElement("button"); nb.textContent="New game"; nb.onclick=newGame; btns.appendChild(nb);
+  } else banner.className="banner";
+}
+function updateGhost(){
+  if(over || !ghost || !selectionValid()){ if(ghostEl) ghostEl.style.display="none"; return; }
+  const w=pieceW(), h=pieceH();
+  const col=Math.max(0,Math.min(ghost.col,GRID-w)), row=Math.max(0,Math.min(ghost.row,GRID-h));
+  const okHere=canPlaceAt(col,row);
+  ghostEl.setAttribute("x",col); ghostEl.setAttribute("y",row);
+  ghostEl.setAttribute("width",w); ghostEl.setAttribute("height",h);
+  ghostEl.setAttribute("fill", turn===1?"var(--p1)":"var(--p2)");
+  ghostEl.setAttribute("class","ghost "+(okHere?"ok":"no"));
+  ghostEl.style.display="block";
+}
+
+/* ---------- pointer ---------- */
+function cellFromEvent(e){
+  const rect=svg.getBoundingClientRect();
+  const px=(e.clientX-rect.left)/rect.width*GRID;
+  const py=(e.clientY-rect.top)/rect.height*GRID;
+  return {col:Math.floor(px), row:Math.floor(py)};
+}
+svg.addEventListener("pointermove",e=>{
+  if(over||!selectionValid()||(botMode&&turn===BOT)){ return; }
+  ghost=cellFromEvent(e); updateGhost();
+});
+svg.addEventListener("pointerdown",e=>{
+  if(over||!selectionValid()||(botMode&&turn===BOT)) return;
+  ghost=cellFromEvent(e);
+  const w=pieceW(), h=pieceH();
+  const col=Math.max(0,Math.min(ghost.col,GRID-w)), row=Math.max(0,Math.min(ghost.row,GRID-h));
+  if(canPlaceAt(col,row)) place(col,row); else updateGhost();
+});
+svg.addEventListener("pointerleave",()=>{ ghost=null; updateGhost(); });
+
+/* ================= BOT (plays Player 2) ================= */
+function firstFit(w,h){
+  for(let row=0;row+h<=GRID;row++) for(let col=0;col+w<=GRID;col++){
+    let ok=true; for(let r=row;r<row+h&&ok;r++) for(let c=col;c<col+w;c++) if(cells[r*GRID+c]!==0){ok=false;break;}
+    if(ok) return {col,row};
+  }
+  return null;
+}
+function allFits(w,h){ const out=[]; for(let row=0;row+h<=GRID;row++) for(let col=0;col+w<=GRID;col++){
+    let ok=true; for(let r=row;r<row+h&&ok;r++) for(let c=col;c<col+w;c++) if(cells[r*GRID+c]!==0){ok=false;break;}
+    if(ok) out.push({col,row}); } return out; }
+function candidatePairs(iA,iB,fm){
+  const out=[], seen=new Set();
+  const add=(pa,pb)=>{ if(pa<1||pb<1||pa>MAXF||pb>MAXF)return; if(pa===iA&&pb===iB&&!fm)return;
+    const key=pa+"x"+pb; if(!seen.has(key)){seen.add(key);out.push([pa,pb]);} };
+  if(fm) add(1,1);
+  for(let k=1;k<=MAXF;k++){ add(k,iB); add(iA,k); }
+  return out;
+}
+// biggest single rectangle a player could drop given inherited (iA,iB) on the current board
+function maxPlaceableArea(iA,iB){
+  let best=0;
+  for(const [pa,pb] of candidatePairs(iA,iB,false)){
+    const orients = pa===pb ? [[pa,pb]] : [[pa,pb],[pb,pa]];
+    for(const [w,h] of orients){ if(w*h<=best) continue; if(firstFit(w,h)) best=w*h; }
+  }
+  return best;
+}
+function botMoves(){   // one first-fit placement per distinct piece shape
+  const out=[];
+  for(const [pa,pb] of candidatePairs(ia,ib,firstMove)){
+    const orients = pa===pb ? [[pa,pb,false]] : [[pa,pb,false],[pb,pa,true]];
+    for(const [w,h,r] of orients){ const s=firstFit(w,h); if(s) out.push({pa,pb,rot:r,w,h,col:s.col,row:s.row,area:w*h}); }
+  }
+  return out;
+}
+function chooseBot(){
+  const moves=botMoves(); if(!moves.length) return null;
+  if(botMode==="easy"){
+    const m=moves[(Math.random()*moves.length)|0];
+    const spots=allFits(m.w,m.h); const s=spots[(Math.random()*spots.length)|0]||m;
+    return {...m,col:s.col,row:s.row};
+  }
+  if(botMode==="medium"){
+    let best=-1,pool=[]; for(const m of moves){ if(m.area>best){best=m.area;pool=[m];} else if(m.area===best)pool.push(m); }
+    return pool[(Math.random()*pool.length)|0];
+  }
+  // hard: maximise (my area − the biggest grab I would hand the opponent next turn)
+  let bestVal=-1e9, pool=[];
+  for(const m of moves){
+    for(let r=m.row;r<m.row+m.h;r++) for(let c=m.col;c<m.col+m.w;c++) cells[r*GRID+c]=BOT;   // make
+    const opp=maxPlaceableArea(m.pa,m.pb);
+    for(let r=m.row;r<m.row+m.h;r++) for(let c=m.col;c<m.col+m.w;c++) cells[r*GRID+c]=0;       // unmake
+    const val=m.area-opp;
+    if(val>bestVal){ bestVal=val; pool=[m]; } else if(val===bestVal) pool.push(m);
+  }
+  let a2=-1,p2=[]; for(const m of pool){ if(m.area>a2){a2=m.area;p2=[m];} else if(m.area===a2)p2.push(m); }
+  return p2[(Math.random()*p2.length)|0];
+}
+function maybeBot(){ if(botMode && !over && turn===BOT) setTimeout(botMove, 650); }
+function botMove(){
+  if(!botMode || over || turn!==BOT) return;
+  const m=chooseBot(); if(!m){ draw(); return; }   // no move -> draw() has already ended the game
+  if(m.pb===ib && m.pa!==ia) onPad("A",m.pa);
+  else if(m.pa===ia && m.pb!==ib) onPad("B",m.pb);
+  else { a=m.pa; b=m.pb; }
+  rot=m.rot; ghost={col:m.col,row:m.row}; draw();
+  setTimeout(()=>{ if(!over && turn===BOT) place(m.col,m.row); }, 480);   // show the ghost, then drop
+}
+
+/* ---------- controls ---------- */
+function onPad(which,k){
+  if(over) return;
+  if(which==="A"){ a=k; b=ib; } else { b=k; a=ia; }   // change one side; other reverts to inherited
+  rot=false; draw();
+}
+function buildPads(){
+  [["padA","A"],["padB","B"]].forEach(([id,which])=>{
+    const el=document.getElementById(id); el.innerHTML="";
+    for(let k=1;k<=MAXF;k++){ const btn=document.createElement("button"); btn.textContent=k; btn.dataset.k=k;
+      btn.addEventListener("click",()=>{ if(botMode&&turn===BOT)return; onPad(which,k); }); el.appendChild(btn); }
+  });
+}
+function buildModeseg(){
+  const seg=document.getElementById("modeseg"); seg.innerHTML="";
+  [["2 Players",null],["Easy","easy"],["Medium","medium"],["Hard","hard"]].forEach(([label,mode])=>{
+    const btn=document.createElement("button"); btn.textContent=label; btn.className = botMode===mode?"on":"";
+    btn.onclick=()=>{ botMode=mode; buildModeseg(); newGame(); };
+    seg.appendChild(btn);
+  });
+}
+document.getElementById("rotate").onclick=()=>{ if(over||(botMode&&turn===BOT))return; rot=!rot; draw(); };
+document.getElementById("reset").onclick=newGame;
+
+buildBoard(); buildPads(); buildModeseg(); newGame();
+</script>
+</body>
+</html>

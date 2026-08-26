@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Factor Heaps</title>
+<style>
+  :root{
+    --cream:#FFFDF7;--ink:#3B2E1A;--muted:#8A7A63;--line:#E7DBC5;
+    --honey:#F5A623;--honey-dark:#C77B12;--honey-pale:#FFF6E5;
+    --p1:#F5A623;--p1-dark:#C77B12;--p2:#4A78D6;--p2-dark:#2F55A6;
+    --c2:#F5A623;--c3:#4A78D6;--c5:#2E9E5B;--c7:#9B5DE5;--c11:#E0679B;--c13:#E8863B;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--cream);color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+  .wrap{max-width:560px;margin:0 auto;padding:14px 14px 40px}
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em}
+  h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px;color:var(--muted)}
+
+  .modebar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .modelabel{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .seg{display:flex;background:var(--honey-pale);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:transparent;padding:8px 12px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;min-height:38px}
+  .seg button.on{background:var(--honey);color:#fff;font-weight:600}
+
+  .board{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 12px 10px;position:relative;text-align:center}
+  .nval{font-size:15px;color:var(--muted)}
+  .nval b{font-size:34px;color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums;display:block;line-height:1.1}
+  .facs{font-size:14px;color:var(--muted);margin-top:2px;min-height:20px}
+  .facs .x{opacity:.5}
+
+  .stacks{display:flex;gap:14px;justify-content:center;align-items:flex-end;min-height:230px;margin:16px 0 6px}
+  .stack{display:flex;flex-direction:column-reverse;align-items:center;gap:5px}
+  .tok{width:40px;height:26px;border-radius:7px;cursor:pointer;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);transition:transform .06s,opacity .1s}
+  .tok:hover{transform:translateY(-2px)}
+  .tok.dim{opacity:.25;cursor:default} .tok.dim:hover{transform:none}
+  .plabel{margin-top:8px;font-size:18px;font-weight:800}
+  .stack.gone .plabel{opacity:.3}
+
+  .turnline{font-size:14px;color:var(--muted);margin-top:2px;min-height:20px}
+  .turnline b{color:var(--ink)}
+  .last{font-size:12px;color:var(--muted);min-height:16px}
+
+  .banner{position:absolute;inset:auto 10px 10px;border-radius:12px;color:#fff;padding:12px 14px;font-size:15px;font-weight:700;
+    display:none;align-items:center;gap:10px;justify-content:space-between;background:var(--ink)}
+  .banner.show{display:flex} .banner.p1{background:var(--p1-dark)} .banner.p2{background:var(--p2-dark)}
+  .banner button{border:0;background:rgba(255,255,255,.25);color:#fff;font:inherit;font-size:13px;padding:7px 12px;border-radius:8px;cursor:pointer;min-height:36px}
+
+  .players{display:flex;gap:10px;margin-top:12px}
+  .pcard{flex:1;border:1px solid var(--line);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+  .pcard .dot{width:12px;height:12px;border-radius:50%}
+  .pcard.p1 .dot{background:var(--p1)} .pcard.p2 .dot{background:var(--p2)}
+  .pcard.p1{--ac:var(--p1)} .pcard.p2{--ac:var(--p2)}
+  .pcard.turn{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac);color:var(--ink);font-weight:600}
+
+  .actions{display:flex;gap:8px;justify-content:center;margin-top:12px}
+  .actions button{font:inherit;font-size:14px;padding:9px 16px;min-height:42px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+
+  .help{margin-top:18px;font-size:13px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+  .help b{color:var(--ink)}
+  .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
+  .credit a{color:var(--honey-dark);text-decoration:none}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Factor <span>Heaps</span></h1>
+    <span class="tag">every number is made of prime blocks · take the last block to win</span>
+  </header>
+
+  <div class="modebar"><span class="modelabel">Opponent</span><div class="seg" id="modeseg"></div></div>
+
+  <div class="board">
+    <div class="nval">the number is<b id="nval">–</b></div>
+    <div class="facs" id="facs"></div>
+    <div class="stacks" id="stacks"></div>
+    <div class="turnline" id="turnline"></div>
+    <div class="last" id="last"></div>
+    <div class="banner" id="banner"><span id="bannertext"></span><button id="again">New game</button></div>
+  </div>
+
+  <div class="players">
+    <div class="pcard p1" id="card1"><span class="dot"></span><span id="who1">Player 1</span></div>
+    <div class="pcard p2" id="card2"><span class="dot"></span><span id="who2">Player 2</span></div>
+  </div>
+
+  <div class="actions"><button id="reset">Restart</button><button id="newp">New game</button></div>
+
+  <div class="help">
+    <b>How to play.</b> The number is broken into <b>prime blocks</b> — 360 = 2×2×2 · 3×3 · 5, so a
+    stack of three 2s, two 3s and one 5. On your turn, pick <b>one</b> prime stack and take away
+    <b>as many blocks as you like</b> from it (that's dividing the number by that prime). Tap a block
+    to remove it and everything above it. Whoever takes the <b>very last block</b> — reducing the
+    number to 1 — <b>wins</b>. Tip: you're really playing a game of Nim on the prime powers.
+  </div>
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+const PRIMES=[2,3,5,7,11], PCOL={2:"var(--c2)",3:"var(--c3)",5:"var(--c5)",7:"var(--c7)",11:"var(--c11)",13:"var(--c13)"};
+let botMode=null; const BOT=2;
+let heaps, turn, over, lastMove;
+
+function rint(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+function newGame(){
+  // choose 2-3 primes with small exponents; total blocks 4..8
+  do{
+    const k=rint(2,3);
+    const chosen=[...PRIMES].sort(()=>Math.random()-0.5).slice(0,k);
+    heaps=chosen.map(p=>({prime:p, count:rint(1,4)}));
+    var total=heaps.reduce((s,h)=>s+h.count,0);
+  } while(total<4 || total>8 || heaps.length<2);
+  heaps.sort((a,b)=>a.prime-b.prime);
+  heaps.forEach(h=>h.__orig=h.count);      // remember start for Restart
+  turn=1; over=0; lastMove="";
+  draw();
+}
+function Nval(){ let n=1; heaps.forEach(h=>{ for(let i=0;i<h.count;i++) n*=h.prime; }); return n; }
+function facsStr(){
+  const parts=[]; heaps.forEach(h=>{ for(let i=0;i<h.count;i++) parts.push(h.prime); });
+  return parts.length?parts.join(" × "):"1";
+}
+function done(){ return heaps.every(h=>h.count===0); }
+
+/* ---- Nim engine ---- */
+function nimXor(){ return heaps.reduce((x,h)=>x^h.count,0); }
+function legalMoves(){ const m=[]; heaps.forEach((h,i)=>{ for(let t=0;t<h.count;t++) m.push({heap:i,to:t}); }); return m; }
+function applyMove(mv){
+  const h=heaps[mv.heap]; const removed=h.count-mv.to; h.count=mv.to;
+  lastMove=`Player ${turn} divided by ${h.prime}${removed>1?"<sup>"+removed+"</sup>":""} → ${Nval()===1?"1 🎉":Nval()}`;
+  if(done()){ over=turn; window.nhTrack&&nhTrack('game_complete',{game:'Hive-Stacks',winner:turn}); }
+  else turn=turn===1?2:1;
+}
+/* bot */
+function botPerfectMove(){
+  const x=nimXor();
+  if(x!==0){ for(let i=0;i<heaps.length;i++){ const target=heaps[i].count^x; if(target<heaps[i].count) return {heap:i,to:target}; } }
+  // losing position: remove 1 from the tallest stack
+  let bi=-1; heaps.forEach((h,i)=>{ if(h.count>0 && (bi<0||h.count>heaps[bi].count)) bi=i; });
+  return {heap:bi, to:heaps[bi].count-1};
+}
+function botRandomMove(){ const m=legalMoves(); return m[Math.floor(Math.random()*m.length)]; }
+function chooseBot(){
+  if(botMode==="easy") return botRandomMove();
+  if(botMode==="medium") return Math.random()<0.5 ? botPerfectMove() : botRandomMove();
+  return botPerfectMove();
+}
+function maybeBot(){ if(botMode && !over && turn===BOT) setTimeout(()=>{ const mv=chooseBot(); applyMove(mv); draw(); maybeBot(); }, 620); }
+
+/* ---- rendering ---- */
+function draw(){
+  document.getElementById("nval").textContent = over? "1" : Nval();
+  document.getElementById("facs").innerHTML = over? "= 1" : `= ${facsStr()}`;
+  const cont=document.getElementById("stacks"); cont.innerHTML="";
+  heaps.forEach((h,i)=>{
+    const st=document.createElement("div"); st.className="stack"+(h.count===0?" gone":"");
+    for(let t=0;t<Math.max(h.count,0);t++){
+      const tok=document.createElement("div"); tok.className="tok"; tok.style.background=PCOL[h.prime]||"#ccc";
+      if(over || (botMode && turn===BOT)) tok.classList.add("dim");
+      tok.dataset.heap=i; tok.dataset.to=t;
+      tok.addEventListener("click",()=>tap(i,t));
+      st.appendChild(tok);
+    }
+    // if empty, keep a faded placeholder height so labels align
+    if(h.count===0){ const ph=document.createElement("div"); ph.className="tok dim"; ph.style.visibility="hidden"; st.appendChild(ph); }
+    const lab=document.createElement("div"); lab.className="plabel"; lab.textContent=h.prime; lab.style.color=PCOL[h.prime]; st.appendChild(lab);
+    cont.appendChild(st);
+  });
+  const p1=botMode?"You":"Player 1", p2=botMode?("Bot · "+botMode[0].toUpperCase()+botMode.slice(1)):"Player 2";
+  document.getElementById("who1").textContent=p1; document.getElementById("who2").textContent=p2;
+  document.getElementById("card1").className="pcard p1"+(turn===1&&!over?" turn":"");
+  document.getElementById("card2").className="pcard p2"+(turn===2&&!over?" turn":"");
+  document.getElementById("turnline").innerHTML = over? "" : (botMode&&turn===BOT? `<b>${p2}</b> is thinking…` : `<b>${turn===1?p1:p2}</b> — take blocks from one stack`);
+  document.getElementById("last").innerHTML = lastMove;
+  const banner=document.getElementById("banner");
+  banner.className="banner"+(over?" show "+(over===1?"p1":"p2"):"");
+  if(over){ const w=over===1?p1:p2; document.getElementById("bannertext").innerHTML=`${w} took the last block — ${w} wins! 🎉`; }
+}
+function tap(heap,to){
+  if(over) return;
+  if(botMode && turn===BOT) return;
+  applyMove({heap,to});
+  draw();
+  maybeBot();
+}
+
+function buildSeg(){
+  const seg=document.getElementById("modeseg"); seg.innerHTML="";
+  [["2 Players",null],["Easy","easy"],["Medium","medium"],["Hard","hard"]].forEach(([label,m])=>{
+    const b=document.createElement("button"); b.textContent=label; b.className=botMode===m?"on":"";
+    b.onclick=()=>{ botMode=m; buildSeg(); newGame(); }; seg.appendChild(b);
+  });
+}
+document.getElementById("reset").onclick=()=>{ turn=1; over=0; lastMove=""; heaps=heaps.map(h=>({prime:h.prime,count:h.__orig,__orig:h.__orig})); draw(); };
+document.getElementById("newp").onclick=newGame;
+document.getElementById("again").onclick=newGame;
+
+buildSeg(); newGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Hive-doku</title>
+<style>
+  :root{
+    --cream:#FFFDF7; --ink:#3B2E1A; --muted:#8A7A63; --line:#E7DBC5;
+    --honey:#F5A623; --honey-dark:#C77B12; --honey-pale:#FFF6E5;
+    --sel:#F5A623; --given:#EFE7D5; --bad:#D6534A; --good:#2E9E5B;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--cream);color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+  .wrap{max-width:560px;margin:0 auto;padding:14px 14px 40px}
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em}
+  h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px;color:var(--muted)}
+
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .seg{display:flex;background:var(--honey-pale);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:transparent;padding:8px 14px;font:inherit;font-size:14px;color:var(--muted);cursor:pointer;min-height:40px}
+  .seg button.on{background:var(--honey);color:#fff;font-weight:600}
+  .bar .sp{margin-left:auto}
+  .bar .act{font:inherit;font-size:14px;padding:8px 14px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+
+  .boardbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:8px;position:relative}
+  svg{display:block;width:100%;height:auto}
+  .hex{stroke:#fff;stroke-width:.06;cursor:pointer}
+  .hexsel{fill:none;stroke:var(--sel);stroke-width:.16}
+  .val{font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none;fill:var(--ink)}
+  .val.given{fill:#6b5b3e}
+  .val.bad{fill:var(--bad)}
+  .clue{font-weight:700;text-anchor:start;dominant-baseline:hanging;pointer-events:none;fill:#5c4a2b}
+
+  .banner{position:absolute;inset:auto 10px 10px;background:var(--good);color:#fff;border-radius:12px;
+    padding:12px 14px;font-size:15px;font-weight:700;display:none;align-items:center;gap:10px;justify-content:space-between}
+  .banner.show{display:flex}
+  .banner button{border:0;background:rgba(255,255,255,.25);color:#fff;font:inherit;font-size:13px;padding:7px 12px;border-radius:8px;cursor:pointer;min-height:36px}
+
+  .pad{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .pad button{font:inherit;font-size:20px;font-weight:700;width:52px;height:52px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .07s}
+  .pad button:active{transform:scale(.92)}
+  .pad button.erase{font-size:15px;font-weight:600;color:var(--muted)}
+
+  .help{margin-top:18px;font-size:13px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+  .help b{color:var(--ink)}
+  .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
+  .credit a{color:var(--honey-dark);text-decoration:none}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Hive<span>-doku</span></h1>
+    <span class="tag">every row & column uses each number once · cages must hit their target</span>
+  </header>
+
+  <div class="bar">
+    <div class="seg" id="seg"></div>
+    <span class="sp"></span>
+    <button class="act" id="newp">New puzzle</button>
+  </div>
+
+  <div class="boardbox">
+    <svg id="svg" role="img" aria-label="Hive-doku board"></svg>
+    <div class="banner" id="banner"><span id="bannertext">Solved! 🎉</span><button id="again">Next puzzle</button></div>
+  </div>
+
+  <div class="pad" id="pad"></div>
+
+  <div class="help">
+    <b>How to play.</b> Fill every hex so each <b>row</b> and each <b>column</b> contains the numbers
+    1 to N exactly once (like Sudoku). The coloured groups are <b>cages</b>: the little label shows a
+    target and a sign — <b>×</b> means the cage's numbers must multiply to it, <b>+</b> means they add
+    to it. The plain grey hexes are given clues. Tap a hex, then tap a number.
+  </div>
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+const PUZZLES={"easy":[{"n":4,"cages":[{"cells":[14,13,9],"op":"x","target":8},{"cells":[7,11],"op":"x","target":4},{"cells":[2,3],"op":"x","target":6},{"cells":[6,5],"op":"x","target":3},{"cells":[8,4],"op":"x","target":8},{"cells":[12],"op":"=","target":3},{"cells":[10],"op":"=","target":3},{"cells":[1,0],"op":"x","target":4},{"cells":[15],"op":"=","target":2}],"solution":[1,4,2,3,2,3,1,4,4,2,3,1,3,1,4,2]},{"n":4,"cages":[{"cells":[1,2],"op":"x","target":8},{"cells":[5,4,0],"op":"x","target":9},{"cells":[10,9],"op":"x","target":3},{"cells":[8,12,13],"op":"x","target":16},{"cells":[15,14],"op":"x","target":3},{"cells":[3,7,6],"op":"+","target":7},{"cells":[11],"op":"=","target":4}],"solution":[3,4,2,1,1,3,4,2,2,1,3,4,4,2,1,3]},{"n":4,"cages":[{"cells":[14],"op":"=","target":3},{"cells":[11,10,9],"op":"x","target":6},{"cells":[5,1],"op":"x","target":8},{"cells":[7,3],"op":"x","target":6},{"cells":[4,8,12],"op":"x","target":24},{"cells":[2,6],"op":"+","target":5},{"cells":[15],"op":"=","target":4},{"cells":[0],"op":"=","target":1},{"cells":[13],"op":"=","target":1}],"solution":[1,2,4,3,3,4,1,2,4,3,2,1,2,1,3,4]}],"medium":[{"n":5,"cages":[{"cells":[7,12],"op":"x","target":5},{"cells":[3,2,8],"op":"x","target":16},{"cells":[21,22],"op":"x","target":12},{"cells":[18,19],"op":"x","target":15},{"cells":[24],"op":"=","target":2},{"cells":[9,4],"op":"x","target":3},{"cells":[5,0],"op":"x","target":12},{"cells":[1,6],"op":"+","target":6},{"cells":[23],"op":"=","target":1},{"cells":[13,14],"op":"x","target":20},{"cells":[20,15,16],"op":"x","target":10},{"cells":[10],"op":"=","target":2},{"cells":[11],"op":"=","target":3},{"cells":[17],"op":"=","target":4}],"solution":[3,5,2,4,1,4,1,5,2,3,2,3,1,5,4,1,2,4,3,5,5,4,3,1,2]},{"n":5,"cages":[{"cells":[3,4],"op":"x","target":3},{"cells":[11,10],"op":"+","target":5},{"cells":[18,17],"op":"x","target":3},{"cells":[5,0],"op":"x","target":15},{"cells":[8,13],"op":"x","target":8},{"cells":[9,14],"op":"x","target":15},{"cells":[15,20],"op":"x","target":2},{"cells":[7,6],"op":"+","target":3},{"cells":[12],"op":"=","target":5},{"cells":[1,2],"op":"+","target":6},{"cells":[21,16],"op":"+","target":8},{"cells":[19,24],"op":"x","target":8},{"cells":[22,23],"op":"x","target":20}],"solution":[5,4,2,3,1,3,2,1,4,5,4,1,5,2,3,2,5,3,1,4,1,3,4,5,2]},{"n":5,"cages":[{"cells":[20,21],"op":"+","target":3},{"cells":[0,1],"op":"x","target":5},{"cells":[5,6],"op":"x","target":8},{"cells":[2,7,12],"op":"x","target":6},{"cells":[8,3],"op":"+","target":4},{"cells":[16,17],"op":"x","target":20},{"cells":[23,22,18],"op":"x","target":40},{"cells":[24],"op":"=","target":3},{"cells":[13],"op":"=","target":4},{"cells":[14,9],"op":"x","target":10},{"cells":[4],"op":"=","target":4},{"cells":[15,10],"op":"+","target":8},{"cells":[19],"op":"=","target":1},{"cells":[11],"op":"=","target":3}],"solution":[1,5,2,3,4,4,2,3,1,5,5,3,1,4,2,3,4,5,2,1,2,1,4,5,3]}],"hard":[{"n":6,"cages":[{"cells":[29,23,35],"op":"+","target":8},{"cells":[21,27],"op":"+","target":6},{"cells":[22,28],"op":"+","target":7},{"cells":[4,5],"op":"x","target":6},{"cells":[14,20],"op":"+","target":6},{"cells":[8,9],"op":"x","target":18},{"cells":[19,25],"op":"+","target":10},{"cells":[12,6],"op":"x","target":2},{"cells":[13],"op":"=","target":3},{"cells":[1,7,2],"op":"x","target":25},{"cells":[11,17],"op":"+","target":10},{"cells":[0],"op":"=","target":6},{"cells":[3],"op":"=","target":4},{"cells":[26,32],"op":"x","target":6},{"cells":[31,30],"op":"x","target":8},{"cells":[15,16],"op":"x","target":10},{"cells":[18,24],"op":"x","target":15},{"cells":[33,34],"op":"x","target":18},{"cells":[10],"op":"=","target":1}],"solution":[6,1,5,4,2,3,2,5,3,6,1,4,1,3,4,2,5,6,3,6,2,5,4,1,5,4,6,1,3,2,4,2,1,3,6,5]},{"n":6,"cages":[{"cells":[20,26],"op":"x","target":10},{"cells":[8,7],"op":"x","target":12},{"cells":[2,3],"op":"x","target":2},{"cells":[16,17],"op":"x","target":12},{"cells":[32,31],"op":"x","target":24},{"cells":[6,0],"op":"+","target":9},{"cells":[11,10],"op":"+","target":7},{"cells":[4,5],"op":"x","target":24},{"cells":[29,23],"op":"x","target":12},{"cells":[34,35],"op":"+","target":6},{"cells":[24,25],"op":"x","target":30},{"cells":[13,12,19],"op":"x","target":8},{"cells":[33],"op":"=","target":3},{"cells":[22,21],"op":"x","target":18},{"cells":[30],"op":"=","target":2},{"cells":[18],"op":"=","target":1},{"cells":[9,15,14],"op":"+","target":9},{"cells":[27,28],"op":"+","target":5},{"cells":[1],"op":"=","target":5}],"solution":[3,5,1,2,4,6,6,3,4,1,2,5,4,1,3,5,6,2,1,2,5,6,3,4,5,6,2,4,1,3,2,4,6,3,5,1]},{"n":6,"cages":[{"cells":[0],"op":"=","target":1},{"cells":[18,12],"op":"x","target":18},{"cells":[1],"op":"=","target":6},{"cells":[15,16],"op":"x","target":30},{"cells":[30,31],"op":"x","target":10},{"cells":[32,26],"op":"+","target":10},{"cells":[8,14],"op":"x","target":10},{"cells":[6,7],"op":"x","target":6},{"cells":[10],"op":"=","target":4},{"cells":[21,22],"op":"+","target":8},{"cells":[19,20],"op":"+","target":5},{"cells":[33,27],"op":"x","target":6},{"cells":[5,4],"op":"x","target":10},{"cells":[35],"op":"=","target":1},{"cells":[17,23],"op":"x","target":8},{"cells":[24,25],"op":"+","target":9},{"cells":[28,29],"op":"+","target":4},{"cells":[11],"op":"=","target":6},{"cells":[3,2],"op":"x","target":12},{"cells":[34],"op":"=","target":6},{"cells":[13],"op":"=","target":1},{"cells":[9],"op":"=","target":1}],"solution":[1,6,3,4,2,5,2,3,5,1,4,6,3,1,2,6,5,4,6,4,1,5,3,2,4,5,6,2,1,3,5,2,4,3,6,1]}]};
+
+const TINTS=["#FDE7BD","#D8F0E2","#DCE6FA","#F7DDE0","#E9E2F6","#FBEFC9","#D9EEF0","#EADFCF"];
+
+let tier="easy", idx=0, P, n, vals, given, cageOf, cageColor, anchor, sel=-1, solved=false;
+
+/* geometry */
+const SIZE=30, SQ3=Math.sqrt(3);
+let CENTERS=[];
+function layout(){
+  CENTERS=[];
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++)
+    CENTERS.push({x:SIZE*SQ3*(c + r/2), y:SIZE*1.5*r});
+}
+function corners(i){const p=[];const ctr=CENTERS[i];
+  for(let k=0;k<6;k++){const ang=Math.PI/180*(60*k-30);
+    p.push((ctr.x+SIZE*Math.cos(ang)).toFixed(2)+","+(ctr.y+SIZE*Math.sin(ang)).toFixed(2));}
+  return p.join(" ");}
+
+/* the six hexes that visually touch cell i in this axial (q=col, r=row) layout */
+function neighborsIdx(i){
+  const r=Math.floor(i/n), c=i%n, out=[];
+  [[0,1],[0,-1],[1,0],[-1,0],[1,-1],[-1,1]].forEach(([dr,dc])=>{const nr=r+dr,nc=c+dc;
+    if(nr>=0&&nr<n&&nc>=0&&nc<n) out.push(nr*n+nc);});
+  return out;
+}
+
+function loadPuzzle(){
+  P=PUZZLES[tier][idx % PUZZLES[tier].length]; n=P.n; layout();
+  vals=new Array(n*n).fill(0);
+  given=new Array(n*n).fill(false);
+  cageOf=new Array(n*n).fill(-1); anchor=new Array(n*n).fill(false);
+  P.cages.forEach((cg,ci)=>{
+    cg.cells.forEach(x=>cageOf[x]=ci);
+    if(cg.op==="="){ cg.cells.forEach(x=>{ vals[x]=cg.target; given[x]=true; }); }
+    else { anchor[Math.min(...cg.cells)]=true; }
+  });
+  // greedy colour cages so neighbours differ
+  const adj=P.cages.map(()=>new Set());
+  for(let i=0;i<n*n;i++) for(const j of neighborsIdx(i)) if(cageOf[i]!==cageOf[j]){ adj[cageOf[i]].add(cageOf[j]); }
+  cageColor=new Array(P.cages.length).fill(-1);
+  P.cages.forEach((cg,ci)=>{
+    if(cg.op==="=") { cageColor[ci]=-1; return; }         // givens: no tint
+    const used=new Set([...adj[ci]].map(j=>cageColor[j]).filter(x=>x>=0));
+    let col=0; while(used.has(col)) col++; cageColor[ci]=col;
+  });
+  sel=-1; solved=false;
+  buildPad(); render();
+}
+
+const svg=document.getElementById("svg");
+function render(){
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  CENTERS.forEach(c=>{minX=Math.min(minX,c.x-SIZE*SQ3/2);maxX=Math.max(maxX,c.x+SIZE*SQ3/2);
+    minY=Math.min(minY,c.y-SIZE);maxY=Math.max(maxY,c.y+SIZE);});
+  const pad=6;
+  svg.setAttribute("viewBox",[minX-pad,minY-pad,(maxX-minX)+pad*2,(maxY-minY)+pad*2].join(" "));
+  const bad=conflicts();
+  let h="";
+  for(let i=0;i<n*n;i++){
+    const ci=cageOf[i]; const tint = given[i] ? "var(--given)" : (cageColor[ci]>=0?TINTS[cageColor[ci]%TINTS.length]:"#fff");
+    h+=`<polygon class="hex" points="${corners(i)}" fill="${tint}" data-i="${i}"></polygon>`;
+  }
+  // clue labels
+  for(let i=0;i<n*n;i++){
+    if(anchor[i]){ const cg=P.cages[cageOf[i]]; const ctr=CENTERS[i];
+      const sym=cg.op==="x"?"×":"+";
+      h+=`<text class="clue" x="${(ctr.x-SIZE*0.62).toFixed(1)}" y="${(ctr.y-SIZE*0.72).toFixed(1)}" font-size="${SIZE*0.42}">${cg.target}${sym}</text>`;
+    }
+  }
+  // values
+  for(let i=0;i<n*n;i++){
+    if(vals[i]){ const ctr=CENTERS[i];
+      const cls="val"+(given[i]?" given":"")+(bad.has(i)?" bad":"");
+      h+=`<text class="${cls}" x="${ctr.x.toFixed(1)}" y="${(ctr.y+SIZE*0.12).toFixed(1)}" font-size="${SIZE*0.95}">${vals[i]}</text>`;
+    }
+  }
+  if(sel>=0){ h+=`<polygon class="hexsel" points="${corners(sel)}"></polygon>`; }
+  svg.innerHTML=h;
+  svg.querySelectorAll(".hex").forEach(el=>el.addEventListener("click",()=>pick(+el.dataset.i)));
+  document.getElementById("banner").className="banner"+(solved?" show":"");
+}
+
+function conflicts(){
+  const bad=new Set();
+  // row / col duplicates
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++){ const v=vals[r*n+c]; if(!v)continue;
+    for(let k=0;k<n;k++){ if(k!==c && vals[r*n+k]===v) bad.add(r*n+c);
+                          if(k!==r && vals[k*n+c]===v) bad.add(r*n+c); } }
+  // completed cages that miss their target
+  P.cages.forEach(cg=>{
+    if(cg.op==="=") return;
+    const vs=cg.cells.map(x=>vals[x]); if(vs.some(v=>!v)) return;
+    let hit; if(cg.op==="x"){ let p=1; vs.forEach(v=>p*=v); hit=(p===cg.target); } else { hit=(vs.reduce((a,b)=>a+b,0)===cg.target); }
+    if(!hit) cg.cells.forEach(x=>bad.add(x));
+  });
+  return bad;
+}
+function checkWin(){
+  for(let i=0;i<n*n;i++) if(!vals[i]) return false;
+  return conflicts().size===0;
+}
+
+function pick(i){ if(solved||given[i])return; sel=i; render(); }
+function setVal(k){ if(solved||sel<0||given[sel])return; vals[sel]=k; if(checkWin()){solved=true; window.nhTrack&&nhTrack('game_complete',{game:'Hive-doku'});} render(); }
+function eraseVal(){ if(solved||sel<0||given[sel])return; vals[sel]=0; render(); }
+
+function buildPad(){
+  const pad=document.getElementById("pad"); pad.innerHTML="";
+  for(let k=1;k<=n;k++){ const b=document.createElement("button"); b.textContent=k; b.onclick=()=>setVal(k); pad.appendChild(b); }
+  const e=document.createElement("button"); e.className="erase"; e.textContent="Erase"; e.onclick=eraseVal; pad.appendChild(e);
+}
+document.addEventListener("keydown",e=>{
+  if(e.key>="1"&&e.key<=String(n)) setVal(+e.key);
+  else if(e.key==="Backspace"||e.key==="0"||e.key==="Delete") eraseVal();
+});
+
+function buildSeg(){
+  const seg=document.getElementById("seg"); seg.innerHTML="";
+  [["Easy","easy"],["Medium","medium"],["Hard","hard"]].forEach(([label,t])=>{
+    const b=document.createElement("button"); b.textContent=label; b.className=tier===t?"on":"";
+    b.onclick=()=>{ tier=t; idx=0; buildSeg(); loadPuzzle(); }; seg.appendChild(b);
+  });
+}
+document.getElementById("newp").onclick=()=>{ idx=(idx+1)%PUZZLES[tier].length; loadPuzzle(); };
+document.getElementById("again").onclick=()=>{ idx=(idx+1)%PUZZLES[tier].length; loadPuzzle(); };
+
+buildSeg(); loadPuzzle();
+</script>
+</body>
+</html>

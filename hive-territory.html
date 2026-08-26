@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Number Hive Territory</title>
+<style>
+  :root{
+    --cream:#FFFDF7;--ink:#3B2E1A;--muted:#8A7A63;--line:#E7DBC5;
+    --honey:#F5A623;--honey-dark:#C77B12;--honey-pale:#FFF6E5;
+    --p1:#F5A623;--p1-dark:#C77B12;--p1-terr:#FBE7BE;--p1-seed:#F5A623;
+    --p2:#4A78D6;--p2-dark:#2F55A6;--p2-terr:#D5E1F7;--p2-seed:#4A78D6;
+    --neutral:#F1EADB;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--cream);color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+  .wrap{max-width:620px;margin:0 auto;padding:14px 14px 40px}
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em}
+  h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px;color:var(--muted)}
+
+  .score{display:flex;gap:10px;margin-bottom:10px}
+  .card{flex:1;border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:#fff;display:flex;align-items:center;gap:10px;transition:box-shadow .15s,border-color .15s}
+  .card .dot{width:14px;height:14px;border-radius:50%}
+  .card.p1 .dot{background:var(--p1)} .card.p2 .dot{background:var(--p2)}
+  .card.p1{--ac:var(--p1)} .card.p2{--ac:var(--p2)}
+  .card .who{font-size:13px;color:var(--muted)}
+  .card .seeds{font-size:11px;color:var(--muted)}
+  .card .pts{margin-left:auto;font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+  .card.turn{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
+  .card.turn .who{color:var(--ink);font-weight:600}
+
+  .boardbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:6px;position:relative}
+  svg{display:block;width:100%;height:auto}
+  .hex{stroke:#fff;stroke-width:.05;cursor:pointer}
+  .hlabel{font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none;fill:var(--ink)}
+  .pips{pointer-events:none}
+  .seedring{fill:none;stroke-width:.12;pointer-events:none}
+
+  .banner{position:absolute;inset:auto 10px 10px;border-radius:12px;color:#fff;padding:12px 14px;font-size:15px;font-weight:700;
+    display:none;align-items:center;gap:10px;justify-content:space-between;background:var(--ink)}
+  .banner.show{display:flex} .banner.p1{background:var(--p1-dark)} .banner.p2{background:var(--p2-dark)}
+  .banner button{border:0;background:rgba(255,255,255,.25);color:#fff;font:inherit;font-size:13px;padding:7px 12px;border-radius:8px;cursor:pointer;min-height:36px}
+
+  .turnline{text-align:center;font-size:13px;color:var(--muted);margin:12px 0 4px}
+  .turnline b{color:var(--ink)}
+  .actions{display:flex;gap:8px;justify-content:center;margin-top:10px}
+  .actions button{font:inherit;font-size:14px;padding:10px 18px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+
+  .help{margin-top:18px;font-size:13px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+  .help b{color:var(--ink)}
+  .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
+  .credit a{color:var(--honey-dark);text-decoration:none}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Number Hive <span>Territory</span></h1>
+    <span class="tag">plant seeds on powerful numbers · rule the most cells</span>
+  </header>
+
+  <div class="score">
+    <div class="card p1" id="card1"><span class="dot"></span><span><span class="who" id="who1">Player 1</span><br><span class="seeds" id="seeds1"></span></span><span class="pts" id="pts1">0</span></div>
+    <div class="card p2" id="card2"><span class="dot"></span><span><span class="who" id="who2">Player 2</span><br><span class="seeds" id="seeds2"></span></span><span class="pts" id="pts2">0</span></div>
+  </div>
+
+  <div class="boardbox">
+    <svg id="svg" role="img" aria-label="Territory board"></svg>
+    <div class="banner" id="banner"><span id="bannertext"></span><button id="again">New game</button></div>
+  </div>
+
+  <div class="turnline" id="turnline"></div>
+  <div class="actions"><button id="reset">New game</button></div>
+
+  <div class="help">
+    <b>How to play.</b> Take turns planting a seed on any empty hex. Each hex is then coloured for
+    whoever's seeds have the most <b>influence</b> over it. A seed's influence = how <b>factorable</b>
+    its number is (shown as dots: 24 has 6 factor pairs → strong; 11 only 2 → weak). Power spreads in
+    rings and drops by one each hex outward, so a strength-6 seed reaches six rings while a weak one
+    barely holds its own patch. When all seeds are planted, whoever colours the most hexes wins.
+  </div>
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+const ROWS=[5,6,7,8,7,8,7,6,5];
+const PRODUCTS=[1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,18,20,21,22,24,25,27,28,30,32,33,35,36,40,42,44,45,48,49,50,54,55,56,60,63,64,66,70,72,77,80,81,84,88,90,96,99,100,108,110,120,121,132,144];
+const SEEDS_EACH=5;
+
+/* strength = how connected the number is in the times-table: count of ordered factor pairs
+   (a,b), a,b in 1..12, a*b = v.  i.e. its branching in the one-factor-change graph. Range 1..6. */
+function strength(v){ let s=0; for(let a=1;a<=12;a++){ if(v%a===0){ const b=v/a; if(b>=1 && b<=12) s++; } } return s; }
+
+/* geometry */
+const SIZE=26, SQ3=Math.sqrt(3);
+let CENTERS=[], N, VALS, NBR;
+function buildGeom(){
+  CENTERS=[];
+  ROWS.forEach((L,r)=>{ const x0=-(L-1)/2*SQ3*SIZE; for(let c=0;c<L;c++) CENTERS.push({x:x0+c*SQ3*SIZE, y:1.5*SIZE*r}); });
+  N=CENTERS.length;
+  NBR=CENTERS.map(()=>[]);
+  for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){
+    const dx=CENTERS[i].x-CENTERS[j].x, dy=CENTERS[i].y-CENTERS[j].y;
+    if(Math.hypot(dx,dy)<SIZE*1.9){ NBR[i].push(j); NBR[j].push(i); }
+  }
+}
+function corners(i){const p=[],ctr=CENTERS[i];
+  for(let k=0;k<6;k++){const ang=Math.PI/180*(60*k-30);p.push((ctr.x+SIZE*Math.cos(ang)).toFixed(2)+","+(ctr.y+SIZE*Math.sin(ang)).toFixed(2));}
+  return p.join(" ");}
+
+/* hex-distance BFS from a source */
+function distFrom(src){
+  const d=new Array(N).fill(-1); d[src]=0; let q=[src];
+  while(q.length){ const x=q.shift(); for(const y of NBR[x]) if(d[y]<0){ d[y]=d[x]+1; q.push(y); } }
+  return d;
+}
+
+/* state */
+let seeds, turn, over, owner, str;
+function newGame(){
+  buildGeom();
+  VALS=PRODUCTS.slice();
+  for(let i=VALS.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [VALS[i],VALS[j]]=[VALS[j],VALS[i]]; }
+  str=VALS.map(strength);
+  seeds=[]; turn=1; over=0; owner=new Array(N).fill(0);
+  computeTerritory(); draw();
+}
+
+/* concentric rings: a seed's influence on a cell = strength + 1 - ringDistance
+   (so the ring right next to a strength-6 seed = 6, next = 5 ... down to 0 = out of reach).
+   Each cell goes to the seed with the highest positive influence; ties or none -> neutral. */
+function computeTerritory(){
+  owner=new Array(N).fill(0);
+  if(!seeds.length) return;
+  const dists=seeds.map(s=>distFrom(s.cell));
+  for(let i=0;i<N;i++){
+    let best=0, bestPl=0, tie=false;
+    for(let k=0;k<seeds.length;k++){
+      const inf=str[seeds[k].cell]+1-dists[k][i];   // ring falloff
+      if(inf<=0) continue;
+      if(inf>best){ best=inf; bestPl=seeds[k].player; tie=false; }
+      else if(inf===best && seeds[k].player!==bestPl){ tie=true; }
+    }
+    owner[i]= tie?0:bestPl;
+  }
+  seeds.forEach(s=>owner[s.cell]=s.player);   // a seed always owns its own cell
+}
+function scores(){ let a=0,b=0; for(let i=0;i<N;i++){ if(owner[i]===1)a++; else if(owner[i]===2)b++; } return [a,b]; }
+function seedAt(cell){ return seeds.find(s=>s.cell===cell); }
+
+/* rendering */
+const svg=document.getElementById("svg");
+function draw(){
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  CENTERS.forEach(c=>{minX=Math.min(minX,c.x-SIZE*SQ3/2);maxX=Math.max(maxX,c.x+SIZE*SQ3/2);minY=Math.min(minY,c.y-SIZE);maxY=Math.max(maxY,c.y+SIZE);});
+  const pad=6; svg.setAttribute("viewBox",[minX-pad,minY-pad,(maxX-minX)+pad*2,(maxY-minY)+pad*2].join(" "));
+  let h="";
+  for(let i=0;i<N;i++){
+    const fill = owner[i]===1?"var(--p1-terr)":owner[i]===2?"var(--p2-terr)":"var(--neutral)";
+    h+=`<polygon class="hex" points="${corners(i)}" fill="${fill}" data-i="${i}"></polygon>`;
+  }
+  for(let i=0;i<N;i++){
+    const ctr=CENTERS[i]; const sd=seedAt(i);
+    if(sd){ // seed marker
+      h+=`<circle cx="${ctr.x.toFixed(1)}" cy="${ctr.y.toFixed(1)}" r="${(SIZE*0.72).toFixed(1)}" fill="${sd.player===1?'var(--p1-seed)':'var(--p2-seed)'}"></circle>`;
+      h+=`<text class="hlabel" x="${ctr.x.toFixed(1)}" y="${(ctr.y+SIZE*0.05).toFixed(1)}" font-size="${SIZE*0.78}" fill="#fff">${VALS[i]}</text>`;
+    } else {
+      h+=`<text class="hlabel" x="${ctr.x.toFixed(1)}" y="${(ctr.y-SIZE*0.08).toFixed(1)}" font-size="${SIZE*0.7}">${VALS[i]}</text>`;
+      // strength pips
+      const s=str[i]; let pips="";
+      for(let k=0;k<s;k++){ pips+=`<circle cx="${(ctr.x-(s-1)*SIZE*0.14 + k*SIZE*0.28).toFixed(2)}" cy="${(ctr.y+SIZE*0.5).toFixed(2)}" r="${(SIZE*0.07).toFixed(2)}" fill="var(--muted)"></circle>`; }
+      h+=`<g class="pips">${pips}</g>`;
+    }
+  }
+  svg.innerHTML=h;
+  svg.querySelectorAll(".hex").forEach(el=>el.addEventListener("click",()=>plant(+el.dataset.i)));
+
+  const sc=scores();
+  document.getElementById("pts1").textContent=sc[0];
+  document.getElementById("pts2").textContent=sc[1];
+  const used1=seeds.filter(s=>s.player===1).length, used2=seeds.filter(s=>s.player===2).length;
+  document.getElementById("seeds1").textContent=`${SEEDS_EACH-used1} seeds left`;
+  document.getElementById("seeds2").textContent=`${SEEDS_EACH-used2} seeds left`;
+  document.getElementById("card1").className="card p1"+(turn===1&&!over?" turn":"");
+  document.getElementById("card2").className="card p2"+(turn===2&&!over?" turn":"");
+  document.getElementById("turnline").innerHTML = over? "" : `<b>Player ${turn}</b> — tap a hex to plant a seed`;
+  const banner=document.getElementById("banner");
+  if(over){ banner.className="banner show"+(over===1?" p1":over===2?" p2":"");
+    document.getElementById("bannertext").textContent = over===3? `Draw — ${sc[0]} each!` : `Player ${over} wins — ${sc[over-1]} hexes to ${sc[over===1?1:0]}!`;
+  } else banner.className="banner";
+}
+
+function plant(cell){
+  if(over) return;
+  if(seedAt(cell)) return;                       // can't stack seeds
+  if(seeds.filter(s=>s.player===turn).length>=SEEDS_EACH) return;
+  seeds.push({cell,player:turn});
+  computeTerritory();
+  const done = seeds.filter(s=>s.player===1).length>=SEEDS_EACH && seeds.filter(s=>s.player===2).length>=SEEDS_EACH;
+  if(done){ const sc=scores(); over = sc[0]>sc[1]?1:sc[1]>sc[0]?2:3; window.nhTrack&&nhTrack('game_complete',{game:'Hive-Territory',winner:over}); }
+  else turn=turn===1?2:1;
+  draw();
+}
+
+document.getElementById("reset").onclick=newGame;
+document.getElementById("again").onclick=newGame;
+newGame();
+</script>
+</body>
+</html>

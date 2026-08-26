@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Number Hive Streaks</title>
+<style>
+  :root{
+    --honey:#F5A623; --honey-dark:#C77B12; --honey-light:#FDE7BD; --honey-pale:#FFF6E5;
+    --cream:#FFFDF7; --ink:#3B2E1A; --muted:#8A7A63; --line:#E7DBC5;
+    --p1:#F5A623; --p1-dark:#C77B12; --p1-light:#FDE7BD;
+    --p2:#4A78D6; --p2-dark:#2F55A6; --p2-light:#DCE6FA;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0; background:var(--cream); color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;}
+  .wrap{max-width:780px; margin:0 auto; padding:14px 14px 40px;}
+
+  header{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+  h1{font-size:22px; margin:0; letter-spacing:-.02em}
+  h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px; color:var(--muted)}
+
+  .modebar{display:flex; align-items:center; gap:10px; margin-bottom:10px}
+  .modelabel{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+  .seg{display:flex; background:var(--honey-pale); border:1px solid var(--line); border-radius:10px; overflow:hidden}
+  .seg button{border:0; background:transparent; padding:8px 13px; font:inherit; font-size:13px;
+    color:var(--muted); cursor:pointer; min-height:38px}
+  .seg button.on{background:var(--honey); color:#fff; font-weight:600}
+
+  .score{display:flex; gap:10px; margin-bottom:10px}
+  .card{flex:1; border:1px solid var(--line); border-radius:12px; padding:9px 12px; background:#fff;
+    display:flex; align-items:center; gap:10px; transition:box-shadow .15s, border-color .15s}
+  .card .dot{width:14px; height:14px; border-radius:50%}
+  .card .who{font-size:13px; color:var(--muted)}
+  .card .pts{margin-left:auto; font-size:24px; font-weight:700; font-variant-numeric:tabular-nums}
+  .card .target{font-size:14px; color:var(--muted); font-variant-numeric:tabular-nums; align-self:flex-end; margin:0 0 3px 3px}
+  .goalchip{font-size:12px; font-weight:800; letter-spacing:.03em; color:var(--honey-dark);
+    background:var(--honey-pale); border:1px solid var(--honey-light); border-radius:999px; padding:4px 10px}
+  .card.p1 .dot{background:var(--p1)} .card.p2 .dot{background:var(--p2)}
+  .card.p1{--ac:var(--p1)} .card.p2{--ac:var(--p2)}
+  .card.turn{border-color:var(--ac); box-shadow:0 0 0 2px var(--ac)}
+  .card.turn .who{color:var(--ink); font-weight:600}
+
+  .boardbox{background:#fff; border:1px solid var(--line); border-radius:16px; padding:6px; position:relative}
+  svg{display:block; width:100%; height:auto}
+  .hexfill{fill:#fff; stroke:var(--line); stroke-width:1.5; transition:fill .15s, stroke .15s}
+  .hexfill.p1{fill:var(--p1-light); stroke:var(--p1)}
+  .hexfill.p2{fill:var(--p2-light); stroke:var(--p2)}
+  .hexfill.cursor{filter:brightness(0.86)}   /* last move / current cell: just a touch darker */
+  .hexfill.reach{stroke-width:2.5}
+  .hexlabel{font-size:14px; font-weight:600; text-anchor:middle; dominant-baseline:central; fill:var(--ink); pointer-events:none}
+  .hexlabel.p1{fill:var(--p1-dark)} .hexlabel.p2{fill:var(--p2-dark)}
+
+  .banner{position:absolute; inset:auto 10px 10px; background:var(--ink); color:#fff; border-radius:12px;
+    padding:12px 14px; font-size:15px; font-weight:600; display:none; align-items:center; gap:10px; justify-content:space-between}
+  .banner.show{display:flex}
+  .banner.p1{background:var(--p1-dark)} .banner.p2{background:var(--p2-dark)}
+  .banner button{border:0; background:rgba(255,255,255,.22); color:#fff; font:inherit; font-size:13px;
+    padding:7px 12px; border-radius:8px; cursor:pointer; min-height:36px}
+
+  .turnline{text-align:center; font-size:14px; margin:14px 0 8px; color:var(--muted)}
+  .turnline b{color:var(--ink)}
+
+  .popup{position:absolute; left:50%; top:16px; transform:translate(-50%,-8px);
+    background:var(--ink); color:#fff; border-radius:14px; padding:9px 18px; text-align:center;
+    pointer-events:none; opacity:0; transition:opacity .2s, transform .2s; z-index:6;
+    box-shadow:0 6px 18px rgba(0,0,0,.18)}
+  .popup.show{opacity:1; transform:translate(-50%,0)}
+  .popup.p1{background:var(--p1-dark)} .popup.p2{background:var(--p2-dark)}
+  .popup .small{font-size:12px; opacity:.92; line-height:1.35}
+  .popup .small .mult{font-weight:800; font-size:13px; opacity:1}
+  .popup .big{font-size:26px; font-weight:800; margin-top:2px; letter-spacing:-.01em}
+  .popup .big.mult{font-size:21px}
+  .popup .big.pop{animation:bigpop .34s ease-out}
+  @keyframes bigpop{0%{transform:scale(.7); opacity:.35} 60%{transform:scale(1.16)} 100%{transform:scale(1)}}
+
+  .streakline{fill:none; stroke-width:5; stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:100; stroke-dashoffset:100;
+    animation:draw .55s ease-out forwards, sfade .45s ease-in .85s forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes sfade{to{opacity:0}}
+  .streakring{fill:none; stroke-width:4; transform-box:fill-box; transform-origin:center;
+    animation:ring .8s ease-out forwards}
+  @keyframes ring{0%{opacity:.85; transform:scale(.55)} 100%{opacity:0; transform:scale(1.4)}}
+
+  .pads{display:flex; gap:12px; align-items:flex-start; justify-content:center; flex-wrap:wrap}
+  .padwrap{flex:1 1 240px; max-width:290px}
+  .padlabel{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); text-align:center; margin-bottom:5px}
+  .pad{display:grid; grid-template-columns:repeat(4,1fr); gap:6px}
+  .pad button{font:inherit; font-size:16px; font-weight:600; min-height:44px; border-radius:10px;
+    border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; transition:transform .08s}
+  .pad button:active{transform:scale(.94)}
+  .pad button.sel{background:var(--honey); border-color:var(--honey-dark); color:#fff}
+  .readout{flex:0 0 auto; text-align:center; min-width:96px; align-self:center}
+  .readout .eq{font-size:11px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase}
+  .readout .val{font-size:32px; font-weight:700; color:var(--honey-dark); line-height:1.1}
+  .shake{animation:sh .28s}
+  @keyframes sh{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  .actions{display:flex; gap:8px; justify-content:center; margin-top:16px}
+  .actions button{font:inherit; font-size:14px; padding:10px 18px; min-height:44px; border-radius:10px;
+    border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer}
+
+  .help{margin-top:18px; font-size:13px; line-height:1.6; color:var(--muted);
+    border-top:1px solid var(--line); padding-top:14px}
+  .help b{color:var(--ink)}
+  .credit{margin-top:16px; text-align:center; font-size:12px; color:var(--muted)}
+  .credit a{color:var(--honey-dark); text-decoration:none}
+  .credit a:hover{text-decoration:underline}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Number Hive <span>Streaks</span></h1>
+    <span class="tag">one screen · fresh board each game</span>
+    <span class="goalchip">🏁 Race to 201</span>
+  </header>
+
+  <div class="modebar">
+    <span class="modelabel">Opponent</span>
+    <div class="seg" id="modeseg"></div>
+  </div>
+
+  <div class="score">
+    <div class="card p1" id="card1">
+      <span class="dot"></span><span class="who" id="who1">Player 1</span><span class="pts" id="pts1">0</span><span class="target" id="tgt1">/ 201</span>
+    </div>
+    <div class="card p2" id="card2">
+      <span class="dot"></span><span class="who" id="who2">Player 2</span><span class="pts" id="pts2">0</span><span class="target" id="tgt2">/ 201</span>
+    </div>
+  </div>
+
+  <div class="boardbox">
+    <svg id="svg" role="img" aria-label="Number Hive board"></svg>
+    <div class="banner" id="banner">
+      <span id="bannertext"></span>
+      <span style="display:flex;gap:6px" id="bannerbtns"></span>
+    </div>
+    <div class="popup" id="popup"></div>
+  </div>
+
+  <div class="turnline" id="turnline"></div>
+
+  <div class="pads">
+    <div class="padwrap">
+      <div class="padlabel">Left factor</div>
+      <div class="pad" id="padA"></div>
+    </div>
+    <div class="readout">
+      <div class="eq">product</div>
+      <div class="val" id="prod">–</div>
+    </div>
+    <div class="padwrap">
+      <div class="padlabel">Right factor</div>
+      <div class="pad" id="padB"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button id="reset">New game</button>
+  </div>
+
+  <div class="help">
+    <b>How to play.</b> Two factor pads are shared. On your turn, change <b>exactly one</b> pad —
+    the product points to a cell, which you claim for your colour if it's free. The pads then
+    pass to your opponent, who changes one of them, and so on.
+    <br><br>
+    <b>Scoring.</b> Each turn you bank points for the streaks you just made. A run of <i>n</i>
+    cells in a straight line is worth <i>n</i>! — a lone cell is 1, two is 2, three is 6, four is 24,
+    five is 120 — and it all banks and only adds up. <b>Streak multiplier:</b> if one move makes
+    more than one streak at once, your points for that turn are multiplied by how many. Two 2-runs
+    together = (2 + 2) × 2 = 8; a 3-run plus a 2-run = (6 + 2) × 2 = 16. <b>First to 201 wins.</b>
+  </div>
+
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+/* ---------- board (59 distinct products of the 12x12 table) ---------- */
+const ROWS=[5,6,7,8,7,8,7,6,5];
+/* the 59 distinct products of the 12x12 table; reshuffled into the cells each new game */
+const PRODUCTS=[70,80,22,11,81,90,72,10,1,63,77,9,108,45,7,14,84,66,5,88,120,96,132,55,50,121,33,110,16,32,48,27,100,49,21,3,20,64,24,30,35,2,56,25,60,18,15,6,4,28,44,40,54,99,8,144,12,36,42];
+let VALS=PRODUCTS.slice();
+const TARGET=201;   // first to reach this wins
+const START_A=1, START_B=1;   // neutral starting cursor (unowned)
+
+/* ---------- geometry ---------- */
+const SIZE=30, W=Math.sqrt(3)*SIZE;
+const CENTERS=[];
+ROWS.forEach((L,r)=>{ const x0=-(L-1)/2*W;
+  for(let c=0;c<L;c++) CENTERS.push({x:x0+c*W, y:1.5*SIZE*r}); });
+const N=CENTERS.length;
+const NBR=CENTERS.map(()=>[]);
+for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){
+  const dx=CENTERS[i].x-CENTERS[j].x, dy=CENTERS[i].y-CENTERS[j].y;
+  if(Math.hypot(dx,dy) < SIZE*1.9){ NBR[i].push(j); NBR[j].push(i); }
+}
+/* three straight-line axes (pixel vectors) for a pointy-top layout */
+const DIRS=[[W,0],[W/2,1.5*SIZE],[-W/2,1.5*SIZE]];
+const TOL=4;
+const nextInDir=DIRS.map(()=>new Array(N).fill(-1));
+const prevInDir=DIRS.map(()=>new Array(N).fill(-1));
+DIRS.forEach((d,di)=>{
+  for(let i=0;i<N;i++){
+    const tx=CENTERS[i].x+d[0], ty=CENTERS[i].y+d[1];
+    for(let j=0;j<N;j++){
+      if(Math.abs(CENTERS[j].x-tx)<TOL && Math.abs(CENTERS[j].y-ty)<TOL){ nextInDir[di][i]=j; prevInDir[di][i]=-2; break; }
+    }
+  }
+  for(let i=0;i<N;i++){ const j=nextInDir[di][i]; if(j>=0) prevInDir[di][j]=i; }
+  for(let i=0;i<N;i++) if(prevInDir[di][i]===-2) prevInDir[di][i]=-1;
+});
+function corners(i){const c=CENTERS[i],p=[];
+  for(let k=0;k<6;k++){const ang=Math.PI/180*(60*k-30);
+    p.push((c.x+SIZE*Math.cos(ang)).toFixed(2)+","+(c.y+SIZE*Math.sin(ang)).toFixed(2));}
+  return p.join(" ");}
+let valToCell={};
+function rebuildLookup(){ valToCell={}; VALS.forEach((v,i)=>valToCell[v]=i); }
+function shuffleBoard(){
+  for(let i=VALS.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=VALS[i]; VALS[i]=VALS[j]; VALS[j]=t; }
+  rebuildLookup();
+}
+rebuildLookup();
+
+/* ---------- factorial ---------- */
+const FACT=[1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800,479001600,6227020800];
+function fact(n){ return FACT[n]!==undefined ? FACT[n] : FACT[FACT.length-1]; }
+
+/* ---------- state ---------- */
+let owner, a, b, turn, over, bank;   // owner[i] in {0,1,2}; turn in {1,2}; bank = running totals
+let lastGain=0, lastItems=[];        // exposed for the score pop-up / tests
+let botMode=null;                    // null = 2 players; else "easy" | "medium" | "hard"
+const BOT=2;                         // bot always plays Player 2
+let firstMove=true;                  // P1's opening move may keep the 1x1 pair and claim cell "1"
+
+function newGame(){
+  shuffleBoard();                 // fresh random board every game
+  owner=new Array(N).fill(0);
+  bank=[0,0,0];
+  a=START_A; b=START_B; turn=1; over=false; firstMove=true;
+  lastGain=0; lastItems=[];
+  hidePopup(); clearStreakFx();
+  draw();
+}
+
+/* Cumulative scoring. When you place a cell, each straight run of 2+ it forms (in any of the
+   3 axes) banks (run length)! for that turn; a placement that touches none of your cells banks
+   1 (=1!). Totals only grow, so a lone cell is +1, extending it to a pair is +2 (total 3),
+   to three is +6, and so on. */
+function runThrough(cell,di,pl){
+  let start=cell;
+  while(prevInDir[di][start]>=0 && owner[prevInDir[di][start]]===pl) start=prevInDir[di][start];
+  const cells=[]; let c=start;
+  while(c>=0 && owner[c]===pl){ cells.push(c); c=nextInDir[di][c]; }
+  return cells;
+}
+function scoreTurn(cell,pl){
+  const items=[];
+  for(let di=0; di<3; di++){
+    const run=runThrough(cell,di,pl);
+    if(run.length>=2) items.push({len:run.length, pts:fact(run.length), cells:run});
+  }
+  if(items.length===0) items.push({len:1, pts:1, cells:[cell]});   // isolated placement = 1!
+  const streaks=items.filter(it=>it.len>=2).length;                // real streaks made this turn
+  const mult=Math.max(1,streaks);                                  // streak multiplier (x1 if 0-1)
+  const base=items.reduce((s,it)=>s+it.pts,0);
+  const gained=base*mult;
+  return {items, gained, streaks, base, mult};
+}
+
+/* cells reachable from the current pair by changing exactly one pad, that are still free */
+function reachableFree(){
+  const set=new Set();
+  for(let k=1;k<=12;k++){
+    if(k!==a){ const c=valToCell[k*b]; if(c!==undefined && owner[c]===0) set.add(c); }
+    if(k!==b){ const c=valToCell[a*k]; if(c!==undefined && owner[c]===0) set.add(c); }
+  }
+  return set;
+}
+
+/* ---------- rendering ---------- */
+const svg=document.getElementById("svg");
+let hexEls=[], labelEls=[];
+function buildBoard(){
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  CENTERS.forEach(c=>{ minX=Math.min(minX,c.x-W/2); maxX=Math.max(maxX,c.x+W/2);
+                       minY=Math.min(minY,c.y-SIZE); maxY=Math.max(maxY,c.y+SIZE); });
+  const pad=10;
+  svg.setAttribute("viewBox",[minX-pad,minY-pad,(maxX-minX)+pad*2,(maxY-minY)+pad*2].join(" "));
+  svg.innerHTML=""; hexEls=[]; labelEls=[];
+  for(let i=0;i<N;i++){
+    const g=document.createElementNS(svg.namespaceURI,"g");
+    const p=document.createElementNS(svg.namespaceURI,"polygon");
+    p.setAttribute("points",corners(i)); p.setAttribute("class","hexfill");
+    const c=CENTERS[i];
+    const t=document.createElementNS(svg.namespaceURI,"text");
+    t.setAttribute("x",c.x); t.setAttribute("y",c.y); t.setAttribute("class","hexlabel");
+    t.textContent=VALS[i];
+    g.appendChild(p); g.appendChild(t); svg.appendChild(g);
+    hexEls.push(p); labelEls.push(t);
+  }
+}
+function draw(){
+  const cursor=valToCell[a*b];
+  const reach = over ? new Set() : reachableFree();
+  hexEls.forEach((p,i)=>{
+    const cls=["hexfill"];
+    if(owner[i]===1) cls.push("p1"); else if(owner[i]===2) cls.push("p2");
+    if(i===cursor) cls.push("cursor");
+    if(reach.has(i)) cls.push("reach");
+    p.setAttribute("class",cls.join(" "));
+    labelEls[i].textContent=VALS[i];
+    labelEls[i].setAttribute("class","hexlabel"+(owner[i]===1?" p1":owner[i]===2?" p2":""));
+  });
+  document.getElementById("prod").textContent=a*b;
+  document.getElementById("pts1").textContent=bank[1];
+  document.getElementById("pts2").textContent=bank[2];
+  const p1name = botMode ? "You" : "Player 1";
+  const p2name = botMode ? "Bot · "+botMode.charAt(0).toUpperCase()+botMode.slice(1) : "Player 2";
+  document.getElementById("who1").textContent=p1name;
+  document.getElementById("who2").textContent=p2name;
+  document.getElementById("card1").className="card p1"+(turn===1&&!over?" turn":"");
+  document.getElementById("card2").className="card p2"+(turn===2&&!over?" turn":"");
+  [["padA",a],["padB",b]].forEach(([id,v])=>{
+    [...document.getElementById(id).children].forEach(btn=>
+      btn.classList.toggle("sel", +btn.dataset.k===v));
+  });
+  const botTurn = botMode && turn===BOT && !over;
+  const tl=document.getElementById("turnline");
+  tl.innerHTML = over ? "" : botTurn ? `<b>${p2name}</b> is thinking…`
+                        : `<b>${turn===1?p1name:p2name}</b> — change one factor to claim a cell`;
+
+  const banner=document.getElementById("banner");
+  const btns=document.getElementById("bannerbtns");
+  if(over){
+    banner.className="banner show "+(over===1?"p1":"p2");
+    const winner = over===1 ? p1name : p2name;
+    document.getElementById("bannertext").textContent=`${winner} wins — ${bank[over]} points!`;
+    btns.innerHTML=""; const nb=document.createElement("button");
+    nb.textContent="New game"; nb.onclick=newGame; btns.appendChild(nb);
+  } else if(reach.size===0 && !botTurn){
+    banner.className="banner show";
+    document.getElementById("bannertext").textContent=`${turn===1?p1name:p2name} has no free cell to reach — pass.`;
+    btns.innerHTML=""; const pb=document.createElement("button");
+    pb.textContent="Pass"; pb.onclick=passTurn; btns.appendChild(pb);
+  } else {
+    banner.className="banner";
+  }
+}
+
+/* ---------- moves ---------- */
+function attempt(which,k){
+  if(over) return;
+  const na=which==="A"?k:a, nb=which==="B"?k:b;
+  if(na===a && nb===b && !firstMove) return bad(which);   // only the opening move may keep the pair
+  const c=valToCell[na*nb];
+  if(c===undefined || owner[c]!==0) return bad(which);  // off-board or taken
+  firstMove=false;
+  owner[c]=turn; a=na; b=nb;
+  const scorer=turn;
+  const res=scoreTurn(c, scorer);
+  bank[scorer]+=res.gained; lastGain=res.gained; lastItems=res.items;
+  showGain(scorer, res);
+  animateStreaks(scorer, res.items);
+  if(bank[scorer]>=TARGET){ over=scorer; window.nhTrack&&nhTrack('game_complete',{game:'Hive-Streaks',winner:scorer}); draw(); return; }
+  turn=turn===1?2:1;
+  draw();
+}
+function bad(which){
+  const el=document.getElementById(which==="A"?"padA":"padB");
+  el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
+}
+
+/* ---------- score pop-up (three 1s beats when a multiplier applies) ---------- */
+let popupTimer=null, popupStage=null, popupStage2=null;
+let lastAnimMs=1200;   // how long the current pop-up sequence runs (used to pace the bot)
+const BEAT=1000;       // 1 second per beat
+function pointsWord(n){ return n===1 ? "point" : "points"; }
+function showGain(pl, res){
+  const el=document.getElementById("popup"); if(!el) return;
+  clearTimeout(popupTimer); clearTimeout(popupStage); clearTimeout(popupStage2);
+  const {items, base, mult, gained}=res;
+  const cls="popup show "+(pl===1?"p1":"p2"), fade="popup "+(pl===1?"p1":"p2");
+  const rows=items.map(it => it.len>=2 ? `${it.len} in a row = ${it.len}!` : `new cell = 1!`);
+  const small=`<div class="small">${rows.join("<br>")}</div>`;
+
+  if(mult<=1){                                   // no multiplier — just the total, held ~1.4s
+    el.innerHTML=small+`<div class="big pop">${gained} ${pointsWord(gained)}!</div>`;
+    el.className=cls; lastAnimMs=1400;
+    popupTimer=setTimeout(()=>{ el.className=fade; }, lastAnimMs);
+    return;
+  }
+  // Beat 1 — the streak score
+  el.innerHTML=small+`<div class="big pop">${base} ${pointsWord(base)}</div>`;
+  el.className=cls;
+  // Beat 2 — the streak multiplier
+  popupStage=setTimeout(()=>{
+    el.innerHTML=small+`<div class="big pop mult">× ${mult} streaks!</div>`;
+    el.className=cls;
+  }, BEAT);
+  // Beat 3 — the total
+  popupStage2=setTimeout(()=>{
+    el.innerHTML=`<div class="small">${rows.join("<br>")}<br><span class="mult">× ${mult} streaks!</span></div>`+
+                 `<div class="big pop">${gained} ${pointsWord(gained)}!</div>`;
+    el.className=cls;
+  }, BEAT*2);
+  lastAnimMs=BEAT*3+300;
+  popupTimer=setTimeout(()=>{ el.className=fade; }, lastAnimMs);
+}
+function hidePopup(){ const el=document.getElementById("popup"); if(el){ clearTimeout(popupTimer); clearTimeout(popupStage); clearTimeout(popupStage2); el.className="popup"; el.innerHTML=""; } }
+
+/* ---------- streak animation ---------- */
+let fxEls=[];
+function clearStreakFx(){ fxEls.forEach(e=>{ try{e.remove();}catch(_){} }); fxEls=[]; }
+function playerColor(pl){
+  try{ const v=getComputedStyle(document.documentElement).getPropertyValue(pl===1?"--p1":"--p2").trim();
+       if(v) return v; }catch(_){}
+  return pl===1?"#F5A623":"#4A78D6";
+}
+function animateStreaks(pl, items){
+  const col=playerColor(pl);
+  items.forEach(it=>{
+    if(it.cells.length>=2){
+      const pts=it.cells.map(i=>CENTERS[i].x.toFixed(1)+","+CENTERS[i].y.toFixed(1)).join(" ");
+      const ln=document.createElementNS(svg.namespaceURI,"polyline");
+      ln.setAttribute("points",pts); ln.setAttribute("class","streakline");
+      ln.setAttribute("pathLength","100"); ln.setAttribute("stroke",col);
+      svg.appendChild(ln); fxEls.push(ln);
+      setTimeout(()=>{ try{ln.remove();}catch(_){} fxEls=fxEls.filter(e=>e!==ln); }, 1500);
+    } else {
+      const c=CENTERS[it.cells[0]];
+      const ring=document.createElementNS(svg.namespaceURI,"circle");
+      ring.setAttribute("cx",c.x); ring.setAttribute("cy",c.y); ring.setAttribute("r",(SIZE*0.85).toFixed(1));
+      ring.setAttribute("class","streakring"); ring.setAttribute("stroke",col);
+      svg.appendChild(ring); fxEls.push(ring);
+      setTimeout(()=>{ try{ring.remove();}catch(_){} fxEls=fxEls.filter(e=>e!==ring); }, 900);
+    }
+  });
+}
+
+/* ================= BOT OPPONENT ================= */
+/* All tiers only ever choose among legal moves and play through attempt(). */
+
+function legalMovesFull(){
+  const res=[];
+  for(let k=1;k<=12;k++){
+    if(k!==a){ const c=valToCell[k*b]; if(c!==undefined && owner[c]===0) res.push({which:"A",k,cell:c,na:k,nb:b}); }
+    if(k!==b){ const c=valToCell[a*k]; if(c!==undefined && owner[c]===0) res.push({which:"B",k,cell:c,na:a,nb:k}); }
+  }
+  return res;
+}
+/* points a player WOULD bank by placing on an empty cell */
+function gainAt(cell,pl){
+  owner[cell]=pl; const g=scoreTurn(cell,pl).gained; owner[cell]=0; return g;
+}
+/* open cells where P1 (human) would complete a run of 3+  (a 2-run "going for 3 or more") */
+function p1Threats(){
+  const T=[];
+  for(let c=0;c<N;c++){
+    if(owner[c]!==0) continue;
+    owner[c]=1; let mx=0;
+    for(let di=0;di<3;di++){ const r=runThrough(c,di,1); if(r.length>mx) mx=r.length; }
+    owner[c]=0;
+    if(mx>=3) T.push(c);
+  }
+  return T;
+}
+/* could P1 reach cell X in one pad change from the pair (na,nb)? */
+function p1CanReach(na,nb,X){
+  const v=VALS[X];
+  for(let k=1;k<=12;k++){
+    if(k!==na && k*nb===v) return true;
+    if(k!==nb && na*k===v) return true;
+  }
+  return false;
+}
+function pickTop(list, keyFn){
+  let best=null, bk=-Infinity;
+  for(const m of list){ const k=keyFn(m); if(k>bk){ bk=k; best=m; } }
+  return best;
+}
+
+function botEasy(moves){
+  // mostly random; occasionally greedy. Never bothers to block.
+  if(Math.random()<0.25) return pickTop(moves, m=>gainAt(m.cell,BOT));
+  return moves[(Math.random()*moves.length)|0];
+}
+function botMedium(moves){
+  // win if you can; block an opponent's winning cell; otherwise grab the most points.
+  const win=moves.filter(m=> bank[BOT]+gainAt(m.cell,BOT) >= TARGET);
+  if(win.length) return pickTop(win, m=>gainAt(m.cell,BOT));
+  const T=p1Threats();
+  const lethal=T.filter(X=> bank[1]+gainAt(X,1) >= TARGET);
+  const block=moves.filter(m=> lethal.includes(m.cell));
+  if(block.length) return pickTop(block, m=>gainAt(m.cell,1));
+  return pickTop(moves, m=> Math.max(gainAt(m.cell,BOT), gainAt(m.cell,1)*0.5));
+}
+/* ---- lookahead engine (minimax + alpha-beta over the make/unmake board) ---- */
+const HARD_PLY=4;           // bot, you, bot, you  (a couple of moves ahead)
+const HARD_WIDTH=14;        // branching cap after move-ordering, keeps it snappy
+
+function runLenAt(cell,di,pl){   // length of the run through cell (owner[cell] already = pl)
+  let len=1, c=prevInDir[di][cell];
+  while(c>=0 && owner[c]===pl){ len++; c=prevInDir[di][c]; }
+  c=nextInDir[di][cell];
+  while(c>=0 && owner[c]===pl){ len++; c=nextInDir[di][c]; }
+  return len;
+}
+function gainedAtPlaced(cell,pl){ // points banked for placing pl on cell (owner[cell] already = pl)
+  let g=0, cnt=0;
+  for(let di=0;di<3;di++){ const L=runLenAt(cell,di,pl); if(L>=2){ g+=fact(L); cnt++; } }
+  return cnt ? g*cnt : 1;         // streak multiplier: total x number of streaks
+}
+function gainProbe(cell,pl){ owner[cell]=pl; const g=gainedAtPlaced(cell,pl); owner[cell]=0; return g; }
+function legalFrom(pa,pb){
+  const res=[];
+  for(let k=1;k<=12;k++){
+    if(k!==pa){ const c=valToCell[k*pb]; if(c!==undefined && owner[c]===0) res.push({cell:c,na:k,nb:pb,which:"A",k}); }
+    if(k!==pb){ const c=valToCell[pa*k]; if(c!==undefined && owner[c]===0) res.push({cell:c,na:pa,nb:k,which:"B",k}); }
+  }
+  return res;
+}
+function doMove(m,pl){ const s={cell:m.cell,pa:a,pb:b}; owner[m.cell]=pl; s.g=gainedAtPlaced(m.cell,pl);
+  bank[pl]+=s.g; a=m.na; b=m.nb; return s; }
+function undoMove(pl,s){ bank[pl]-=s.g; owner[s.cell]=0; a=s.pa; b=s.pb; }
+
+function potential(pl){   // small credit for lines that can still grow (setup value)
+  let p=0;
+  for(let di=0;di<3;di++){
+    for(let i=0;i<N;i++){
+      if(owner[i]!==pl) continue;
+      if(prevInDir[di][i]>=0 && owner[prevInDir[di][i]]===pl) continue; // run start only
+      let len=1, end=i; while(nextInDir[di][end]>=0 && owner[nextInDir[di][end]]===pl){ len++; end=nextInDir[di][end]; }
+      if(len<2) continue;
+      const before=prevInDir[di][i], after=nextInDir[di][end];
+      const openEnds=(before>=0&&owner[before]===0?1:0)+(after>=0&&owner[after]===0?1:0);
+      if(openEnds) p += openEnds*(fact(len+1)-fact(len));
+    }
+  }
+  return p;
+}
+function evalBot(){ return (bank[BOT]-bank[1]) + 0.35*(potential(BOT)-potential(1)); }
+function orderMoves(moves,pl){
+  const other=pl===1?2:1;
+  return moves.map(m=>[m, Math.max(gainProbe(m.cell,pl), gainProbe(m.cell,other))])
+              .sort((x,y)=>y[1]-x[1]).map(x=>x[0]);
+}
+function search(pl, depth, alpha, beta){
+  if(bank[BOT]>=TARGET) return 100000 - (HARD_PLY-depth);   // win sooner = better
+  if(bank[1]>=TARGET)   return -100000 + (HARD_PLY-depth);
+  if(depth===0) return evalBot();
+  let moves=legalFrom(a,b);
+  if(moves.length===0) return evalBot();                    // pass (rare, near-full board)
+  moves=orderMoves(moves,pl); if(moves.length>HARD_WIDTH) moves=moves.slice(0,HARD_WIDTH);
+  if(pl===BOT){
+    let best=-Infinity;
+    for(const m of moves){ const s=doMove(m,BOT); const v=search(1,depth-1,alpha,beta); undoMove(BOT,s);
+      if(v>best)best=v; if(best>alpha)alpha=best; if(alpha>=beta)break; }
+    return best;
+  } else {
+    let best=Infinity;
+    for(const m of moves){ const s=doMove(m,1); const v=search(BOT,depth-1,alpha,beta); undoMove(1,s);
+      if(v<best)best=v; if(best<beta)beta=best; if(beta<=alpha)break; }
+    return best;
+  }
+}
+function botHard(moves){
+  // grab an outright win immediately
+  for(const m of moves){ const s=doMove(m,BOT); const won=bank[BOT]>=TARGET; undoMove(BOT,s); if(won) return m; }
+  const ordered=orderMoves(moves,BOT);
+  let bestV=-Infinity, bestMoves=[], alpha=-Infinity;
+  for(const m of ordered){
+    const s=doMove(m,BOT);
+    const v = bank[BOT]>=TARGET ? 100000 : search(1, HARD_PLY-1, alpha, Infinity);
+    undoMove(BOT,s);
+    if(v>bestV){ bestV=v; bestMoves=[m]; } else if(v===bestV){ bestMoves.push(m); }
+    if(v>alpha) alpha=v;
+  }
+  return bestMoves[(Math.random()*bestMoves.length)|0] || ordered[0];
+}
+function chooseBotMove(moves){
+  if(botMode==="easy")   return botEasy(moves);
+  if(botMode==="medium") return botMedium(moves);
+  return botHard(moves);
+}
+function maybeBot(){
+  if(botMode && !over && turn===BOT) setTimeout(botMove, lastAnimMs+150);   // wait out your score pop-up
+}
+function botMove(){
+  if(!botMode || over || turn!==BOT) return;
+  const moves=legalMovesFull();
+  if(moves.length===0){ turn=1; draw(); return; }   // nothing reachable -> pass
+  const m=chooseBotMove(moves);
+  attempt(m.which, m.k);   // banks, animates, switches turn back to the human
+}
+
+/* ---------- chrome ---------- */
+function onPadClick(which,k){
+  if(over) return;
+  if(botMode && turn===BOT) return;   // ignore taps while the bot is to move
+  attempt(which,k);
+  maybeBot();
+}
+function passTurn(){ turn=turn===1?2:1; draw(); maybeBot(); }
+
+function buildPads(){
+  [["padA","A"],["padB","B"]].forEach(([id,which])=>{
+    const el=document.getElementById(id); el.innerHTML="";
+    for(let k=1;k<=12;k++){
+      const btn=document.createElement("button");
+      btn.textContent=k; btn.dataset.k=k;
+      btn.addEventListener("click",()=>onPadClick(which,k));
+      el.appendChild(btn);
+    }
+  });
+}
+function buildModeseg(){
+  const seg=document.getElementById("modeseg"); seg.innerHTML="";
+  const opts=[["2 Players",null],["Easy","easy"],["Medium","medium"],["Hard","hard"]];
+  opts.forEach(([label,mode])=>{
+    const btn=document.createElement("button");
+    btn.textContent=label; btn.className = botMode===mode ? "on" : "";
+    btn.onclick=()=>{ botMode=mode; buildModeseg(); newGame(); };
+    seg.appendChild(btn);
+  });
+}
+document.getElementById("reset").onclick=newGame;
+
+// keep the on-screen goal wording in sync with TARGET
+document.getElementById("tgt1").textContent="/ "+TARGET;
+document.getElementById("tgt2").textContent="/ "+TARGET;
+{ const gc=document.querySelector(".goalchip"); if(gc) gc.textContent="🏁 Race to "+TARGET; }
+buildBoard(); buildPads(); buildModeseg(); newGame();
+</script>
+</body>
+</html>

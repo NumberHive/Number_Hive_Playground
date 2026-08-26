@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Product Grid</title>
+<style>
+  :root{
+    --cream:#FFFDF7;--ink:#3B2E1A;--muted:#8A7A63;--line:#E7DBC5;
+    --honey:#F5A623;--honey-dark:#C77B12;--honey-pale:#FFF6E5;
+    --keep:#2E9E5B;--keep-l:#DFF3E7;--cross:#D6534A;--cross-l:#F7DDE0;--tgt:#F4E7CF;--tgtok:#DFF3E7;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--cream);color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+  .wrap{max-width:520px;margin:0 auto;padding:14px 14px 40px}
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em}
+  h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px;color:var(--muted)}
+
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .seg{display:flex;background:var(--honey-pale);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:transparent;padding:8px 14px;font:inherit;font-size:14px;color:var(--muted);cursor:pointer;min-height:40px}
+  .seg button.on{background:var(--honey);color:#fff;font-weight:600}
+  .bar .sp{margin-left:auto}
+  .bar .act{font:inherit;font-size:14px;padding:8px 14px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+
+  .boardbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;position:relative;display:flex;justify-content:center}
+  table{border-collapse:separate;border-spacing:6px}
+  td{padding:0}
+  .cell{width:58px;height:58px;border:2px solid var(--line);border-radius:12px;background:#fff;position:relative;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;transition:background .1s;user-select:none}
+  .cell.cross{background:var(--cross-l);border-color:var(--cross);color:#b23}
+  .cell.keep{background:var(--keep-l);border-color:var(--keep)}
+  .cell .mark{position:absolute;inset:0;pointer-events:none}
+  .cell.cross .mark::before,.cell.cross .mark::after{content:"";position:absolute;left:14%;right:14%;top:48%;height:3px;background:var(--cross);border-radius:2px}
+  .cell.cross .mark::before{transform:rotate(45deg)} .cell.cross .mark::after{transform:rotate(-45deg)}
+  .cell.keep .mark{border:3px solid var(--keep);border-radius:50%;margin:9px}
+  .tgt{width:46px;height:58px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:var(--honey-dark);
+    background:var(--tgt);border-radius:10px}
+  .tgt.col{width:58px;height:40px}
+  .tgt.ok{background:var(--tgtok);color:var(--keep)}
+  .corner{width:46px}
+
+  .banner{position:absolute;inset:auto 10px 10px;background:var(--keep);color:#fff;border-radius:12px;
+    padding:12px 14px;font-size:15px;font-weight:700;display:none;align-items:center;gap:10px;justify-content:space-between}
+  .banner.show{display:flex}
+  .banner button{border:0;background:rgba(255,255,255,.25);color:#fff;font:inherit;font-size:13px;padding:7px 12px;border-radius:8px;cursor:pointer;min-height:36px}
+
+  .actions{display:flex;gap:8px;justify-content:center;margin-top:14px}
+  .actions button{font:inherit;font-size:14px;padding:9px 16px;min-height:44px;border-radius:11px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+
+  .help{margin-top:18px;font-size:13px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+  .help b{color:var(--ink)}
+  .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
+  .credit a{color:var(--honey-dark);text-decoration:none}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Product <span>Grid</span></h1>
+    <span class="tag">cross out cells so each row & column multiplies to its target</span>
+  </header>
+
+  <div class="bar">
+    <div class="seg" id="seg"></div>
+    <span class="sp"></span>
+    <button class="act" id="newp">New puzzle</button>
+  </div>
+
+  <div class="boardbox">
+    <table id="grid"></table>
+    <div class="banner" id="banner"><span id="bannertext">Solved! 🍯</span><button id="again">Next puzzle</button></div>
+  </div>
+
+  <div class="actions">
+    <button id="clear">◼ Clear</button>
+    <button id="hint">✦ Hint</button>
+    <button id="undo">↩ Undo</button>
+  </div>
+
+  <div class="help">
+    <b>How to play.</b> The number beside each <b>row</b> and below each <b>column</b> is the
+    <b>product</b> you need — multiply the numbers you <b>keep</b> in that line. Tap a cell to
+    <b>cross it out</b> (remove it); tap again for a green <b>keep</b> ring, once more to clear.
+    Get every row and column to hit its target — a target turns green when its line is right.
+  </div>
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+const PUZZLES={"easy":[{"n":3,"grid":[[7,8,2],[6,4,5],[2,6,3]],"rt":[8,20,6],"ct":[2,32,15],"keep":[[false,true,false],[false,true,true],[true,false,true]]},{"n":3,"grid":[[3,3,2],[2,6,7],[9,9,4]],"rt":[6,7,81],"ct":[27,9,14],"keep":[[true,false,true],[false,false,true],[true,true,false]]},{"n":3,"grid":[[5,8,7],[6,5,2],[3,7,4]],"rt":[7,30,12],"ct":[18,5,28],"keep":[[false,false,true],[true,true,false],[true,false,true]]},{"n":3,"grid":[[3,3,8],[4,4,6],[8,5,2]],"rt":[9,4,2],"ct":[12,3,2],"keep":[[true,true,false],[true,false,false],[false,false,true]]}],"medium":[{"n":4,"grid":[[6,4,6,6],[3,5,5,6],[4,6,4,4],[5,3,5,5]],"rt":[144,6,6,5],"ct":[5,24,6,36],"keep":[[false,true,true,true],[false,false,false,true],[false,true,false,false],[true,false,false,false]]},{"n":4,"grid":[[3,6,4,5],[4,4,6,6],[6,6,6,6],[5,4,3,5]],"rt":[5,6,36,15],"ct":[5,6,3,180],"keep":[[false,false,false,true],[false,false,false,true],[false,true,false,true],[true,false,true,false]]},{"n":4,"grid":[[3,2,3,2],[6,5,5,4],[6,5,3,3],[5,5,6,2]],"rt":[6,120,3,30],"ct":[6,50,18,12],"keep":[[false,true,true,false],[true,true,false,true],[false,false,false,true],[false,true,true,false]]},{"n":4,"grid":[[4,6,6,2],[4,4,5,5],[3,4,4,5],[5,2,3,4]],"rt":[72,4,12,40],"ct":[60,12,24,8],"keep":[[false,true,true,true],[true,false,false,false],[true,false,true,false],[true,true,false,true]]}],"hard":[{"n":5,"grid":[[3,3,4,5,2],[2,5,4,3,3],[5,5,5,3,3],[3,5,2,2,3],[2,4,2,4,5]],"rt":[8,9,125,5,80],"ct":[10,100,40,3,30],"keep":[[false,false,true,false,true],[false,false,false,true,true],[true,true,true,false,false],[false,true,false,false,false],[true,true,true,false,true]]},{"n":5,"grid":[[4,3,4,2,3],[4,4,2,2,5],[5,2,4,2,5],[3,2,4,5,5],[2,2,2,5,4]],"rt":[24,16,50,30,10],"ct":[120,16,4,50,15],"keep":[[false,false,true,true,true],[true,true,false,false,false],[true,true,false,false,true],[true,true,false,true,false],[true,false,false,true,false]]},{"n":5,"grid":[[4,5,3,4,5],[4,4,4,2,5],[4,2,5,3,2],[4,5,4,4,4],[5,2,2,2,4]],"rt":[400,160,4,256,8],"ct":[64,80,8,64,200],"keep":[[true,true,false,true,true],[true,true,false,true,true],[false,true,false,false,true],[true,false,true,true,true],[false,true,true,true,false]]},{"n":5,"grid":[[5,3,2,4,3],[5,4,3,2,2],[3,4,3,4,4],[2,4,3,5,4],[4,5,4,5,4]],"rt":[180,2,4,240,25],"ct":[5,240,3,200,12],"keep":[[true,true,false,true,true],[false,false,false,true,false],[false,true,false,false,false],[false,true,true,true,true],[false,true,false,true,false]]}]};
+
+let tier="easy", idx=0, P, state, history=[], solved=false;
+// state[r][c]: 0 none, 1 cross, 2 keep-ring. product counts cells with state!==1.
+
+function loadPuzzle(){
+  P=PUZZLES[tier][idx%PUZZLES[tier].length];
+  state=P.grid.map(row=>row.map(()=>0));
+  history=[]; solved=false;
+  draw();
+}
+function rowProd(r){ let p=1; for(let c=0;c<P.n;c++) if(state[r][c]!==1) p*=P.grid[r][c]; return p; }
+function colProd(c){ let p=1; for(let r=0;r<P.n;r++) if(state[r][c]!==1) p*=P.grid[r][c]; return p; }
+function check(){ for(let r=0;r<P.n;r++) if(rowProd(r)!==P.rt[r]) return false; for(let c=0;c<P.n;c++) if(colProd(c)!==P.ct[c]) return false; return true; }
+
+const gridEl=document.getElementById("grid");
+function draw(){
+  const n=P.n; let h="";
+  for(let r=0;r<n;r++){
+    h+="<tr>";
+    for(let c=0;c<n;c++){
+      const st=state[r][c]; const cls="cell"+(st===1?" cross":st===2?" keep":"");
+      h+=`<td><div class="${cls}" data-r="${r}" data-c="${c}">${P.grid[r][c]}<span class="mark"></span></div></td>`;
+    }
+    const ok=rowProd(r)===P.rt[r];
+    h+=`<td><div class="tgt${ok?' ok':''}">${P.rt[r]}</div></td></tr>`;
+  }
+  h+="<tr>";
+  for(let c=0;c<n;c++){ const ok=colProd(c)===P.ct[c]; h+=`<td><div class="tgt col${ok?' ok':''}">${P.ct[c]}</div></td>`; }
+  h+=`<td><div class="corner"></div></td></tr>`;
+  gridEl.innerHTML=h;
+  gridEl.querySelectorAll(".cell").forEach(el=>el.addEventListener("click",()=>tap(+el.dataset.r,+el.dataset.c)));
+  document.getElementById("undo").disabled=history.length===0;
+  document.getElementById("banner").className="banner"+(solved?" show":"");
+}
+function tap(r,c){
+  if(solved) return;
+  history.push([r,c,state[r][c]]);
+  state[r][c]=(state[r][c]+1)%3;
+  if(check()){ solved=true; window.nhTrack&&nhTrack('game_complete',{game:'Griddle'}); }
+  draw();
+}
+function undo(){ if(!history.length||solved) return; const [r,c,prev]=history.pop(); state[r][c]=prev; draw(); }
+function clearAll(){ if(solved) return; history.push(["clear",JSON.parse(JSON.stringify(state))]); state=P.grid.map(row=>row.map(()=>0)); draw(); }
+function hint(){
+  if(solved) return;
+  // find a cell whose cross-status disagrees with the solution, set it correctly
+  for(let r=0;r<P.n;r++) for(let c=0;c<P.n;c++){
+    const shouldCross = !P.keep[r][c];
+    const isCross = state[r][c]===1;
+    if(shouldCross!==isCross){ history.push([r,c,state[r][c]]); state[r][c]= shouldCross?1:2; if(check()){solved=true; window.nhTrack&&nhTrack('game_complete',{game:'Griddle'});} draw(); return; }
+  }
+}
+// undo needs to handle the "clear" snapshot form
+function undoSmart(){
+  if(!history.length||solved) return;
+  const last=history.pop();
+  if(last[0]==="clear"){ state=last[1]; }
+  else { const [r,c,prev]=last; state[r][c]=prev; }
+  draw();
+}
+
+function buildSeg(){
+  const seg=document.getElementById("seg"); seg.innerHTML="";
+  [["3 × 3","easy"],["4 × 4","medium"],["5 × 5","hard"]].forEach(([label,t])=>{
+    const b=document.createElement("button"); b.textContent=label; b.className=tier===t?"on":"";
+    b.onclick=()=>{ tier=t; idx=0; buildSeg(); loadPuzzle(); }; seg.appendChild(b);
+  });
+}
+document.getElementById("undo").onclick=undoSmart;
+document.getElementById("clear").onclick=clearAll;
+document.getElementById("hint").onclick=hint;
+document.getElementById("newp").onclick=()=>{ idx=(idx+1)%PUZZLES[tier].length; loadPuzzle(); };
+document.getElementById("again").onclick=()=>{ idx=(idx+1)%PUZZLES[tier].length; loadPuzzle(); };
+buildSeg(); loadPuzzle();
+</script>
+</body>
+</html>
