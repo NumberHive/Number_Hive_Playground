@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Number Hive Streaks</title>
+<title>Hive-Streaks</title>
 <style>
   :root{
     --honey:#F5A623; --honey-dark:#C77B12; --honey-light:#FDE7BD; --honey-pale:#FFF6E5;
@@ -108,6 +108,10 @@
   .credit{margin-top:16px; text-align:center; font-size:12px; color:var(--muted)}
   .credit a{color:var(--honey-dark); text-decoration:none}
   .credit a:hover{text-decoration:underline}
+
+  /* per-game scene background */
+  body{background:url('bg-hive-streaks.png') center center/cover no-repeat fixed, var(--cream)}
+  .wrap{background:rgba(255,253,247,.82);border-radius:20px;box-shadow:0 8px 30px rgba(120,90,30,.16);backdrop-filter:blur(2px)}
 </style>
   <script src="analytics.js"></script>
 </head>
@@ -116,7 +120,7 @@
 <div class="wrap">
 
   <header>
-    <h1>Number Hive <span>Streaks</span></h1>
+    <h1>Hive<span>-Streaks</span></h1>
     <span class="tag">one screen · fresh board each game</span>
     <span class="goalchip">🏁 Race to 201</span>
   </header>
@@ -340,7 +344,7 @@ function draw(){
   if(over){
     banner.className="banner show "+(over===1?"p1":"p2");
     const winner = over===1 ? p1name : p2name;
-    document.getElementById("bannertext").textContent=`${winner} wins — ${bank[over]} points!`;
+    document.getElementById("bannertext").textContent=`${winner} ${winner==="You"?"win":"wins"} — ${bank[over]} points!`;
     btns.innerHTML=""; const nb=document.createElement("button");
     nb.textContent="New game"; nb.onclick=newGame; btns.appendChild(nb);
   } else if(reach.size===0 && !botTurn){

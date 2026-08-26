@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Factor Heaps</title>
+<title>Hive-Stacks</title>
 <style>
   :root{
     --cream:#FFFDF7;--ink:#3B2E1A;--muted:#8A7A63;--line:#E7DBC5;
@@ -63,6 +63,10 @@
   .help b{color:var(--ink)}
   .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
   .credit a{color:var(--honey-dark);text-decoration:none}
+
+  /* per-game scene background */
+  body{background:url('bg-hive-heaps.png') center center/cover no-repeat fixed, var(--cream)}
+  .wrap{background:rgba(255,253,247,.82);border-radius:20px;box-shadow:0 8px 30px rgba(120,90,30,.16);backdrop-filter:blur(2px)}
 </style>
   <script src="analytics.js"></script>
 </head>
@@ -70,7 +74,7 @@
 <a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
 <div class="wrap">
   <header>
-    <h1>Factor <span>Heaps</span></h1>
+    <h1>Hive<span>-Stacks</span></h1>
     <span class="tag">every number is made of prime blocks · take the last block to win</span>
   </header>
 
@@ -180,7 +184,7 @@ function draw(){
   document.getElementById("last").innerHTML = lastMove;
   const banner=document.getElementById("banner");
   banner.className="banner"+(over?" show "+(over===1?"p1":"p2"):"");
-  if(over){ const w=over===1?p1:p2; document.getElementById("bannertext").innerHTML=`${w} took the last block — ${w} wins! 🎉`; }
+  if(over){ const w=over===1?p1:p2; document.getElementById("bannertext").innerHTML=`${w} took the last block — ${w} ${w==="You"?"win":"wins"}! 🎉`; }
 }
 function tap(heap,to){
   if(over) return;

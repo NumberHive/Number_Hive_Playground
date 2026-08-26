@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Number Hive Territory</title>
+<title>Hive-Territory</title>
 <style>
   :root{
     --cream:#FFFDF7;--ink:#3B2E1A;--muted:#8A7A63;--line:#E7DBC5;
@@ -20,6 +20,12 @@
   h1{font-size:22px;margin:0;letter-spacing:-.02em}
   h1 span{color:var(--honey-dark)}
   .tag{font-size:12px;color:var(--muted)}
+
+  .modebar{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .modelabel{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .seg{display:flex;background:var(--honey-pale);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:transparent;padding:8px 12px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;min-height:38px}
+  .seg button.on{background:var(--honey);color:#fff;font-weight:600}
 
   .score{display:flex;gap:10px;margin-bottom:10px}
   .card{flex:1;border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:#fff;display:flex;align-items:center;gap:10px;transition:box-shadow .15s,border-color .15s}
@@ -53,6 +59,10 @@
   .help b{color:var(--ink)}
   .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
   .credit a{color:var(--honey-dark);text-decoration:none}
+
+  /* per-game scene background */
+  body{background:url('bg-hive-territory.png') center center/cover no-repeat fixed, var(--cream)}
+  .wrap{background:rgba(255,253,247,.82);border-radius:20px;box-shadow:0 8px 30px rgba(120,90,30,.16);backdrop-filter:blur(2px)}
 </style>
   <script src="analytics.js"></script>
 </head>
@@ -60,9 +70,11 @@
 <a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
 <div class="wrap">
   <header>
-    <h1>Number Hive <span>Territory</span></h1>
+    <h1>Hive<span>-Territory</span></h1>
     <span class="tag">plant seeds on powerful numbers · rule the most cells</span>
   </header>
+
+  <div class="modebar"><span class="modelabel">Opponent</span><div class="seg" id="modeseg"></div></div>
 
   <div class="score">
     <div class="card p1" id="card1"><span class="dot"></span><span><span class="who" id="who1">Player 1</span><br><span class="seeds" id="seeds1"></span></span><span class="pts" id="pts1">0</span></div>
@@ -122,12 +134,14 @@ function distFrom(src){
 
 /* state */
 let seeds, turn, over, owner, str;
+let botMode=null; const BOT=2; let botThinking=false; let DIST=[];
 function newGame(){
   buildGeom();
+  DIST=CENTERS.map((_,i)=>distFrom(i));   // cache hex distances for the bot
   VALS=PRODUCTS.slice();
   for(let i=VALS.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [VALS[i],VALS[j]]=[VALS[j],VALS[i]]; }
   str=VALS.map(strength);
-  seeds=[]; turn=1; over=0; owner=new Array(N).fill(0);
+  seeds=[]; turn=1; over=0; owner=new Array(N).fill(0); botThinking=false;
   computeTerritory(); draw();
 }
 
@@ -180,6 +194,11 @@ function draw(){
   svg.innerHTML=h;
   svg.querySelectorAll(".hex").forEach(el=>el.addEventListener("click",()=>plant(+el.dataset.i)));
 
+  const p1name = botMode ? "You" : "Player 1";
+  const p2name = botMode ? "Bot · "+botMode.charAt(0).toUpperCase()+botMode.slice(1) : "Player 2";
+  const nameFor = pl => pl===1 ? p1name : p2name;
+  document.getElementById("who1").textContent=p1name;
+  document.getElementById("who2").textContent=p2name;
   const sc=scores();
   document.getElementById("pts1").textContent=sc[0];
   document.getElementById("pts2").textContent=sc[1];
@@ -188,24 +207,110 @@ function draw(){
   document.getElementById("seeds2").textContent=`${SEEDS_EACH-used2} seeds left`;
   document.getElementById("card1").className="card p1"+(turn===1&&!over?" turn":"");
   document.getElementById("card2").className="card p2"+(turn===2&&!over?" turn":"");
-  document.getElementById("turnline").innerHTML = over? "" : `<b>Player ${turn}</b> — tap a hex to plant a seed`;
+  document.getElementById("turnline").innerHTML = over ? ""
+      : (botThinking && turn===BOT) ? `<b>${p2name}</b> is thinking…`
+      : `<b>${nameFor(turn)}</b> — tap a hex to plant a seed`;
   const banner=document.getElementById("banner");
   if(over){ banner.className="banner show"+(over===1?" p1":over===2?" p2":"");
-    document.getElementById("bannertext").textContent = over===3? `Draw — ${sc[0]} each!` : `Player ${over} wins — ${sc[over-1]} hexes to ${sc[over===1?1:0]}!`;
+    const wn=nameFor(over), wv=wn==="You"?"win":"wins";
+    document.getElementById("bannertext").textContent = over===3? `Draw — ${sc[0]} each!` : `${wn} ${wv} — ${sc[over-1]} hexes to ${sc[over===1?1:0]}!`;
   } else banner.className="banner";
 }
 
-function plant(cell){
-  if(over) return;
-  if(seedAt(cell)) return;                       // can't stack seeds
-  if(seeds.filter(s=>s.player===turn).length>=SEEDS_EACH) return;
+function place(cell){
+  if(over) return false;
+  if(seedAt(cell)) return false;                 // can't stack seeds
+  if(seeds.filter(s=>s.player===turn).length>=SEEDS_EACH) return false;
   seeds.push({cell,player:turn});
   computeTerritory();
   const done = seeds.filter(s=>s.player===1).length>=SEEDS_EACH && seeds.filter(s=>s.player===2).length>=SEEDS_EACH;
   if(done){ const sc=scores(); over = sc[0]>sc[1]?1:sc[1]>sc[0]?2:3; window.nhTrack&&nhTrack('game_complete',{game:'Hive-Territory',winner:over}); }
   else turn=turn===1?2:1;
-  draw();
+  return true;
 }
+function plant(cell){
+  if(over || botThinking) return;
+  if(botMode && turn===BOT) return;              // ignore clicks on the bot's turn
+  if(!place(cell)) return;
+  draw();
+  maybeBot();
+}
+
+/* ---------- bot ---------- */
+// territory scores [a,b] for an arbitrary seed list, using cached distances
+function territoryFor(arr){
+  const own=new Array(N).fill(0);
+  if(arr.length){
+    for(let i=0;i<N;i++){
+      let best=0,bestPl=0,tie=false;
+      for(let k=0;k<arr.length;k++){
+        const inf=str[arr[k].cell]+1-DIST[arr[k].cell][i];
+        if(inf<=0) continue;
+        if(inf>best){best=inf;bestPl=arr[k].player;tie=false;}
+        else if(inf===best && arr[k].player!==bestPl){tie=true;}
+      }
+      own[i]=tie?0:bestPl;
+    }
+    arr.forEach(s=>own[s.cell]=s.player);
+  }
+  let a=0,b=0; for(let i=0;i<N;i++){ if(own[i]===1)a++; else if(own[i]===2)b++; }
+  return [a,b];
+}
+const advFor=(arr,pl)=>{ const [a,b]=territoryFor(arr); return pl===1? a-b : b-a; };
+function emptyCells(){ const t=new Set(seeds.map(s=>s.cell)); const e=[]; for(let i=0;i<N;i++) if(!t.has(i)) e.push(i); return e; }
+
+function chooseBotMove(){
+  const empt=emptyCells(); if(!empt.length) return null;
+  if(botMode==="easy"){                          // wander, but lean toward stronger cells
+    empt.sort((x,y)=>str[y]-str[x]);
+    const top=empt.slice(0, Math.max(3,(empt.length*0.5)|0));
+    return top[(Math.random()*top.length)|0];
+  }
+  // one-ply value of each candidate for the bot
+  const scored=empt.map(c=>({c, v:advFor(seeds.concat({cell:c,player:BOT}), BOT)}));
+  scored.sort((a,b)=>b.v-a.v);
+  if(botMode==="medium") return scored[0].c;
+  // hard: look one reply ahead — assume the human answers with their best greedy move
+  const humanLeft = seeds.filter(s=>s.player===1).length < SEEDS_EACH;
+  const K=Math.min(8,scored.length);
+  let bestC=scored[0].c, bestV=-1e9;
+  for(let i=0;i<K;i++){
+    const c=scored[i].c;
+    const afterBot=seeds.concat({cell:c,player:BOT});
+    let val;
+    if(!humanLeft){ val=advFor(afterBot,BOT); }
+    else{
+      // human plays the reply that is best for them; bot's value is what's left afterwards
+      const rem=[]; const t=new Set(afterBot.map(s=>s.cell));
+      for(let j=0;j<N;j++) if(!t.has(j)) rem.push(j);
+      let humanBest=-1e9, humanPick=rem[0];
+      for(const r of rem){ const a=advFor(afterBot.concat({cell:r,player:1}),1); if(a>humanBest){humanBest=a;humanPick=r;} }
+      val=advFor(afterBot.concat({cell:humanPick,player:1}),BOT);
+    }
+    if(val>bestV){ bestV=val; bestC=c; }
+  }
+  return bestC;
+}
+function maybeBot(){
+  if(!botMode || over || turn!==BOT) return;
+  botThinking=true; draw();
+  setTimeout(()=>{ const c=chooseBotMove(); botThinking=false; if(c!=null){ place(c); } draw(); maybeBot(); }, 600);
+}
+
+/* ---------- opponent mode selector ---------- */
+const MODES=[["2p","2-Player"],["easy","Easy"],["medium","Medium"],["hard","Hard"]];
+function buildModeSeg(){
+  const seg=document.getElementById("modeseg"); seg.innerHTML="";
+  MODES.forEach(([key,label])=>{
+    const b=document.createElement("button");
+    b.textContent=label;
+    const cur=botMode||"2p";
+    if(cur===key) b.classList.add("on");
+    b.onclick=()=>{ botMode = key==="2p"?null:key; buildModeSeg(); newGame(); };
+    seg.appendChild(b);
+  });
+}
+buildModeSeg();
 
 document.getElementById("reset").onclick=newGame;
 document.getElementById("again").onclick=newGame;

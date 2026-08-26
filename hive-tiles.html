@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Number Hive Tiles</title>
+<title>Hive-Tiles</title>
 <style>
   :root{
     --cream:#FFFDF7; --ink:#3B2E1A; --muted:#8A7A63; --line:#E7DBC5;
@@ -79,6 +79,10 @@
   .help b{color:var(--ink)}
   .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
   .credit a{color:var(--honey-dark);text-decoration:none}
+
+  /* per-game scene background */
+  body{background:url('bg-hive-tiles.png') center center/cover no-repeat fixed, var(--cream)}
+  .wrap{background:rgba(255,253,247,.82);border-radius:20px;box-shadow:0 8px 30px rgba(120,90,30,.16);backdrop-filter:blur(2px)}
 </style>
   <script src="analytics.js"></script>
 </head>
@@ -87,7 +91,7 @@
 <div class="wrap">
 
   <header>
-    <h1>Number Hive <span>Tiles</span></h1>
+    <h1>Hive<span>-Tiles</span></h1>
     <span class="tag">two players · one screen</span>
     <span class="goalchip" id="goalchip">🏁 Most squares wins</span>
   </header>
@@ -237,7 +241,7 @@ function draw(){
     banner.className="banner show"+(over===1?" p1":over===2?" p2":"");
     document.getElementById("bannertext").textContent = over===3
        ? `Draw — ${area[1]} squares each!`
-       : `${over===1?p1name:p2name} wins — ${area[over]} squares to ${area[over===1?2:1]}!`;
+       : `${over===1?p1name:p2name} ${(over===1?p1name:p2name)==="You"?"win":"wins"} — ${area[over]} squares to ${area[over===1?2:1]}!`;
     btns.innerHTML=""; const nb=document.createElement("button"); nb.textContent="New game"; nb.onclick=newGame; btns.appendChild(nb);
   } else banner.className="banner";
 }
