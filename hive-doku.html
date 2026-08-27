@@ -28,9 +28,10 @@
 
   .boardbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:8px;position:relative}
   svg{display:block;width:100%;height:auto}
-  .hex{stroke:var(--line);stroke-width:.12;stroke-linejoin:round;cursor:pointer}
-  .cageborder{fill:none;stroke:#B4915A;stroke-width:.24;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
-  .hexsel{fill:none;stroke:var(--sel);stroke-width:.2;stroke-linejoin:round}
+  .hexbg{fill:#D4D0C8;stroke:#D4D0C8;stroke-width:.8;stroke-linejoin:round}
+  .hex{stroke:#D4D0C8;stroke-width:2.2;stroke-linejoin:round;cursor:pointer}
+  .cageborder{fill:none;stroke:#6E6862;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+  .hexsel{fill:none;stroke:var(--sel);stroke-width:2.8;stroke-linejoin:round}
   .val{font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none;fill:var(--ink)}
   .val.given{fill:#6b5b3e}
   .val.bad{fill:var(--bad)}
@@ -110,6 +111,67 @@ function cornerPt(i,k){const ctr=CENTERS[i];const ang=Math.PI/180*(60*k-30);
   return [ctr.x+SIZE*Math.cos(ang), ctr.y+SIZE*Math.sin(ang)];}
 /* edge k (between corner k and k+1) faces this neighbour (dr,dc) */
 const EDGEN=[[0,1],[1,0],[1,-1],[0,-1],[-1,0],[-1,1]];
+/* rounded-corner hex path for a cartoon look */
+function roundHex(cx,cy,size,rad){
+  const P=[]; for(let k=0;k<6;k++){const a=Math.PI/180*(60*k-30);P.push([cx+size*Math.cos(a),cy+size*Math.sin(a)]);}
+  const u=(f,t)=>{const dx=t[0]-f[0],dy=t[1]-f[1],L=Math.hypot(dx,dy)||1;return [dx/L,dy/L];};
+  let d="";
+  for(let i=0;i<6;i++){ const cur=P[i],prev=P[(i+5)%6],next=P[(i+1)%6];
+    const v1=u(cur,prev),p1=[cur[0]+v1[0]*rad,cur[1]+v1[1]*rad];
+    const v2=u(cur,next),p2=[cur[0]+v2[0]*rad,cur[1]+v2[1]*rad];
+    d+=(i===0?`M${p1[0].toFixed(2)},${p1[1].toFixed(2)}`:`L${p1[0].toFixed(2)},${p1[1].toFixed(2)}`);
+    d+=`Q${cur[0].toFixed(2)},${cur[1].toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+  }
+  return d+"Z";
+}
+/* round the corners of an arbitrary closed polygon */
+function roundPoly(pts,rad){ const m=pts.length; if(m<3) return "";
+  const u=(f,t)=>{const dx=t[0]-f[0],dy=t[1]-f[1],L=Math.hypot(dx,dy)||1;return[dx/L,dy/L];};
+  let d="";
+  for(let i=0;i<m;i++){ const cur=pts[i],prev=pts[(i-1+m)%m],next=pts[(i+1)%m];
+    const lp=Math.hypot(prev[0]-cur[0],prev[1]-cur[1]), ln=Math.hypot(next[0]-cur[0],next[1]-cur[1]);
+    const rr=Math.min(rad,lp/2,ln/2);
+    const v1=u(cur,prev),p1=[cur[0]+v1[0]*rr,cur[1]+v1[1]*rr];
+    const v2=u(cur,next),p2=[cur[0]+v2[0]*rr,cur[1]+v2[1]*rr];
+    d+=(i===0?`M${p1[0].toFixed(2)},${p1[1].toFixed(2)}`:`L${p1[0].toFixed(2)},${p1[1].toFixed(2)}`);
+    d+=`Q${cur[0].toFixed(2)},${cur[1].toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+  }
+  return d+"Z";
+}
+/* trace each cage's outer boundary into continuous rounded outline paths */
+function cageOutlines(rad){
+  let out="";
+  const key=p=>p[0].toFixed(1)+","+p[1].toFixed(1);
+  const ekey=(a,b)=>a<b?a+"|"+b:b+"|"+a;
+  for(let cg=0;cg<P.cages.length;cg++){
+    const adj=new Map(), pt=new Map();
+    for(let i=0;i<n*n;i++){ if(cageOf[i]!==cg) continue; const r=Math.floor(i/n),c=i%n;
+      for(let k=0;k<6;k++){ const nr=r+EDGEN[k][0],nc=c+EDGEN[k][1];
+        const inb=nr>=0&&nr<n&&nc>=0&&nc<n;
+        if(inb && cageOf[nr*n+nc]===cg) continue;               // interior edge
+        const a=cornerPt(i,k), b=cornerPt(i,(k+1)%6), ka=key(a), kb=key(b);
+        pt.set(ka,a); pt.set(kb,b);
+        (adj.get(ka)||adj.set(ka,[]).get(ka)).push(kb);
+        (adj.get(kb)||adj.set(kb,[]).get(kb)).push(ka);
+      }
+    }
+    if(!adj.size) continue;
+    const used=new Set();
+    for(const start of adj.keys()){
+      for(const first of adj.get(start)){
+        if(used.has(ekey(start,first))) continue;
+        const loop=[start]; let prev=start, cur=first; used.add(ekey(prev,cur));
+        while(cur!==start){
+          loop.push(cur); let moved=false;
+          for(const w of (adj.get(cur)||[])){ if(w!==prev && !used.has(ekey(cur,w))){ used.add(ekey(cur,w)); prev=cur; cur=w; moved=true; break; } }
+          if(!moved) break;
+        }
+        if(loop.length>=3) out+=`<path class="cageborder" d="${roundPoly(loop.map(k=>pt.get(k)),rad)}"></path>`;
+      }
+    }
+  }
+  return out;
+}
 
 /* the six hexes that visually touch cell i in this axial (q=col, r=row) layout */
 function neighborsIdx(i){
@@ -150,36 +212,32 @@ function render(){
   const pad=6;
   svg.setAttribute("viewBox",[minX-pad,minY-pad,(maxX-minX)+pad*2,(maxY-minY)+pad*2].join(" "));
   const bad=conflicts();
+  const CELL=SIZE, CRAD=SIZE*0.12;          // cells touch (closer); gentler corners
   let h="";
+  // backdrop: solid outline-coloured hexes (tile perfectly -> no voids at intersections)
+  for(let i=0;i<n*n;i++){ h+=`<polygon class="hexbg" points="${corners(i)}"></polygon>`; }
+  // rounded cell fills, inset so the backdrop shows as a uniform thick outline
   for(let i=0;i<n*n;i++){
     const ci=cageOf[i]; const tint = given[i] ? "var(--given)" : (cageColor[ci]>=0?TINTS[cageColor[ci]%TINTS.length]:"#fff");
-    h+=`<polygon class="hex" points="${corners(i)}" fill="${tint}" data-i="${i}"></polygon>`;
+    h+=`<path class="hex" d="${roundHex(CENTERS[i].x,CENTERS[i].y,CELL,CRAD)}" fill="${tint}" data-i="${i}"></path>`;
   }
-  // cage borders: draw a thicker line on any edge whose neighbour is in a different cage (or off-board)
-  for(let i=0;i<n*n;i++){ const r=Math.floor(i/n), c=i%n;
-    for(let k=0;k<6;k++){ const nr=r+EDGEN[k][0], nc=c+EDGEN[k][1];
-      const inb=nr>=0&&nr<n&&nc>=0&&nc<n;
-      if(!inb || cageOf[nr*n+nc]!==cageOf[i]){
-        const a=cornerPt(i,k), b=cornerPt(i,(k+1)%6);
-        h+=`<line class="cageborder" x1="${a[0].toFixed(2)}" y1="${a[1].toFixed(2)}" x2="${b[0].toFixed(2)}" y2="${b[1].toFixed(2)}"></line>`;
-      }
-    }
-  }
-  // clue labels (middle-top of the anchor cell)
+  // cage borders: one continuous rounded outline per cage
+  h+=cageOutlines(SIZE*0.12);
+  // clue labels (near the top of the anchor cell)
   for(let i=0;i<n*n;i++){
     if(anchor[i]){ const cg=P.cages[cageOf[i]]; const ctr=CENTERS[i];
       const sym=cg.op==="x"?"×":"+";
-      h+=`<text class="clue" x="${ctr.x.toFixed(1)}" y="${(ctr.y-SIZE*0.66).toFixed(1)}" font-size="${SIZE*0.4}">${cg.target}${sym}</text>`;
+      h+=`<text class="clue" x="${ctr.x.toFixed(1)}" y="${(ctr.y-SIZE*0.8).toFixed(1)}" font-size="${SIZE*0.36}">${cg.target}${sym}</text>`;
     }
   }
-  // values
+  // values (centred in the cell)
   for(let i=0;i<n*n;i++){
     if(vals[i]){ const ctr=CENTERS[i];
       const cls="val"+(given[i]?" given":"")+(bad.has(i)?" bad":"");
-      h+=`<text class="${cls}" x="${ctr.x.toFixed(1)}" y="${(ctr.y+SIZE*0.12).toFixed(1)}" font-size="${SIZE*0.95}">${vals[i]}</text>`;
+      h+=`<text class="${cls}" x="${ctr.x.toFixed(1)}" y="${ctr.y.toFixed(1)}" font-size="${SIZE*0.9}">${vals[i]}</text>`;
     }
   }
-  if(sel>=0){ h+=`<polygon class="hexsel" points="${corners(sel)}"></polygon>`; }
+  if(sel>=0){ h+=`<path class="hexsel" d="${roundHex(CENTERS[sel].x,CENTERS[sel].y,CELL,CRAD)}"></path>`; }
   svg.innerHTML=h;
   svg.querySelectorAll(".hex").forEach(el=>el.addEventListener("click",()=>pick(+el.dataset.i)));
   document.getElementById("banner").className="banner"+(solved?" show":"");

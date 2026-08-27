@@ -28,12 +28,13 @@
 
   .boardbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px;position:relative}
   svg{display:block;width:100%;height:auto}
-  .hex{stroke:var(--line);stroke-width:1.5;fill:#fff}
+  .hexwall{fill:#6E6862}
+  .hex{stroke:none;fill:#fff;stroke-linejoin:round;cursor:pointer}
   .hex.given{fill:var(--given)}
   .hex.blank{fill:#FCFAF3;cursor:pointer}
-  .hex.filled{fill:var(--fill);stroke:var(--fill-b)}
-  .hex.top{fill:var(--top);stroke:var(--honey-dark);stroke-width:2.5}
-  .hex.sel{stroke:var(--honey-dark);stroke-width:3.5}
+  .hex.filled{fill:var(--fill)}
+  .hex.top{fill:#E08207;stroke:#A85E08;stroke-width:2.5}
+  .hex.sel{stroke:var(--honey-dark);stroke-width:3}
   .hex.good{fill:var(--good)!important;stroke:#1d6e3e}
   .cval{text-anchor:middle;dominant-baseline:central;font-weight:800;pointer-events:none;fill:var(--ink)}
   .cval.top{fill:#fff} .cval.type{fill:var(--honey-dark)}
@@ -130,6 +131,19 @@ function cellXY(k,i){ // row k (0=top) has k+1 cells, centred
 function corners(cx,cy){ const p=[];
   for(let a=0;a<6;a++){ const ang=Math.PI/180*(60*a-30); p.push((cx+SIZE*Math.cos(ang)).toFixed(2)+","+(cy+SIZE*Math.sin(ang)).toFixed(2)); }
   return p.join(" ");}
+/* rounded-corner hex path for a cartoon look */
+function roundHex(cx,cy,size,rad){
+  const P=[]; for(let k=0;k<6;k++){const a=Math.PI/180*(60*k-30);P.push([cx+size*Math.cos(a),cy+size*Math.sin(a)]);}
+  const u=(f,t)=>{const dx=t[0]-f[0],dy=t[1]-f[1],L=Math.hypot(dx,dy)||1;return [dx/L,dy/L];};
+  let d="";
+  for(let i=0;i<6;i++){ const cur=P[i],prev=P[(i+5)%6],next=P[(i+1)%6];
+    const v1=u(cur,prev),p1=[cur[0]+v1[0]*rad,cur[1]+v1[1]*rad];
+    const v2=u(cur,next),p2=[cur[0]+v2[0]*rad,cur[1]+v2[1]*rad];
+    d+=(i===0?`M${p1[0].toFixed(2)},${p1[1].toFixed(2)}`:`L${p1[0].toFixed(2)},${p1[1].toFixed(2)}`);
+    d+=`Q${cur[0].toFixed(2)},${cur[1].toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+  }
+  return d+"Z";
+}
 
 const svg=document.getElementById("svg");
 function draw(){
@@ -139,6 +153,12 @@ function draw(){
   const pad=8; svg.setAttribute("viewBox",[minX-pad,minY-pad,(maxX-minX)+pad*2,(maxY-minY)+pad*2].join(" "));
   const wrong=wrongSet();
   let s="";
+  // honeycomb walls: rounded, slightly enlarged hexes overlap to stay solid inside
+  // while giving the whole hive rounded outer corners
+  for(let k=0;k<P.n;k++) for(let i=0;i<=k;i++){ const {x,y}=cellXY(k,i);
+    s+=`<path class="hexwall" d="${roundHex(x,y,SIZE*1.06,SIZE*0.24)}"></path>`; }
+  // cells nestle inside the walls
+  const CF=SIZE*0.93, CFR=CF*0.13;
   for(let k=0;k<P.n;k++) for(let i=0;i<=k;i++){
     const {x,y}=cellXY(k,i); const top=(k===0);
     const g=isGiven(k,i), f=filled[key(k,i)]!=null, isSel=(selCell&&selCell[0]===k&&selCell[1]===i);
@@ -147,7 +167,7 @@ function draw(){
     if(wrong.has(key(k,i))) cls+=" wrong";
     if(solved && (g||f||top)) cls+=" good";
     if(isSel) cls+=" sel";
-    s+=`<polygon class="${cls}" points="${corners(x,y)}" data-k="${k}" data-i="${i}"></polygon>`;
+    s+=`<path class="${cls}" d="${roundHex(x,y,CF,CFR)}" data-k="${k}" data-i="${i}"></path>`;
     const v=valOf(k,i), txt = v==null ? "" : v;
     const fs = String(txt).length>=3 ? SIZE*0.6 : SIZE*0.82;
     s+=`<text class="cval${top?' top':''}" x="${x.toFixed(1)}" y="${(y+SIZE*0.04).toFixed(1)}" font-size="${fs}">${txt}</text>`;
