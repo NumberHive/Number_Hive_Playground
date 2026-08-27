@@ -28,12 +28,13 @@
 
   .boardbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:8px;position:relative}
   svg{display:block;width:100%;height:auto}
-  .hex{stroke:#fff;stroke-width:.06;cursor:pointer}
-  .hexsel{fill:none;stroke:var(--sel);stroke-width:.16}
+  .hex{stroke:var(--line);stroke-width:.12;stroke-linejoin:round;cursor:pointer}
+  .cageborder{fill:none;stroke:#B4915A;stroke-width:.24;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+  .hexsel{fill:none;stroke:var(--sel);stroke-width:.2;stroke-linejoin:round}
   .val{font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none;fill:var(--ink)}
   .val.given{fill:#6b5b3e}
   .val.bad{fill:var(--bad)}
-  .clue{font-weight:700;text-anchor:start;dominant-baseline:hanging;pointer-events:none;fill:#5c4a2b}
+  .clue{font-weight:800;text-anchor:middle;dominant-baseline:hanging;pointer-events:none;fill:#5c4a2b}
 
   .banner{position:absolute;inset:auto 10px 10px;background:var(--good);color:#fff;border-radius:12px;
     padding:12px 14px;font-size:15px;font-weight:700;display:none;align-items:center;gap:10px;justify-content:space-between}
@@ -105,6 +106,10 @@ function corners(i){const p=[];const ctr=CENTERS[i];
   for(let k=0;k<6;k++){const ang=Math.PI/180*(60*k-30);
     p.push((ctr.x+SIZE*Math.cos(ang)).toFixed(2)+","+(ctr.y+SIZE*Math.sin(ang)).toFixed(2));}
   return p.join(" ");}
+function cornerPt(i,k){const ctr=CENTERS[i];const ang=Math.PI/180*(60*k-30);
+  return [ctr.x+SIZE*Math.cos(ang), ctr.y+SIZE*Math.sin(ang)];}
+/* edge k (between corner k and k+1) faces this neighbour (dr,dc) */
+const EDGEN=[[0,1],[1,0],[1,-1],[0,-1],[-1,0],[-1,1]];
 
 /* the six hexes that visually touch cell i in this axial (q=col, r=row) layout */
 function neighborsIdx(i){
@@ -150,11 +155,21 @@ function render(){
     const ci=cageOf[i]; const tint = given[i] ? "var(--given)" : (cageColor[ci]>=0?TINTS[cageColor[ci]%TINTS.length]:"#fff");
     h+=`<polygon class="hex" points="${corners(i)}" fill="${tint}" data-i="${i}"></polygon>`;
   }
-  // clue labels
+  // cage borders: draw a thicker line on any edge whose neighbour is in a different cage (or off-board)
+  for(let i=0;i<n*n;i++){ const r=Math.floor(i/n), c=i%n;
+    for(let k=0;k<6;k++){ const nr=r+EDGEN[k][0], nc=c+EDGEN[k][1];
+      const inb=nr>=0&&nr<n&&nc>=0&&nc<n;
+      if(!inb || cageOf[nr*n+nc]!==cageOf[i]){
+        const a=cornerPt(i,k), b=cornerPt(i,(k+1)%6);
+        h+=`<line class="cageborder" x1="${a[0].toFixed(2)}" y1="${a[1].toFixed(2)}" x2="${b[0].toFixed(2)}" y2="${b[1].toFixed(2)}"></line>`;
+      }
+    }
+  }
+  // clue labels (middle-top of the anchor cell)
   for(let i=0;i<n*n;i++){
     if(anchor[i]){ const cg=P.cages[cageOf[i]]; const ctr=CENTERS[i];
       const sym=cg.op==="x"?"×":"+";
-      h+=`<text class="clue" x="${(ctr.x-SIZE*0.62).toFixed(1)}" y="${(ctr.y-SIZE*0.72).toFixed(1)}" font-size="${SIZE*0.42}">${cg.target}${sym}</text>`;
+      h+=`<text class="clue" x="${ctr.x.toFixed(1)}" y="${(ctr.y-SIZE*0.66).toFixed(1)}" font-size="${SIZE*0.4}">${cg.target}${sym}</text>`;
     }
   }
   // values
