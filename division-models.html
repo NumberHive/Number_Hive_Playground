@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Division Models</title>
+<style>
+:root {
+  --primary: #F5A623;
+  --primary-dark: #C77B12;
+  --green: #84A856;
+  --green-dark: #5C7A2E;
+  --green-light: #E8F0DC;
+  --green-subtle: #F4F8EC;
+  --accent: #4A78D6;
+  --accent-light: #FCE9C4;
+  --bg: #FFFDF7;
+  --card: #ffffff;
+  --grid-line: #222;
+  --muted: #9aa6b1;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  background: var(--bg);
+  color: #333;
+  margin: 0;
+  padding: 24px;
+}
+.wrap { max-width: 1400px; margin: 0 auto; }
+
+/* Header */
+.header { text-align: center; margin-bottom: 24px; }
+h1 {
+  color: var(--green-dark);
+  font-size: 32px;
+  margin: 0 0 16px 0;
+  letter-spacing: 0.5px;
+}
+.expression {
+  display: inline-block;
+  font-size: 56px;
+  font-weight: 800;
+  color: var(--green-dark);
+  background: var(--card);
+  padding: 8px 36px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.expression .div-symbol { color: var(--green); }
+.expression .eq-sign { color: var(--accent); }
+
+/* Controls */
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  background: var(--card);
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.slider-group label {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--green-dark);
+  font-size: 16px;
+}
+.slider-hint {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-left: 8px;
+}
+.slider-value {
+  display: inline-block;
+  background: var(--green);
+  color: white;
+  padding: 2px 12px;
+  border-radius: 6px;
+  margin-left: 10px;
+  min-width: 36px;
+  text-align: center;
+  font-weight: 800;
+}
+input[type=range] {
+  width: 100%;
+  accent-color: var(--green);
+  height: 28px;
+  margin: 0;
+}
+.slider-ticks {
+  position: relative;
+  height: 22px;
+  margin-top: 2px;
+  padding: 0 9px;
+}
+.slider-ticks .tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+  color: #9aa6b1;
+  font-weight: 700;
+  user-select: none;
+  pointer-events: none;
+}
+.slider-ticks .tick::before {
+  content: '';
+  width: 1px;
+  height: 5px;
+  background: #c8d0d8;
+  margin-bottom: 2px;
+}
+.slider-ticks .tick.current { color: var(--green); }
+.slider-ticks .tick.current::before { background: var(--green); height: 7px; width: 2px; }
+
+/* Walkthrough panel */
+.walkthrough-panel {
+  background: var(--card);
+  padding: 22px 28px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-left: 5px solid var(--green);
+}
+.walkthrough-panel.hidden { display: none; }
+.step-indicator {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px;
+  color: var(--primary);
+  font-weight: 700; font-size: 12px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+.step-dots { display: flex; gap: 7px; }
+.step-dot { width: 9px; height: 9px; border-radius: 50%; background: #E7DBC5; transition: all 0.2s; }
+.step-dot.current { background: var(--green); transform: scale(1.4); }
+.step-dot.done { background: var(--green-dark); }
+.walkthrough-title {
+  color: var(--green-dark);
+  font-size: 24px; font-weight: 800;
+  margin: 0 0 8px 0; letter-spacing: 0.5px;
+}
+.walkthrough-body { color: #333; font-size: 16px; line-height: 1.5; margin-bottom: 6px; }
+.walkthrough-prompt { color: var(--primary); font-style: italic; font-size: 15px; }
+.walkthrough-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 20px;
+  background: var(--card);
+  padding: 14px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.walkthrough-nav .nav-left, .walkthrough-nav .nav-right { display: flex; gap: 10px; align-items: center; }
+.nav-btn {
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  padding: 10px 22px; border-radius: 8px; cursor: pointer;
+  transition: all 0.15s; border: 2px solid transparent;
+}
+.nav-btn.primary { background: var(--green); color: white; border-color: var(--green); }
+.nav-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(132,168,86,0.3); }
+.nav-btn.ghost { background: transparent; color: var(--primary); }
+.nav-btn.ghost:hover { background: #F2E9D6; }
+.nav-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Toggles */
+.toggles {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.toggles.hidden { display: none; }
+.toggles button {
+  background: var(--card);
+  color: var(--green-dark);
+  border: 2px solid var(--green);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.toggles button.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+.toggles button:hover { transform: translateY(-1px); }
+
+/* Models grid */
+.models {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.models.walkthrough-mode { display: flex; justify-content: center; }
+.models.walkthrough-mode .model { max-width: 760px; width: 100%; }
+.model {
+  background: var(--card);
+  padding: 28px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+.model h2 {
+  color: var(--green-dark);
+  margin: 0 0 6px 0;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+}
+.model-question {
+  color: var(--primary);
+  font-style: italic;
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+.model-question .hl {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--green-dark);
+}
+.model.hidden { display: none; }
+.model-body {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+  padding: 8px 0;
+}
+.model-answer {
+  text-align: right;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 12px;
+}
+.model-answer .answer-num {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  font-weight: 800;
+  padding: 2px 12px;
+  border-radius: 6px;
+  margin-right: 6px;
+  font-size: 18px;
+}
+
+/* Sharing & Grouping visuals (reused) */
+.circles-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+}
+.circles-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 300px;
+}
+.circles-or {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--primary);
+  padding: 0 8px;
+}
+
+/* Repeated Subtraction */
+.subtraction-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+.subtraction-chain {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  font-family: ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+}
+.subtraction-chain .row {
+  display: grid;
+  grid-template-columns: 50px 28px 30px 28px 50px;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
+}
+.subtraction-chain .minus-pill {
+  display: inline-block;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  font-weight: 800;
+  border-radius: 50%;
+  padding: 0 6px;
+  font-size: 16px;
+  min-width: 26px;
+  text-align: center;
+}
+.subtraction-chain .eq { color: var(--muted); }
+.numberline-wrap { width: 100%; padding: 0 12px; }
+.jumps-label {
+  text-align: right;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 4px;
+}
+
+/* Inverse */
+.inverse-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+.inverse-eq {
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--green-dark);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.inverse-eq .blank {
+  display: inline-block;
+  border: 3px solid var(--accent);
+  background: var(--card);
+  color: var(--accent);
+  border-radius: 8px;
+  min-width: 56px;
+  padding: 2px 10px;
+  text-align: center;
+}
+.inverse-eq .blank.revealed {
+  color: var(--accent);
+  font-weight: 800;
+  background: #FFF6E5;
+}
+.fact-family {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--accent);
+  border-radius: 10px;
+  overflow: hidden;
+  font-weight: 800;
+}
+.fact-family .label {
+  background: transparent;
+  color: white;
+  padding: 12px 16px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  letter-spacing: 1px;
+  border-right: 2px solid white;
+}
+.fact-family .facts {
+  background: var(--accent);
+  color: white;
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 16px;
+  font-family: ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+}
+
+@media (max-width: 980px) {
+  .models { grid-template-columns: 1fr; }
+  .controls { grid-template-columns: 1fr; }
+  .expression { font-size: 42px; }
+}
+
+  /* fallback scene background */
+  body{background:url('scene-main.jpg') center center/cover no-repeat fixed, #F6E7C4 !important;min-height:100vh}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
+<a href="division-assessment.html" style="position:fixed;top:10px;right:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#fff;background:#C77B12;border-radius:999px;padding:8px 15px;box-shadow:0 2px 8px rgba(120,90,30,.28)">Test yourself &rarr;</a>
+<div class="wrap">
+
+  <div class="header">
+    <h1>DIVISION MODELS</h1>
+    <div class="expression">
+      <span id="exp-dividend">15</span>
+      <span class="div-symbol">&divide;</span>
+      <span id="exp-divisor">5</span>
+      <span class="eq-sign">=</span>
+      <span id="exp-quotient">3</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="slider-group">
+      <label>Divisor <span class="slider-hint">(groups, or group size)</span> <span class="slider-value" id="val-divisor">5</span></label>
+      <input type="range" min="1" max="12" value="5" id="slider-divisor">
+      <div class="slider-ticks" id="ticks-divisor"></div>
+    </div>
+    <div class="slider-group">
+      <label>Quotient <span class="slider-hint">(the answer)</span> <span class="slider-value" id="val-quotient">3</span></label>
+      <input type="range" min="1" max="12" value="3" id="slider-quotient">
+      <div class="slider-ticks" id="ticks-quotient"></div>
+    </div>
+  </div>
+
+  <div class="walkthrough-panel" id="walkthrough-panel">
+    <div class="step-indicator">
+      <span id="step-label">Step 1 of 5</span>
+      <div class="step-dots" id="step-dots"></div>
+    </div>
+    <h2 class="walkthrough-title" id="walkthrough-title"></h2>
+    <div class="walkthrough-body" id="walkthrough-body"></div>
+    <div class="walkthrough-prompt" id="walkthrough-prompt"></div>
+  </div>
+
+  <div class="toggles" id="toggles">
+    <button data-toggle="sharing" class="active">Sharing</button>
+    <button data-toggle="grouping" class="active">Grouping</button>
+    <button data-toggle="subtraction" class="active">Repeated Subtraction</button>
+    <button data-toggle="inverse" class="active">Inverse Operation</button>
+  </div>
+
+  <div class="models">
+
+    <div class="model" id="model-sharing">
+      <h2>Sharing Model</h2>
+      <div class="model-question">
+        "How many in each group if we make <span class="hl" id="sharing-q-divisor">5</span> equal groups?"
+        <br>Divide <span class="hl" id="sharing-q-dividend">15</span> into
+        <span class="hl" id="sharing-q-divisor2">5</span> equal groups.
+      </div>
+      <div class="model-body">
+        <div class="circles-container" id="sharing-display"></div>
+      </div>
+      <div class="model-answer">
+        <span class="answer-num" id="sharing-a">3</span>in each group
+      </div>
+    </div>
+
+    <div class="model" id="model-grouping">
+      <h2>Grouping Model</h2>
+      <div class="model-question">
+        "How many <span class="hl" id="grouping-q-divisor">5</span>'s in
+        <span class="hl" id="grouping-q-dividend">15</span>?"
+        <br>Divide <span class="hl" id="grouping-q-dividend2">15</span> into groups of
+        <span class="hl" id="grouping-q-divisor2">5</span>.
+      </div>
+      <div class="model-body">
+        <div class="circles-container" id="grouping-display"></div>
+      </div>
+      <div class="model-answer">
+        <span class="answer-num" id="grouping-a">3</span>groups
+      </div>
+    </div>
+
+    <div class="model" id="model-subtraction">
+      <h2>Repeated Subtraction</h2>
+      <div class="model-question">
+        Start at <span class="hl" id="sub-q-dividend">15</span>.
+        Keep subtracting <span class="hl" id="sub-q-divisor">5</span> until you get to 0.
+      </div>
+      <div class="model-body">
+        <div class="subtraction-display" id="subtraction-display"></div>
+      </div>
+      <div class="model-answer">
+        <span class="answer-num" id="sub-a">3</span>jumps
+      </div>
+    </div>
+
+    <div class="model" id="model-inverse">
+      <h2>Inverse Operation (&times;)</h2>
+      <div class="model-question">
+        <span class="hl" id="inv-q-divisor">5</span> multiplied by what number gets
+        <span class="hl" id="inv-q-dividend">15</span>?
+      </div>
+      <div class="model-body">
+        <div class="inverse-display" id="inverse-display"></div>
+      </div>
+      <div class="model-answer">
+        <span class="answer-num" id="inv-a">3</span>is the missing number
+      </div>
+    </div>
+
+  </div>
+
+  <div class="walkthrough-nav" id="walkthrough-nav">
+    <div class="nav-left">
+      <button class="nav-btn ghost" id="back-btn">&larr; Back</button>
+    </div>
+    <div class="nav-right">
+      <button class="nav-btn ghost" id="skip-btn">Skip walkthrough</button>
+      <button class="nav-btn primary" id="next-btn">Got it &rarr;</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const STROKE = '#5C7A2E';
+const STROKE_LIGHT = '#84A856';
+const FILL_LIGHT = '#E8F0DC';
+
+/* ---------- Clean circle (4-cubic-bezier) ---------- */
+function handDrawnCircle(cx, cy, r, seed) {
+  const k = 0.5522847;
+  const dx = r * k;
+  return `M ${cx - r} ${cy}
+    C ${cx - r} ${cy - dx}, ${cx - dx} ${cy - r}, ${cx} ${cy - r}
+    C ${cx + dx} ${cy - r}, ${cx + r} ${cy - dx}, ${cx + r} ${cy}
+    C ${cx + r} ${cy + dx}, ${cx + dx} ${cy + r}, ${cx} ${cy + r}
+    C ${cx - dx} ${cy + r}, ${cx - r} ${cy + dx}, ${cx - r} ${cy} Z`;
+}
+function dotPositions(n, R) {
+  if (n === 1) return [[0, 0]];
+  const cols = Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const spacing = Math.min((R * 1.7) / Math.max(cols, rows), 13);
+  const positions = [];
+  let placed = 0;
+  for (let r = 0; r < rows && placed < n; r++) {
+    const remaining = n - placed;
+    const inRow = Math.min(cols, remaining);
+    for (let c = 0; c < inRow; c++) {
+      const x = (c - (inRow - 1) / 2) * spacing;
+      const y = (r - (rows - 1) / 2) * spacing;
+      positions.push([x, y]);
+      placed++;
+    }
+  }
+  return positions;
+}
+
+/* Sharing & Grouping share a dotted+numbered renderer */
+function renderCircles(container, groupCount, perGroup) {
+  container.innerHTML = '';
+  const size = 76, cx = size / 2, cy = size / 2, R = 32;
+  const dotted = document.createElement('div');
+  dotted.className = 'circles-section';
+  const numbered = document.createElement('div');
+  numbered.className = 'circles-section';
+  const or = document.createElement('div');
+  or.className = 'circles-or';
+  or.textContent = 'OR';
+
+  for (let g = 0; g < groupCount; g++) {
+    const seed = g + 0.7;
+    // Dotted
+    let dots = '';
+    const positions = dotPositions(perGroup, R - 8);
+    for (const [px, py] of positions) {
+      dots += `<circle cx="${cx + px}" cy="${cy + py}" r="3" fill="#222"/>`;
+    }
+    dotted.insertAdjacentHTML('beforeend', `
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <path d="${handDrawnCircle(cx, cy, R, seed)}" stroke="${STROKE}" stroke-width="2.5" fill="${FILL_LIGHT}"/>
+        ${dots}
+      </svg>`);
+    // Numbered
+    numbered.insertAdjacentHTML('beforeend', `
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <path d="${handDrawnCircle(cx, cy, R, seed + 11.3)}" stroke="${STROKE}" stroke-width="2.5" fill="${FILL_LIGHT}"/>
+        <text x="${cx}" y="${cy + 9}" text-anchor="middle" font-size="26" font-weight="800" fill="#333" font-family="inherit">${perGroup}</text>
+      </svg>`);
+  }
+  container.appendChild(dotted);
+  container.appendChild(or);
+  container.appendChild(numbered);
+}
+
+/* ---------- Sharing: divisor groups, each with quotient items ---------- */
+function renderSharing(divisor, quotient) {
+  renderCircles($('sharing-display'), divisor, quotient);
+  $('sharing-q-divisor').textContent = divisor;
+  $('sharing-q-divisor2').textContent = divisor;
+  $('sharing-q-dividend').textContent = divisor * quotient;
+  $('sharing-a').textContent = quotient;
+}
+
+/* ---------- Grouping: quotient groups, each with divisor items ---------- */
+function renderGrouping(divisor, quotient) {
+  renderCircles($('grouping-display'), quotient, divisor);
+  $('grouping-q-divisor').textContent = divisor;
+  $('grouping-q-divisor2').textContent = divisor;
+  $('grouping-q-dividend').textContent = divisor * quotient;
+  $('grouping-q-dividend2').textContent = divisor * quotient;
+  $('grouping-a').textContent = quotient;
+}
+
+/* ---------- Repeated Subtraction ---------- */
+function renderSubtraction(divisor, quotient) {
+  const dividend = divisor * quotient;
+  const container = $('subtraction-display');
+  container.innerHTML = '';
+
+  // Chain
+  const chain = document.createElement('div');
+  chain.className = 'subtraction-chain';
+  let current = dividend;
+  for (let i = 0; i < quotient; i++) {
+    const next = current - divisor;
+    chain.insertAdjacentHTML('beforeend', `
+      <div class="row">
+        <span>${current}</span>
+        <span class="minus-pill">-${divisor}</span>
+        <span class="eq">=</span>
+        <span></span>
+        <span><strong>${next}</strong></span>
+      </div>`);
+    current = next;
+  }
+  container.appendChild(chain);
+
+  // Number line — width fits in card
+  const wrap = document.createElement('div');
+  wrap.className = 'numberline-wrap';
+
+  const totalWidth = Math.min(560, container.clientWidth - 24);
+  const labelHeight = 28;
+  const arcHeight = 36;
+  const height = arcHeight + labelHeight + 16;
+  const padX = 12;
+
+  // Position each tick at every divisor unit along the line
+  const ticks = quotient + 1; // 0, divisor, 2*divisor, ..., dividend
+  const xs = [];
+  for (let i = 0; i < ticks; i++) {
+    xs.push(padX + (totalWidth - padX * 2) * (i / (ticks - 1 || 1)));
+  }
+  const baseY = arcHeight + 4;
+
+  // Build arcs (jumping backward from dividend to 0)
+  let arcs = '';
+  for (let i = quotient; i > 0; i--) {
+    const xStart = xs[i];
+    const xEnd = xs[i - 1];
+    const midX = (xStart + xEnd) / 2;
+    const midY = baseY - arcHeight;
+    arcs += `<path d="M ${xStart} ${baseY} Q ${midX} ${midY} ${xEnd} ${baseY}"
+      stroke="${STROKE_LIGHT}" stroke-width="2" fill="none" stroke-linecap="round"
+      marker-end="url(#arrowhead)"/>`;
+    // Arc label "-divisor"
+    arcs += `<text x="${midX}" y="${midY + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="${STROKE}">-${divisor}</text>`;
+  }
+
+  // Tick marks + numbers below the line
+  let ticksSvg = `<line x1="${xs[0]}" y1="${baseY}" x2="${xs[xs.length-1]}" y2="${baseY}" stroke="${STROKE}" stroke-width="2"/>`;
+  for (let i = 0; i < ticks; i++) {
+    ticksSvg += `<line x1="${xs[i]}" y1="${baseY - 4}" x2="${xs[i]}" y2="${baseY + 4}" stroke="${STROKE}" stroke-width="2"/>`;
+    const num = i * divisor;
+    ticksSvg += `<text x="${xs[i]}" y="${baseY + 18}" text-anchor="middle" font-size="11" font-weight="700" fill="${STROKE}">${num}</text>`;
+  }
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${totalWidth} ${height}" width="100%" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="arrowhead" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="strokeWidth">
+          <path d="M0 0 L7 3.5 L0 7 Z" fill="${STROKE_LIGHT}"/>
+        </marker>
+      </defs>
+      ${ticksSvg}
+      ${arcs}
+    </svg>`;
+  container.appendChild(wrap);
+
+  $('sub-q-dividend').textContent = dividend;
+  $('sub-q-divisor').textContent = divisor;
+  $('sub-a').textContent = quotient;
+}
+
+/* ---------- Inverse Operation ---------- */
+function renderInverse(divisor, quotient) {
+  const dividend = divisor * quotient;
+  const c = $('inverse-display');
+  c.innerHTML = '';
+
+  // Equation: divisor × ? = dividend (with the ? revealed as quotient)
+  const eq = document.createElement('div');
+  eq.className = 'inverse-eq';
+  eq.innerHTML = `
+    <span>${divisor}</span>
+    <span>&times;</span>
+    <span class="blank revealed">${quotient}</span>
+    <span>=</span>
+    <span>${dividend}</span>`;
+  c.appendChild(eq);
+
+  // Fact family
+  const ff = document.createElement('div');
+  ff.className = 'fact-family';
+  ff.innerHTML = `
+    <div class="label">FACT<br>FAMILY</div>
+    <div class="facts">
+      <span>${divisor} &times; ${quotient} = ${dividend}</span>
+      <span>${quotient} &times; ${divisor} = ${dividend}</span>
+      <span>${dividend} &divide; ${divisor} = ${quotient}</span>
+      <span>${dividend} &divide; ${quotient} = ${divisor}</span>
+    </div>`;
+  c.appendChild(ff);
+
+  $('inv-q-divisor').textContent = divisor;
+  $('inv-q-dividend').textContent = dividend;
+  $('inv-a').textContent = quotient;
+}
+
+/* ---------- Tick marks under sliders ---------- */
+function buildTicks(containerId, current) {
+  const c = $(containerId);
+  c.innerHTML = '';
+  for (let i = 1; i <= 12; i++) {
+    const t = document.createElement('div');
+    t.className = 'tick' + (i === current ? ' current' : '');
+    t.style.left = `calc(9px + (100% - 18px) * ${(i - 1) / 11})`;
+    t.textContent = i;
+    c.appendChild(t);
+  }
+}
+
+/* ---------- Master render ---------- */
+function render() {
+  const divisor = parseInt($('slider-divisor').value);
+  const quotient = parseInt($('slider-quotient').value);
+  const dividend = divisor * quotient;
+
+  $('exp-dividend').textContent = dividend;
+  $('exp-divisor').textContent = divisor;
+  $('exp-quotient').textContent = quotient;
+  $('val-divisor').textContent = divisor;
+  $('val-quotient').textContent = quotient;
+
+  renderSharing(divisor, quotient);
+  renderGrouping(divisor, quotient);
+  renderSubtraction(divisor, quotient);
+  renderInverse(divisor, quotient);
+
+  buildTicks('ticks-divisor', divisor);
+  buildTicks('ticks-quotient', quotient);
+}
+
+$('slider-divisor').addEventListener('input', render);
+$('slider-quotient').addEventListener('input', render);
+
+/* ---------- Walkthrough state machine ---------- */
+const STEPS = [
+  {
+    model: 'sharing',
+    title: 'Sharing Model',
+    body: 'Division can mean "share equally". 15 ÷ 5 = 3 means you split 15 into 5 equal groups — each group ends up with 3 items.',
+    prompt: 'Try 12 ÷ 4. How many items in each group?'
+  },
+  {
+    model: 'grouping',
+    title: 'Grouping Model',
+    body: 'Division can also mean "how many groups of". 15 ÷ 5 = 3 means you can make 3 groups of 5 from 15.',
+    prompt: 'Notice — same numbers as sharing, but the groups look different. Same maths, different way of seeing it.'
+  },
+  {
+    model: 'subtraction',
+    title: 'Repeated Subtraction',
+    body: 'Division is like repeated subtraction. Start with 15 and keep taking away 5 — you can do it 3 times before you reach zero.',
+    prompt: 'Drag the sliders. The number line shows each backward jump.'
+  },
+  {
+    model: 'inverse',
+    title: 'Inverse Operation',
+    body: 'Division is the inverse of multiplication. If 5 × 3 = 15, then 15 ÷ 5 = 3. The fact family shows all four related facts together.',
+    prompt: 'Change the sliders — watch the whole fact family update.'
+  },
+  {
+    model: null,
+    title: 'Explore them all',
+    body: 'Now you can see all four models together. Use the toggle buttons to focus on any one, or compare them side by side.',
+    prompt: null
+  }
+];
+
+let currentStep = 1;
+const ALL_MODELS = ['sharing', 'grouping', 'subtraction', 'inverse'];
+const userToggleState = { sharing: true, grouping: true, subtraction: true, inverse: true };
+
+function applyStep() {
+  const step = STEPS[currentStep - 1];
+  const isFinal = currentStep === STEPS.length;
+
+  $('step-label').textContent = `Step ${currentStep} of ${STEPS.length}`;
+  const dots = $('step-dots');
+  dots.innerHTML = '';
+  for (let i = 1; i <= STEPS.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'step-dot' + (i === currentStep ? ' current' : (i < currentStep ? ' done' : ''));
+    dots.appendChild(dot);
+  }
+
+  $('walkthrough-title').textContent = step.title;
+  $('walkthrough-body').textContent = step.body;
+  $('walkthrough-prompt').textContent = step.prompt || '';
+  $('walkthrough-prompt').style.display = step.prompt ? '' : 'none';
+
+  const modelsContainer = document.querySelector('.models');
+  const togglesEl = $('toggles');
+  if (isFinal) {
+    ALL_MODELS.forEach(m => {
+      const el = $('model-' + m);
+      if (userToggleState[m]) el.classList.remove('hidden');
+      else el.classList.add('hidden');
+      const btn = document.querySelector(`.toggles button[data-toggle="${m}"]`);
+      if (userToggleState[m]) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    togglesEl.classList.remove('hidden');
+    modelsContainer.classList.remove('walkthrough-mode');
+  } else {
+    ALL_MODELS.forEach(m => {
+      const el = $('model-' + m);
+      if (m === step.model) el.classList.remove('hidden');
+      else el.classList.add('hidden');
+    });
+    togglesEl.classList.add('hidden');
+    modelsContainer.classList.add('walkthrough-mode');
+  }
+
+  $('back-btn').disabled = currentStep === 1;
+  $('skip-btn').style.display = isFinal ? 'none' : '';
+  if (isFinal) $('next-btn').textContent = '↻ Replay walkthrough';
+  else if (currentStep === STEPS.length - 1) $('next-btn').textContent = 'See all four →';
+  else $('next-btn').textContent = 'Got it →';
+
+  render();
+}
+
+function nextStep() {
+  if (currentStep < STEPS.length) currentStep++;
+  else currentStep = 1;
+  applyStep();
+}
+function backStep() {
+  if (currentStep > 1) { currentStep--; applyStep(); }
+}
+function skipWalkthrough() { currentStep = STEPS.length; applyStep(); }
+
+$('next-btn').addEventListener('click', nextStep);
+$('back-btn').addEventListener('click', backStep);
+$('skip-btn').addEventListener('click', skipWalkthrough);
+
+document.querySelectorAll('.toggles button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.classList.toggle('active');
+    const model = btn.dataset.toggle;
+    userToggleState[model] = btn.classList.contains('active');
+    $('model-' + model).classList.toggle('hidden');
+    render();
+  });
+});
+
+applyStep();
+</script>
+<div style="text-align:center;font-size:12px;color:#8A7A63;margin:22px 0 8px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener" style="color:#C77B12;text-decoration:none">numberhive.app</a></div>
+</body>
+</html>

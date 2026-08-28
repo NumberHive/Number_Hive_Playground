@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Multiplication Models</title>
+<style>
+:root {
+  --primary: #F5A623;
+  --primary-dark: #C77B12;
+  --accent: #4A78D6;
+  --accent-light: #FCE9C4;
+  --area-cell: #CCCCCC;
+  --grid-line: #222;
+  --bg: #FFFDF7;
+  --card: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  background: var(--bg);
+  color: #333;
+  margin: 0;
+  padding: 24px;
+}
+
+.wrap { max-width: 1400px; margin: 0 auto; }
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+h1 {
+  color: var(--accent);
+  font-size: 32px;
+  margin: 0 0 16px 0;
+  letter-spacing: 0.5px;
+}
+
+.expression {
+  display: inline-block;
+  font-size: 64px;
+  font-weight: 800;
+  color: var(--primary);
+  background: var(--card);
+  padding: 8px 36px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  background: var(--card);
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.slider-group label {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.slider-value {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  padding: 2px 12px;
+  border-radius: 6px;
+  margin-left: 10px;
+  min-width: 36px;
+  text-align: center;
+  font-weight: 800;
+}
+
+input[type=range] {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 28px;
+  margin: 0;
+}
+
+.slider-ticks {
+  position: relative;
+  height: 22px;
+  margin-top: 2px;
+  /* Match the slider's effective track width by inseting half a thumb on each side */
+  padding: 0 9px;
+}
+.slider-ticks .tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+  color: #9aa6b1;
+  font-weight: 700;
+  user-select: none;
+  pointer-events: none;
+}
+.slider-ticks .tick::before {
+  content: '';
+  width: 1px;
+  height: 5px;
+  background: #c8d0d8;
+  margin-bottom: 2px;
+}
+.slider-ticks .tick.current {
+  color: var(--accent);
+}
+.slider-ticks .tick.current::before {
+  background: var(--accent);
+  height: 7px;
+  width: 2px;
+}
+
+/* Walkthrough panel */
+.walkthrough-panel {
+  background: var(--card);
+  padding: 22px 28px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-left: 5px solid var(--accent);
+}
+.walkthrough-panel.hidden { display: none; }
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.step-dots { display: flex; gap: 7px; }
+.step-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #E7DBC5;
+  transition: all 0.2s;
+}
+.step-dot.current { background: var(--accent); transform: scale(1.4); }
+.step-dot.done { background: var(--primary); }
+.walkthrough-title {
+  color: var(--accent);
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  letter-spacing: 0.5px;
+}
+.walkthrough-body {
+  color: #333;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+.walkthrough-prompt {
+  color: var(--primary-dark);
+  font-style: italic;
+  font-size: 15px;
+}
+
+/* Walkthrough nav */
+.walkthrough-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  background: var(--card);
+  padding: 14px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.walkthrough-nav .nav-left,
+.walkthrough-nav .nav-right { display: flex; gap: 10px; align-items: center; }
+.nav-btn {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 2px solid transparent;
+}
+.nav-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+.nav-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(255,149,0,0.3); }
+.nav-btn.ghost { background: transparent; color: var(--primary); }
+.nav-btn.ghost:hover { background: #F2E9D6; }
+.nav-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.toggles {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.toggles.hidden { display: none; }
+
+.toggles button {
+  background: var(--card);
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.toggles button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.toggles button:hover { transform: translateY(-1px); }
+
+.models {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.models.walkthrough-mode { display: flex; justify-content: center; }
+.models.walkthrough-mode .model { max-width: 760px; width: 100%; }
+
+.model {
+  background: var(--card);
+  padding: 28px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+}
+.model h2 {
+  color: var(--accent);
+  margin: 0 0 20px 0;
+  font-size: 22px;
+  letter-spacing: 0.5px;
+}
+.model.hidden { display: none; }
+
+.model-body {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+  padding: 8px;
+}
+
+/* Bracket layout: 3x3 grid placing label/bracket above and to the left of content */
+.bracket-layout {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  grid-template-rows: auto auto auto;
+  column-gap: 8px;
+  row-gap: 6px;
+  align-items: center;
+  justify-items: center;
+}
+.top-label   { grid-column: 3; grid-row: 1; }
+.top-bracket { grid-column: 3; grid-row: 2; display: flex; align-items: flex-end; }
+.left-label  { grid-column: 1; grid-row: 3; }
+.left-bracket{ grid-column: 2; grid-row: 3; display: flex; justify-content: flex-end; }
+.content     { grid-column: 3; grid-row: 3; }
+
+.bracket-label {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+/* Array */
+.array-grid {
+  display: grid;
+  gap: 8px;
+}
+.array-cell {
+  width: 45px;
+  height: 45px;
+  background: var(--primary);
+  border: 2px solid var(--primary-dark);
+  border-radius: 8px;
+}
+
+/* Area: dark background with 1px gap looks like Excel grid; 3px outer border */
+.area-wrapper {
+  border: 3px solid var(--grid-line);
+  display: inline-block;
+  line-height: 0;
+}
+.area-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--grid-line);
+}
+.area-cell {
+  width: 45px;
+  height: 45px;
+  background: var(--area-cell);
+}
+
+/* Set */
+.set-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.set-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 300px;
+}
+.set-or {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+/* Repeated addition */
+.addition-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.addition {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+.addition-bracket-svg { display: block; width: 100%; }
+.addition-count {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-top: -2px;
+}
+.addition-box {
+  background: var(--accent);
+  color: #FFFFFF;
+  font-size: 32px;
+  font-weight: 800;
+  padding: 10px 18px;
+  border-radius: 8px;
+  min-width: 56px;
+  text-align: center;
+  line-height: 1;
+}
+.addition-plus {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+@media (max-width: 980px) {
+  .models { grid-template-columns: 1fr; }
+  .controls { grid-template-columns: 1fr; }
+  .expression { font-size: 42px; }
+}
+
+  /* fallback scene background */
+  body{background:url('scene-main.jpg') center center/cover no-repeat fixed, #F6E7C4 !important;min-height:100vh}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
+<a href="multiplication-assessment.html" style="position:fixed;top:10px;right:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#fff;background:#C77B12;border-radius:999px;padding:8px 15px;box-shadow:0 2px 8px rgba(120,90,30,.28)">Test yourself &rarr;</a>
+<div class="wrap">
+
+<div class="header">
+  <h1>MULTIPLICATION MODELS</h1>
+  <div class="expression"><span id="exp1">3</span> &times; <span id="exp2">5</span></div>
+</div>
+
+<div class="controls">
+  <div class="slider-group">
+    <label>Rows / Groups <span class="slider-value" id="val1">3</span></label>
+    <input type="range" min="1" max="12" value="3" id="slider1">
+    <div class="slider-ticks" id="ticks1"></div>
+  </div>
+  <div class="slider-group">
+    <label>Columns / Group size <span class="slider-value" id="val2">5</span></label>
+    <input type="range" min="1" max="12" value="5" id="slider2">
+    <div class="slider-ticks" id="ticks2"></div>
+  </div>
+</div>
+
+<div class="walkthrough-panel" id="walkthrough-panel">
+  <div class="step-indicator">
+    <span id="step-label">Step 1 of 5</span>
+    <div class="step-dots" id="step-dots"></div>
+  </div>
+  <h2 class="walkthrough-title" id="walkthrough-title"></h2>
+  <div class="walkthrough-body" id="walkthrough-body"></div>
+  <div class="walkthrough-prompt" id="walkthrough-prompt"></div>
+</div>
+
+<div class="toggles" id="toggles">
+  <button data-toggle="array" class="active">Array</button>
+  <button data-toggle="area" class="active">Area</button>
+  <button data-toggle="set" class="active">Set</button>
+  <button data-toggle="addition" class="active">Repeated Addition</button>
+</div>
+
+<div class="models">
+
+  <div class="model" id="model-array">
+    <h2>Array Model</h2>
+    <div class="model-body">
+      <div class="bracket-layout">
+        <div class="top-label"><div class="bracket-label" id="array-top-label">5</div></div>
+        <div class="top-bracket"><svg id="array-top-svg" height="10"></svg></div>
+        <div class="left-label"><div class="bracket-label" id="array-left-label">3</div></div>
+        <div class="left-bracket"><svg id="array-left-svg" width="10"></svg></div>
+        <div class="content"><div class="array-grid" id="array-grid"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="model" id="model-area">
+    <h2>Area Model</h2>
+    <div class="model-body">
+      <div class="bracket-layout">
+        <div class="top-label"><div class="bracket-label" id="area-top-label">5</div></div>
+        <div class="top-bracket"><svg id="area-top-svg" height="10"></svg></div>
+        <div class="left-label"><div class="bracket-label" id="area-left-label">3</div></div>
+        <div class="left-bracket"><svg id="area-left-svg" width="10"></svg></div>
+        <div class="content">
+          <div class="area-wrapper"><div class="area-grid" id="area-grid"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="model" id="model-set">
+    <h2>Set Model</h2>
+    <div class="model-body">
+      <div class="set-container">
+        <div class="set-group" id="set-dotted"></div>
+        <div class="set-or">OR</div>
+        <div class="set-group" id="set-numbered"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="model" id="model-addition">
+    <h2>Repeated Addition</h2>
+    <div class="model-body">
+      <div class="addition-wrapper">
+        <div class="addition" id="addition"></div>
+        <svg class="addition-bracket-svg" id="addition-bracket" height="10"></svg>
+        <div class="addition-count" id="addition-count">3</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="walkthrough-nav" id="walkthrough-nav">
+  <div class="nav-left">
+    <button class="nav-btn ghost" id="back-btn">&larr; Back</button>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn ghost" id="skip-btn">Skip walkthrough</button>
+    <button class="nav-btn primary" id="next-btn">Got it &rarr;</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+const CELL = 45;
+const GAP = 8;
+const TICK = 10;
+const STROKE = '#F5A623';
+const $ = id => document.getElementById(id);
+
+function bracketTopPath(w) {
+  return `<path d="M 0 ${TICK} L 0 0 L ${w} 0 L ${w} ${TICK}"
+    stroke="${STROKE}" stroke-width="2.5" fill="none"
+    stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+function bracketLeftPath(h) {
+  return `<path d="M ${TICK} 0 L 0 0 L 0 ${h} L ${TICK} ${h}"
+    stroke="${STROKE}" stroke-width="2.5" fill="none"
+    stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+
+function renderArray(rows, cols) {
+  const grid = $('array-grid');
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = `repeat(${cols}, ${CELL}px)`;
+  grid.style.gridTemplateRows = `repeat(${rows}, ${CELL}px)`;
+  for (let i = 0; i < rows * cols; i++) {
+    const c = document.createElement('div');
+    c.className = 'array-cell';
+    grid.appendChild(c);
+  }
+  const w = cols * CELL + (cols - 1) * GAP;
+  const h = rows * CELL + (rows - 1) * GAP;
+
+  const top = $('array-top-svg');
+  top.setAttribute('width', w);
+  top.setAttribute('viewBox', `0 0 ${w} ${TICK}`);
+  top.innerHTML = bracketTopPath(w);
+
+  const left = $('array-left-svg');
+  left.setAttribute('height', h);
+  left.setAttribute('viewBox', `0 0 ${TICK} ${h}`);
+  left.innerHTML = bracketLeftPath(h);
+
+  $('array-top-label').textContent = cols;
+  $('array-left-label').textContent = rows;
+}
+
+function renderArea(rows, cols) {
+  const grid = $('area-grid');
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = `repeat(${cols}, ${CELL}px)`;
+  grid.style.gridTemplateRows = `repeat(${rows}, ${CELL}px)`;
+  for (let i = 0; i < rows * cols; i++) {
+    const c = document.createElement('div');
+    c.className = 'area-cell';
+    grid.appendChild(c);
+  }
+  // outer width = cells + (cols-1) gap of 1 + 6 outer border
+  const w = cols * CELL + (cols - 1) + 6;
+  const h = rows * CELL + (rows - 1) + 6;
+
+  const top = $('area-top-svg');
+  top.setAttribute('width', w);
+  top.setAttribute('viewBox', `0 0 ${w} ${TICK}`);
+  top.innerHTML = bracketTopPath(w);
+
+  const left = $('area-left-svg');
+  left.setAttribute('height', h);
+  left.setAttribute('viewBox', `0 0 ${TICK} ${h}`);
+  left.innerHTML = bracketLeftPath(h);
+
+  $('area-top-label').textContent = cols;
+  $('area-left-label').textContent = rows;
+}
+
+/* Clean circle: 4-cubic-bezier approximation — slick, not wonky */
+function handDrawnCircle(cx, cy, r, seed) {
+  const k = 0.5522847; // circle-via-cubic-bezier constant
+  const dx = r * k;
+  return `M ${cx - r} ${cy}
+    C ${cx - r} ${cy - dx}, ${cx - dx} ${cy - r}, ${cx} ${cy - r}
+    C ${cx + dx} ${cy - r}, ${cx + r} ${cy - dx}, ${cx + r} ${cy}
+    C ${cx + r} ${cy + dx}, ${cx + dx} ${cy + r}, ${cx} ${cy + r}
+    C ${cx - dx} ${cy + r}, ${cx - r} ${cy + dx}, ${cx - r} ${cy} Z`;
+}
+
+/* Place n dots in a roughly square pattern that fits inside radius R */
+function dotPositions(n, R) {
+  if (n === 1) return [[0, 0]];
+  const cols = Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const spacing = Math.min((R * 1.7) / Math.max(cols, rows), 13);
+  const positions = [];
+  let placed = 0;
+  for (let r = 0; r < rows && placed < n; r++) {
+    const remaining = n - placed;
+    const inRow = Math.min(cols, remaining);
+    for (let c = 0; c < inRow; c++) {
+      const x = (c - (inRow - 1) / 2) * spacing;
+      const y = (r - (rows - 1) / 2) * spacing;
+      positions.push([x, y]);
+      placed++;
+    }
+  }
+  return positions;
+}
+
+function renderSet(groups, perGroup) {
+  const dotted = $('set-dotted');
+  const numbered = $('set-numbered');
+  dotted.innerHTML = '';
+  numbered.innerHTML = '';
+
+  const size = 76, cx = size / 2, cy = size / 2, R = 32;
+
+  for (let g = 0; g < groups; g++) {
+    const seed = g + 0.7;
+    const positions = dotPositions(perGroup, R - 8);
+    let dots = '';
+    for (const [px, py] of positions) {
+      dots += `<circle cx="${cx + px}" cy="${cy + py}" r="3" fill="#222"/>`;
+    }
+    dotted.insertAdjacentHTML('beforeend', `
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <path d="${handDrawnCircle(cx, cy, R, seed)}" stroke="${STROKE}" stroke-width="2.5" fill="${'#FCE9C4'}"/>
+        ${dots}
+      </svg>`);
+
+    numbered.insertAdjacentHTML('beforeend', `
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <path d="${handDrawnCircle(cx, cy, R, seed + 11.3)}" stroke="${STROKE}" stroke-width="2.5" fill="#FCE9C4"/>
+        <text x="${cx}" y="${cy + 9}" text-anchor="middle" font-size="26" font-weight="800" fill="#333" font-family="inherit">${perGroup}</text>
+      </svg>`);
+  }
+}
+
+function renderAddition(times, value) {
+  const c = $('addition');
+  c.innerHTML = '';
+  for (let i = 0; i < times; i++) {
+    if (i > 0) {
+      const p = document.createElement('div');
+      p.className = 'addition-plus';
+      p.textContent = '+';
+      c.appendChild(p);
+    }
+    const box = document.createElement('div');
+    box.className = 'addition-box';
+    box.textContent = value;
+    c.appendChild(box);
+  }
+  // Measure each box's center x relative to the addition row, draw an up-tick under each
+  const boxes = c.querySelectorAll('.addition-box');
+  const containerRect = c.getBoundingClientRect();
+  const positions = Array.from(boxes).map(b => {
+    const r = b.getBoundingClientRect();
+    return r.left + r.width / 2 - containerRect.left;
+  });
+  const w = Math.max(c.offsetWidth, 40);
+  const H = 10;
+  const baseY = 8;   // horizontal line y
+  const topY = 2;    // tick top y (ticks point up toward numbers)
+
+  let d = '';
+  if (positions.length >= 2) {
+    d += `M ${positions[0]} ${baseY} L ${positions[positions.length - 1]} ${baseY} `;
+  }
+  positions.forEach(x => {
+    d += `M ${x} ${baseY} L ${x} ${topY} `;
+  });
+
+  const svg = $('addition-bracket');
+  svg.setAttribute('viewBox', `0 0 ${w} ${H}`);
+  svg.setAttribute('width', w);
+  svg.innerHTML = `<path d="${d}"
+    stroke="${STROKE}" stroke-width="1.8" fill="none"
+    stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>`;
+  $('addition-count').textContent = times;
+}
+
+function render() {
+  const n1 = parseInt($('slider1').value);
+  const n2 = parseInt($('slider2').value);
+  $('val1').textContent = n1;
+  $('val2').textContent = n2;
+  $('exp1').textContent = n1;
+  $('exp2').textContent = n2;
+  renderArray(n1, n2);
+  renderArea(n1, n2);
+  renderSet(n1, n2);
+  renderAddition(n1, n2);
+  buildTicks('ticks1', n1);
+  buildTicks('ticks2', n2);
+}
+
+function buildTicks(containerId, current) {
+  const c = $(containerId);
+  c.innerHTML = '';
+  for (let i = 1; i <= 12; i++) {
+    const t = document.createElement('div');
+    t.className = 'tick' + (i === current ? ' current' : '');
+    t.style.left = `calc(9px + (100% - 18px) * ${(i - 1) / 11})`;
+    t.textContent = i;
+    c.appendChild(t);
+  }
+}
+
+$('slider1').addEventListener('input', render);
+$('slider2').addEventListener('input', render);
+
+/* ---------- Walkthrough state machine ---------- */
+const STEPS = [
+  {
+    model: 'addition',
+    title: 'Repeated Addition',
+    body: 'Multiplication is really repeated addition. 3 × 5 means you add 5 to itself 3 times. The bracket and number below tell you how many times.',
+    prompt: 'Drag the sliders. Watch how the number of boxes changes.'
+  },
+  {
+    model: 'set',
+    title: 'Set Model',
+    body: 'Multiplication can mean "groups of". 3 × 5 makes 3 groups, each with 5 items inside. Both sides show the same idea — dots and numbers.',
+    prompt: 'Try 4 × 6. How many groups? How many in each?'
+  },
+  {
+    model: 'array',
+    title: 'Array Model',
+    body: 'An array arranges the items into a tidy grid. 3 × 5 makes a rectangle with 3 rows and 5 columns. The brackets show each side.',
+    prompt: 'Move the sliders — watch the shape stretch and squash.'
+  },
+  {
+    model: 'area',
+    title: 'Area Model',
+    body: 'The area model is a tiled rectangle. The two numbers are the side lengths. This is how multiplication scales up to bigger numbers and into geometry.',
+    prompt: 'How is this similar to the array model? How is it different?'
+  },
+  {
+    model: null,
+    title: 'Explore them all',
+    body: 'Now you can see all four models together. Use the toggle buttons to focus on any one, or compare them side by side.',
+    prompt: null
+  }
+];
+
+let currentStep = 1;
+const ALL_MODELS = ['array', 'area', 'set', 'addition'];
+const userToggleState = { array: true, area: true, set: true, addition: true };
+
+function applyStep() {
+  const step = STEPS[currentStep - 1];
+  const isFinal = currentStep === STEPS.length;
+
+  // Step label + dots
+  $('step-label').textContent = `Step ${currentStep} of ${STEPS.length}`;
+  const dots = $('step-dots');
+  dots.innerHTML = '';
+  for (let i = 1; i <= STEPS.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'step-dot' + (i === currentStep ? ' current' : (i < currentStep ? ' done' : ''));
+    dots.appendChild(dot);
+  }
+
+  // Explainer copy
+  $('walkthrough-title').textContent = step.title;
+  $('walkthrough-body').textContent = step.body;
+  $('walkthrough-prompt').textContent = step.prompt || '';
+  $('walkthrough-prompt').style.display = step.prompt ? '' : 'none';
+
+  // Model visibility
+  const modelsContainer = document.querySelector('.models');
+  const togglesEl = $('toggles');
+  if (isFinal) {
+    // Free exploration: show models per userToggleState, show toggles, restore grid
+    ALL_MODELS.forEach(m => {
+      const el = $('model-' + m);
+      if (userToggleState[m]) el.classList.remove('hidden');
+      else el.classList.add('hidden');
+      const btn = document.querySelector(`.toggles button[data-toggle="${m}"]`);
+      if (userToggleState[m]) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    togglesEl.classList.remove('hidden');
+    modelsContainer.classList.remove('walkthrough-mode');
+  } else {
+    // Walkthrough: only the step's model visible, hide toggles, single-col layout
+    ALL_MODELS.forEach(m => {
+      const el = $('model-' + m);
+      if (m === step.model) el.classList.remove('hidden');
+      else el.classList.add('hidden');
+    });
+    togglesEl.classList.add('hidden');
+    modelsContainer.classList.add('walkthrough-mode');
+  }
+
+  // Nav button states
+  $('back-btn').disabled = currentStep === 1;
+  $('skip-btn').style.display = isFinal ? 'none' : '';
+  if (isFinal) {
+    $('next-btn').textContent = '↻ Replay walkthrough';
+  } else if (currentStep === STEPS.length - 1) {
+    $('next-btn').textContent = 'See all four →';
+  } else {
+    $('next-btn').textContent = 'Got it →';
+  }
+
+  // Re-render so any newly visible model (esp. addition, which measures DOM) sizes correctly
+  render();
+}
+
+function nextStep() {
+  if (currentStep < STEPS.length) {
+    currentStep++;
+  } else {
+    currentStep = 1; // replay from start
+  }
+  applyStep();
+}
+function backStep() {
+  if (currentStep > 1) {
+    currentStep--;
+    applyStep();
+  }
+}
+function skipWalkthrough() {
+  currentStep = STEPS.length;
+  applyStep();
+}
+
+$('next-btn').addEventListener('click', nextStep);
+$('back-btn').addEventListener('click', backStep);
+$('skip-btn').addEventListener('click', skipWalkthrough);
+
+document.querySelectorAll('.toggles button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.classList.toggle('active');
+    const model = btn.dataset.toggle;
+    userToggleState[model] = btn.classList.contains('active');
+    $('model-' + model).classList.toggle('hidden');
+    render();
+  });
+});
+
+applyStep();
+</script>
+<div style="text-align:center;font-size:12px;color:#8A7A63;margin:22px 0 8px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener" style="color:#C77B12;text-decoration:none">numberhive.app</a></div>
+</body>
+</html>

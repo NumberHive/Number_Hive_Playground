@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Number Builder</title>
+<style>
+  :root{
+    --cream:#FFFDF7;--ink:#3B2E1A;--muted:#8A7A63;--line:#E7DBC5;
+    --honey:#F5A623;--honey-dark:#C77B12;--honey-pale:#FFF6E5;--honey-light:#FBE7BE;
+    --blue:#4A78D6;--blue-dark:#2F55A6;--good:#2E9E5B;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100vh;background:var(--cream);color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+  .wrap{max-width:560px;margin:0 auto;padding:14px 14px 40px}
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em} h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px;color:var(--muted)}
+
+  .bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center;margin:10px 0}
+  .seg{display:flex;background:var(--honey-pale);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:transparent;padding:8px 14px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;min-height:38px;font-weight:700}
+  .seg button.on{background:var(--honey);color:#fff}
+  .digits{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--muted)}
+  .digits input{width:120px;accent-color:var(--honey)}
+  .digits .v{background:var(--blue);color:#fff;border-radius:8px;padding:1px 9px;min-width:26px;text-align:center}
+
+  .goal{text-align:center;font-size:15px;font-weight:800;color:var(--ink);margin:4px 0 8px}
+  .goal b{color:var(--honey-dark)}
+
+  .boxes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+  .box{width:52px;height:66px;border-radius:12px;border:2.5px dashed var(--line);background:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:var(--ink);transition:transform .1s,border-color .1s,background .1s}
+  .box.live{border-style:solid;border-color:var(--honey);cursor:pointer;background:var(--honey-pale)}
+  .box.live:hover{transform:translateY(-3px)}
+  .box.filled{border-style:solid;border-color:var(--honey-dark);background:#fff}
+  @media(max-width:520px){.box{width:42px;height:56px;font-size:28px}}
+
+  .spinbox{display:flex;flex-direction:column;align-items:center;gap:10px;margin:8px 0}
+  .wheelwrap{position:relative;width:220px;height:220px}
+  .pointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);z-index:3;
+    width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:20px solid var(--ink)}
+  .wheel{width:100%;height:100%;transition:transform 1.3s cubic-bezier(.15,.7,.15,1)}
+  .callout{font-size:14px;font-weight:800;color:var(--honey-dark);min-height:20px;text-align:center}
+  .btn{font:inherit;font-size:16px;font-weight:800;padding:12px 30px;border-radius:12px;cursor:pointer;
+    border:2px solid var(--honey);background:var(--honey);color:#fff;transition:transform .1s}
+  .btn:active{transform:translateY(1px)} .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.ghost{background:#fff;color:var(--honey-dark);font-size:14px;padding:10px 18px}
+
+  .result{text-align:center;margin-top:6px;display:none} .result.show{display:block}
+  .result .num{font-size:40px;font-weight:800;color:var(--honey-dark);font-variant-numeric:tabular-nums}
+  .result .rank{font-size:17px;font-weight:800;margin-top:4px}
+  .result .best{font-size:13px;color:var(--muted);margin-top:4px}
+  .result.show + .actions{margin-top:12px}
+  .actions{display:flex;gap:10px;justify-content:center;margin-top:12px}
+
+  .help{margin-top:18px;font-size:13px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+  .help b{color:var(--ink)}
+  .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
+  .credit a{color:var(--honey-dark);text-decoration:none}
+
+  /* fallback scene background */
+  body{background:url('scene-main.jpg') center center/cover no-repeat fixed, var(--cream);min-height:100vh}
+  .wrap{background:rgba(255,253,247,.86);border-radius:20px;box-shadow:0 8px 30px rgba(120,90,30,.16);backdrop-filter:blur(2px)}
+</style>
+<script src="analytics.js"></script>
+</head>
+<body>
+<a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
+
+<div class="wrap">
+  <header>
+    <h1>Number <span>Builder</span></h1>
+    <span class="tag">spin a digit, choose its place — you can't move it later</span>
+  </header>
+
+  <div class="bar">
+    <div class="seg" id="modeseg"><button data-m="high" class="on">Highest</button><button data-m="low">Lowest</button></div>
+    <div class="digits"><span>Digits</span><input type="range" min="3" max="7" value="5" id="digs"><span class="v" id="digv">5</span></div>
+  </div>
+
+  <div class="goal" id="goal"></div>
+
+  <div class="boxes" id="boxes"></div>
+
+  <div class="spinbox">
+    <div class="wheelwrap">
+      <div class="pointer"></div>
+      <div class="wheel" id="wheel"></div>
+    </div>
+    <div class="callout" id="callout">Press spin to get your first digit.</div>
+    <button class="btn" id="spin">Spin</button>
+  </div>
+
+  <div class="result" id="result">
+    <div class="num" id="r-num"></div>
+    <div class="rank" id="r-rank"></div>
+    <div class="best" id="r-best"></div>
+  </div>
+  <div class="actions"><button class="btn ghost" id="newg">New game</button></div>
+
+  <div class="help">
+    <b>How to play.</b> Each spin gives you a digit 0–9. Tap an empty box to drop it in — but once it's
+    placed, it's stuck. Fill every box to make the <b>biggest</b> number you can (or smallest, if you switch).
+    The trick: do you gamble a big place on an early digit, or play it safe? At the end we rank your number
+    against every arrangement of the digits you drew.
+  </div>
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const HONEY='#F5A623',HPALE='#FFF6E5',BLUE='#4A78D6',BLUEL='#D5E1F7',INK='#3B2E1A';
+let N=5, mode='high', slots=[], current=null, state='idle', rot=0;
+
+/* ---------- spinner wheel ---------- */
+function buildWheel(){
+  const R=110,cx=110,cy=110; let s='';
+  for(let i=0;i<10;i++){
+    const a0=(i*36-18)*Math.PI/180, a1=(i*36+18)*Math.PI/180;
+    const x0=cx+R*Math.sin(a0), y0=cy-R*Math.cos(a0);
+    const x1=cx+R*Math.sin(a1), y1=cy-R*Math.cos(a1);
+    const fill = i%2===0?HONEY:BLUE;
+    s+=`<path d="M${cx} ${cy} L${x0.toFixed(1)} ${y0.toFixed(1)} A${R} ${R} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" fill="${fill}" stroke="#fff" stroke-width="1.5"/>`;
+    const am=i*36*Math.PI/180, rt=R*0.72;
+    const tx=cx+rt*Math.sin(am), ty=cy-rt*Math.cos(am);
+    s+=`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="26" font-weight="800" fill="#fff" transform="rotate(${i*36} ${tx.toFixed(1)} ${ty.toFixed(1)})">${i}</text>`;
+  }
+  s+=`<circle cx="${cx}" cy="${cy}" r="18" fill="#fff" stroke="${INK}" stroke-width="2"/>`;
+  $('wheel').innerHTML=`<svg viewBox="0 0 220 220" width="220" height="220">${s}</svg>`;
+}
+
+/* ---------- setup ---------- */
+function newGame(){
+  N=+$('digs').value; mode=$('modeseg').querySelector('.on').dataset.m;
+  slots=new Array(N).fill(null); current=null; state='idle';
+  $('goal').innerHTML = `Make the <b>${mode==='high'?'BIGGEST':'SMALLEST'}</b> ${N}-digit number you can`;
+  const bx=$('boxes'); bx.innerHTML='';
+  for(let i=0;i<N;i++){ const d=document.createElement('div'); d.className='box'; d.dataset.i=i;
+    d.onclick=()=>place(i); bx.appendChild(d); }
+  $('result').classList.remove('show');
+  $('callout').textContent='Press spin to get your first digit.';
+  $('spin').disabled=false; $('spin').textContent='Spin';
+  renderBoxes();
+}
+function renderBoxes(){
+  [...$('boxes').children].forEach((el,i)=>{
+    el.className='box'+(slots[i]!==null?' filled':(state==='placing'?' live':''));
+    el.textContent=slots[i]===null?'':slots[i];
+  });
+}
+
+/* ---------- spin ---------- */
+function spin(){
+  if(state!=='idle') return;
+  state='spinning'; $('spin').disabled=true; $('callout').textContent='Spinning…';
+  const d=Math.floor(Math.random()*10);
+  const targetMod=((-d*36)%360+360)%360;
+  const delta=((targetMod-(rot%360))%360+360)%360 + 360*4;
+  rot+=delta; $('wheel').style.transform=`rotate(${rot}deg)`;
+  setTimeout(()=>{ current=d; state='placing'; $('callout').innerHTML=`You spun a <b>${d}</b> — tap a box to place it`; renderBoxes(); }, 1350);
+}
+function place(i){
+  if(state!=='placing'||slots[i]!==null) return;
+  slots[i]=current; current=null;
+  const filled=slots.filter(v=>v!==null).length;
+  if(filled===N){ state='done'; renderBoxes(); finish(); }
+  else { state='idle'; $('spin').disabled=false; $('callout').textContent='Nice — spin again.'; renderBoxes(); }
+}
+
+/* ---------- ranking ---------- */
+function distinctValues(digits){
+  const s=[...digits].sort((a,b)=>a-b), used=new Array(s.length).fill(false), cur=[], set=new Set();
+  (function rec(){ if(cur.length===s.length){ set.add(parseInt(cur.join(''),10)); return; }
+    for(let i=0;i<s.length;i++){ if(used[i])continue; if(i>0&&s[i]===s[i-1]&&!used[i-1])continue;
+      used[i]=true; cur.push(s[i]); rec(); cur.pop(); used[i]=false; } })();
+  return [...set];
+}
+function ordinal(n){ const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+function fmt(n){ return n.toLocaleString('en-US'); }
+function finish(){
+  const digits=slots.slice();
+  const mine=parseInt(digits.join(''),10);
+  const vals=distinctValues(digits);
+  vals.sort((a,b)=> mode==='high'? b-a : a-b);
+  const rank=vals.indexOf(mine)+1, total=vals.length, best=vals[0];
+  $('spin').disabled=true; $('spin').textContent='Spin';
+  $('callout').textContent='';
+  $('r-num').textContent=fmt(mine);
+  if(rank===1){ $('r-rank').innerHTML=`🏆 The ${mode==='high'?'biggest':'smallest'} possible!`; $('r-rank').style.color='var(--good)'; }
+  else { $('r-rank').innerHTML=`You made the <b>${ordinal(rank)}</b> ${mode==='high'?'biggest':'smallest'} number`; $('r-rank').style.color='var(--ink)'; }
+  $('r-best').textContent = rank===1 ? `out of ${total} possible arrangements`
+    : `best possible: ${fmt(best)}  ·  ${total} arrangements`;
+  $('result').classList.add('show');
+  window.nhTrack&&nhTrack('game_complete',{game:'Number Builder',digits:N,mode:mode,rank:rank,best:rank===1});
+}
+
+/* ---------- controls ---------- */
+$('spin').onclick=spin;
+$('newg').onclick=newGame;
+$('digs').oninput=e=>{ $('digv').textContent=e.target.value; newGame(); };
+$('modeseg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $('modeseg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); newGame();
+});
+
+buildWheel(); newGame();
+</script>
+</body>
+</html>

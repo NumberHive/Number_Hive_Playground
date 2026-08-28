@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Addition Models Assessment</title>
+<style>
+:root {
+  --primary: #F5A623;
+  --primary-dark: #C77B12;
+  --blue: #F5A623;
+  --blue-deep: #C77B12;
+  --blue-light: #F5E4C0;
+  --blue-subtle: #FFF6E5;
+  --color-a: #F5A623;
+  --color-b: #4A78D6;
+  --accent: #4A78D6;
+  --bg: #FFFDF7;
+  --card: #ffffff;
+  --correct: #2ecc71;
+  --wrong: #e74c3c;
+  --muted: #9aa6b1;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  background: var(--bg);
+  color: #333;
+  margin: 0;
+  padding: 24px;
+}
+.wrap { max-width: 900px; margin: 0 auto; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+.app-header { text-align: center; margin-bottom: 24px; }
+.app-header h1 {
+  color: var(--blue-deep);
+  font-size: 30px;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Welcome */
+#screen-welcome { text-align: center; }
+.welcome-card {
+  background: var(--card);
+  padding: 48px 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.welcome-card p { font-size: 18px; color: var(--blue-deep); line-height: 1.5; margin: 0 0 16px 0; }
+.welcome-list {
+  text-align: left;
+  display: inline-block;
+  margin: 16px auto 32px auto;
+  color: var(--primary-dark);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 14px 36px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(91,124,153,0.3);
+  transition: all 0.15s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(91,124,153,0.4); }
+.btn-primary:disabled {
+  background: #d0d4d8;
+  color: #fff;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+.btn-secondary {
+  background: white;
+  color: var(--blue);
+  border: 2px solid var(--blue);
+  padding: 14px 36px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-secondary:hover { transform: translateY(-2px); background: #FFF6E5; }
+.welcome-buttons {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 8px;
+}
+.welcome-note {
+  font-size: 13px; color: var(--muted); font-style: italic; margin-top: 14px;
+}
+.practice-badge {
+  background: var(--blue); color: white;
+  padding: 4px 12px; border-radius: 6px;
+  font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+}
+.btn-mini {
+  background: white; color: var(--blue);
+  border: 2px solid var(--blue);
+  padding: 6px 14px; border-radius: 6px;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-mini:hover { background: #F2E9D6; }
+
+.progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 20px;
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  font-weight: 700;
+  color: var(--blue-deep);
+}
+.progress-track {
+  height: 6px;
+  background: #F2E9D6;
+  border-radius: 3px;
+  overflow: hidden;
+  flex: 1;
+  margin: 0 16px;
+}
+.progress-fill { height: 100%; background: var(--blue); transition: width 0.3s; }
+
+.target-card {
+  background: var(--card);
+  padding: 24px 28px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  text-align: center;
+}
+.target-label {
+  color: var(--blue-deep);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.target-question { color: var(--blue); font-style: italic; font-size: 14px; margin-bottom: 14px; }
+.target-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 140px;
+  overflow: auto;
+}
+
+.answer-card {
+  background: var(--card);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.answer-card h3 {
+  margin: 0 0 16px 0;
+  color: var(--blue-deep);
+  font-size: 18px;
+  font-weight: 700;
+}
+.slider-row { margin-bottom: 18px; }
+.slider-row label {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: var(--blue-deep);
+  margin-bottom: 8px;
+}
+.slider-hint { font-size: 12px; color: var(--muted); font-weight: 600; margin-left: 8px; }
+.slider-value {
+  display: inline-block;
+  background: var(--blue);
+  color: white;
+  padding: 2px 12px;
+  border-radius: 6px;
+  margin-left: 10px;
+  min-width: 36px;
+  text-align: center;
+  font-weight: 800;
+}
+.slider-row.b .slider-value { background: var(--color-b); }
+input[type=range] { width: 100%; accent-color: var(--blue); height: 26px; margin: 0; }
+.slider-row.b input[type=range] { accent-color: var(--color-b); }
+.slider-ticks { position: relative; height: 22px; margin-top: 2px; padding: 0 9px; }
+.slider-ticks .tick {
+  position: absolute; top: 0; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  font-size: 11px; color: #9aa6b1; font-weight: 700;
+  user-select: none; pointer-events: none;
+}
+.slider-ticks .tick::before { content: ''; width: 1px; height: 5px; background: #c8d0d8; margin-bottom: 2px; }
+.slider-ticks .tick.current { color: var(--blue); }
+.slider-ticks .tick.current::before { background: var(--blue); height: 7px; width: 2px; }
+.slider-row.b .slider-ticks .tick.current { color: var(--color-b); }
+.slider-row.b .slider-ticks .tick.current::before { background: var(--color-b); }
+
+.expression-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--blue-deep);
+  margin: 22px 0 18px 0;
+  flex-wrap: wrap;
+}
+.expr-fixed { display: inline-block; min-width: 60px; text-align: center; }
+.expr-fixed.a { color: var(--color-a); }
+.expr-fixed.b { color: var(--color-b); }
+.expression-row .plus-sym { color: var(--accent); }
+.expression-row .eq-sym { color: var(--accent); }
+.sum-input {
+  width: 130px;
+  font-family: inherit;
+  font-size: 38px;
+  font-weight: 800;
+  text-align: center;
+  border: 3px solid var(--blue);
+  border-radius: 10px;
+  padding: 4px 8px;
+  color: var(--blue-deep);
+  background: #f8fafd;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.sum-input::-webkit-outer-spin-button,
+.sum-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.sum-input:focus { border-color: var(--accent); }
+
+.feedback {
+  padding: 16px 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  font-weight: 700;
+  display: none;
+}
+.feedback.show { display: block; }
+.feedback.correct { background: #eafaf0; border-left: 5px solid var(--correct); color: #1d6b3c; }
+.feedback.wrong { background: #fdecea; border-left: 5px solid var(--wrong); color: #8a2424; }
+.feedback-detail { font-weight: 600; font-size: 14px; margin-top: 6px; }
+.feedback-correct-answer {
+  margin-top: 8px; font-size: 18px; font-weight: 800; color: var(--blue-deep);
+}
+.mark { font-size: 22px; margin-right: 6px; }
+.mark.ok { color: var(--correct); }
+.mark.no { color: var(--wrong); }
+
+.actions { display: flex; justify-content: center; gap: 12px; margin-top: 8px; }
+
+.summary-score {
+  text-align: center;
+  background: var(--card);
+  padding: 32px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.summary-score h2 { color: var(--blue-deep); margin: 0 0 8px 0; font-size: 28px; }
+.score-line { font-size: 22px; color: var(--blue); margin: 10px 0; font-weight: 700; }
+.score-big { color: var(--blue-deep); font-size: 30px; font-weight: 800; }
+
+.summary-section {
+  background: var(--card);
+  padding: 20px 24px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.summary-section h3 { color: var(--blue-deep); margin: 0 0 14px 0; font-size: 18px; }
+.model-stat {
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #F2E9D6;
+}
+.model-stat:last-child { border-bottom: none; }
+.model-stat .name { font-weight: 700; color: var(--blue-deep); }
+.model-stat .score { font-weight: 700; color: var(--blue); }
+
+.q-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+.q-card {
+  background: #FFFDF7;
+  border: 2px solid #FBF3E2;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.q-card.right { border-color: var(--correct); background: #eafaf0; }
+.q-card.partial { border-color: var(--accent); background: #FFF6E5; }
+.q-card.wrong { border-color: var(--wrong); background: #fdecea; }
+.q-card .qnum { font-weight: 800; font-size: 13px; color: var(--blue-deep); margin-bottom: 4px; }
+.q-card .qmodel { font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.q-card .qanswer { font-weight: 800; font-size: 15px; color: var(--blue-deep); }
+
+/* Target visuals */
+.set-target { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.set-op { font-size: 26px; font-weight: 800; color: var(--accent); }
+.tenframe-target { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.tenframe-op { font-size: 26px; font-weight: 800; color: var(--accent); }
+.bar-target {
+  display: flex; flex-direction: column; gap: 6px;
+  width: 100%; max-width: 440px;
+}
+.bar-target-track { display: flex; height: 56px; border-radius: 6px; overflow: hidden; }
+.bar-piece {
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 22px; color: white;
+  border-right: 2px solid white;
+}
+.bar-piece:last-child { border-right: none; }
+.bar-piece.a { background: var(--color-a); }
+.bar-piece.b { background: var(--color-b); }
+.numberline-wrap { width: 100%; padding: 0 12px; max-width: 600px; }
+
+@media (max-width: 720px) {
+  .expression-row { font-size: 30px; }
+  .sum-input { font-size: 30px; width: 100px; }
+}
+
+  /* fallback scene background */
+  body{background:url('scene-main.jpg') center center/cover no-repeat fixed, #F6E7C4 !important;min-height:100vh}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
+<a href="addition-models.html" style="position:fixed;top:10px;right:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#fff;background:#C77B12;border-radius:999px;padding:8px 15px;box-shadow:0 2px 8px rgba(120,90,30,.28)">Explore models &rarr;</a>
+<div class="wrap">
+
+  <div class="app-header">
+    <h1>ADDITION MODELS ASSESSMENT</h1>
+  </div>
+
+  <!-- WELCOME -->
+  <div class="screen active" id="screen-welcome">
+    <div class="welcome-card">
+      <p><strong>Look at each model.</strong> Move the sliders so they match the two addends, then type the total.</p>
+      <ul class="welcome-list">
+        <li>10 questions, random addition models</li>
+        <li>You'll see if you got each one right</li>
+        <li>Final results at the end</li>
+      </ul>
+      <div class="welcome-buttons">
+        <button class="btn-secondary" id="practice-btn">Practice First</button>
+        <button class="btn-primary" id="start-btn">Start Assessment</button>
+      </div>
+      <div class="welcome-note">Practice = unlimited questions, no score tracked</div>
+    </div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="screen" id="screen-question">
+    <div class="progress-row" id="progress-row-assessment">
+      <span>Question <span id="q-num">1</span>/10</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <span>Score: <span id="q-score">0</span></span>
+    </div>
+    <div class="progress-row" id="progress-row-practice" style="display:none">
+      <span class="practice-badge">Practice Mode</span>
+      <span>Question <span id="practice-q-num">1</span></span>
+      <button class="btn-mini" id="switch-to-assessment">Start real assessment &rarr;</button>
+    </div>
+
+    <div class="target-card">
+      <div class="target-label" id="target-label">Set Model</div>
+      <div class="target-question" id="target-question"></div>
+      <div class="target-display" id="target-display"></div>
+    </div>
+
+    <div class="answer-card">
+      <h3>Match the sliders to the addends, then find the total:</h3>
+      <div class="slider-row">
+        <label>First addend <span class="slider-value" id="a-val-a">1</span></label>
+        <input type="range" min="1" max="10" value="1" id="a-slider-a">
+        <div class="slider-ticks" id="a-ticks-a"></div>
+      </div>
+      <div class="slider-row b">
+        <label>Second addend <span class="slider-value" id="a-val-b">1</span></label>
+        <input type="range" min="1" max="10" value="1" id="a-slider-b">
+        <div class="slider-ticks" id="a-ticks-b"></div>
+      </div>
+      <div class="expression-row">
+        <span class="expr-fixed a" id="a-exp-a">1</span>
+        <span class="plus-sym">+</span>
+        <span class="expr-fixed b" id="a-exp-b">1</span>
+        <span class="eq-sym">=</span>
+        <input type="number" class="sum-input" id="a-sum" min="1" max="999" placeholder="?">
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="actions">
+        <button class="btn-primary" id="check-btn" disabled>Check</button>
+        <button class="btn-primary" id="next-btn" style="display:none">Next &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="screen" id="screen-summary">
+    <div class="summary-score">
+      <h2>Assessment Complete!</h2>
+      <div class="score-line">Model reading: <span class="score-big" id="sum-reading">0</span>/10</div>
+      <div class="score-line">Addition facts: <span class="score-big" id="sum-facts">0</span>/10</div>
+    </div>
+    <div class="summary-section">
+      <h3>By Model Type</h3>
+      <div id="model-breakdown"></div>
+    </div>
+    <div class="summary-section">
+      <h3>Question by Question</h3>
+      <div class="q-grid" id="q-grid"></div>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" id="restart-btn">Take Another Assessment</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const QUIZ_LENGTH = 10;
+const MODEL_TYPES = ['set', 'numberline', 'bar', 'tenframe'];
+const MODEL_NAMES = {
+  set: 'Set Model',
+  numberline: 'Number Line',
+  bar: 'Part-Part-Whole',
+  tenframe: 'Ten Frame'
+};
+const COLOR_A = '#F5A623';
+const COLOR_B = '#4A78D6';
+const STROKE = '#C77B12';
+const FRAME_BG = '#FFFDF7';
+
+const state = { questions: [], index: 0 };
+
+/* ---------- Question generation ---------- */
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function generateQuestions() {
+  const qs = [];
+  const baseMix = [...MODEL_TYPES, ...MODEL_TYPES];
+  while (baseMix.length < QUIZ_LENGTH) baseMix.push(MODEL_TYPES[randInt(0, 3)]);
+  for (let i = baseMix.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [baseMix[i], baseMix[j]] = [baseMix[j], baseMix[i]];
+  }
+  for (let i = 0; i < QUIZ_LENGTH; i++) {
+    qs.push({
+      type: baseMix[i],
+      a: randInt(1, 10),
+      b: randInt(1, 10),
+      studentA: 1, studentB: 1, studentSum: '',
+      checked: false,
+      addendsCorrect: null,
+      sumCorrect: null
+    });
+  }
+  return qs;
+}
+
+/* ---------- Hand-drawn circle ---------- */
+function handDrawnCircle(cx, cy, r, seed) {
+  const k = 0.5522847;
+  const dx = r * k;
+  return `M ${cx - r} ${cy}
+    C ${cx - r} ${cy - dx}, ${cx - dx} ${cy - r}, ${cx} ${cy - r}
+    C ${cx + dx} ${cy - r}, ${cx + r} ${cy - dx}, ${cx + r} ${cy}
+    C ${cx + r} ${cy + dx}, ${cx + dx} ${cy + r}, ${cx} ${cy + r}
+    C ${cx - dx} ${cy + r}, ${cx - r} ${cy + dx}, ${cx - r} ${cy} Z`;
+}
+function dotPositions(n, R) {
+  if (n === 0) return [];
+  if (n === 1) return [[0, 0]];
+  const cols = Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const spacing = Math.min((R * 1.7) / Math.max(cols, rows), 14);
+  const positions = [];
+  let placed = 0;
+  for (let r = 0; r < rows && placed < n; r++) {
+    const remaining = n - placed;
+    const inRow = Math.min(cols, remaining);
+    for (let c = 0; c < inRow; c++) {
+      const x = (c - (inRow - 1) / 2) * spacing;
+      const y = (r - (rows - 1) / 2) * spacing;
+      positions.push([x, y]);
+      placed++;
+    }
+  }
+  return positions;
+}
+function circleSvg(size, n, fillColor, dotColor, seed) {
+  const cx = size / 2, cy = size / 2, R = size * 0.4;
+  const pos = dotPositions(n, R - 6);
+  let dots = '';
+  for (const [px, py] of pos) {
+    dots += `<circle cx="${cx + px}" cy="${cy + py}" r="3.2" fill="${dotColor}"/>`;
+  }
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <path d="${handDrawnCircle(cx, cy, R, seed)}" stroke="${STROKE}" stroke-width="2.5" fill="${fillColor}"/>
+    ${dots}
+  </svg>`;
+}
+
+/* ---------- Set target (no combined circle) ---------- */
+function renderTargetSet(a, b) {
+  const c = $('target-display');
+  const size = 100;
+  c.innerHTML = `
+    <div class="set-target">
+      ${circleSvg(size, a, '#FBF3E2', COLOR_A, 1.1)}
+      <div class="set-op">+</div>
+      ${circleSvg(size, b, '#FCE9C4', COLOR_B, 2.7)}
+    </div>`;
+  $('target-question').textContent = 'Two groups combined make how many?';
+}
+
+/* ---------- Number line target (hops shown, no end label) ---------- */
+function renderTargetNumberLine(a, b) {
+  const c = $('target-display');
+  const maxN = 20;
+  const totalW = 560;
+  const padX = 18;
+  const usable = totalW - padX * 2;
+  const xs = [];
+  for (let i = 0; i <= maxN; i++) xs.push(padX + usable * (i / maxN));
+  const baseY = 70;
+  const arcHeight = 26;
+  const height = baseY + 28;
+
+  let arcs = '';
+  for (let i = 0; i < b; i++) {
+    const xStart = xs[a + i];
+    const xEnd = xs[a + i + 1];
+    const midX = (xStart + xEnd) / 2;
+    const midY = baseY - arcHeight;
+    arcs += `<path d="M ${xStart} ${baseY} Q ${midX} ${midY} ${xEnd} ${baseY}"
+      stroke="${COLOR_B}" stroke-width="2.2" fill="none" stroke-linecap="round"
+      marker-end="url(#nlArrow)"/>`;
+  }
+  let ticks = `<line x1="${xs[0]}" y1="${baseY}" x2="${xs[xs.length-1]}" y2="${baseY}" stroke="${STROKE}" stroke-width="2"/>`;
+  for (let i = 0; i <= maxN; i++) {
+    ticks += `<line x1="${xs[i]}" y1="${baseY-4}" x2="${xs[i]}" y2="${baseY+4}" stroke="${STROKE}" stroke-width="1.5"/>`;
+    ticks += `<text x="${xs[i]}" y="${baseY+18}" text-anchor="middle" font-size="11" font-weight="700" fill="${STROKE}">${i}</text>`;
+  }
+  const startMarker = `<circle cx="${xs[a]}" cy="${baseY}" r="6" fill="${COLOR_A}"/>`;
+
+  c.innerHTML = `
+    <div class="numberline-wrap">
+      <svg viewBox="0 0 ${totalW} ${height}" width="100%" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="nlArrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0 0 L7 3.5 L0 7 Z" fill="${COLOR_B}"/>
+          </marker>
+        </defs>
+        ${ticks}
+        ${arcs}
+        ${startMarker}
+      </svg>
+    </div>`;
+  $('target-question').textContent = 'Start at the blue dot, then hop forward. Where do you land?';
+}
+
+/* ---------- Bar target (parts only, no whole) ---------- */
+function renderTargetBar(a, b) {
+  const c = $('target-display');
+  const sum = a + b;
+  const aPct = (a / sum) * 100;
+  const bPct = (b / sum) * 100;
+  c.innerHTML = `
+    <div class="bar-target">
+      <div class="bar-target-track">
+        <div class="bar-piece a" style="width: ${aPct}%">${a}</div>
+        <div class="bar-piece b" style="width: ${bPct}%">${b}</div>
+      </div>
+    </div>`;
+  $('target-question').textContent = 'Two parts. What is the whole?';
+}
+
+/* ---------- Ten frame target (no combined frame) ---------- */
+function tenFrameSvg(dots) {
+  const cellW = 28, cellH = 28;
+  const cols = 5, rows = 2;
+  const w = cellW * cols, h = cellH * rows;
+  let grid = '';
+  for (let r = 0; r < rows; r++) {
+    for (let col = 0; col < cols; col++) {
+      grid += `<rect x="${col*cellW}" y="${r*cellH}" width="${cellW}" height="${cellH}" fill="${FRAME_BG}" stroke="${STROKE}" stroke-width="1.2"/>`;
+    }
+  }
+  grid += `<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="${STROKE}" stroke-width="2.5"/>`;
+  for (let i = 0; i < 10; i++) {
+    if (!dots[i]) continue;
+    const r = Math.floor(i / cols);
+    const col = i % cols;
+    const cx = col * cellW + cellW/2;
+    const cy = r * cellH + cellH/2;
+    grid += `<circle cx="${cx}" cy="${cy}" r="9" fill="${dots[i]}"/>`;
+  }
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${grid}</svg>`;
+}
+function frameForCount(n, color) {
+  const arr = Array(10).fill(null);
+  for (let i = 0; i < Math.min(n, 10); i++) arr[i] = color;
+  return arr;
+}
+function renderTargetTenFrame(a, b) {
+  const c = $('target-display');
+  const frameA = frameForCount(a, COLOR_A);
+  const frameB = frameForCount(b, COLOR_B);
+  c.innerHTML = `
+    <div class="tenframe-target">
+      ${tenFrameSvg(frameA)}
+      <div class="tenframe-op">+</div>
+      ${tenFrameSvg(frameB)}
+    </div>`;
+  $('target-question').textContent = 'Count the dots in each frame.';
+}
+
+function renderTarget(q) {
+  $('target-label').textContent = MODEL_NAMES[q.type];
+  if (q.type === 'set')        renderTargetSet(q.a, q.b);
+  else if (q.type === 'numberline') renderTargetNumberLine(q.a, q.b);
+  else if (q.type === 'bar')        renderTargetBar(q.a, q.b);
+  else if (q.type === 'tenframe')   renderTargetTenFrame(q.a, q.b);
+}
+
+/* ---------- Ticks ---------- */
+function buildTicks(containerId, current) {
+  const c = $(containerId);
+  c.innerHTML = '';
+  for (let i = 1; i <= 10; i++) {
+    const t = document.createElement('div');
+    t.className = 'tick' + (i === current ? ' current' : '');
+    t.style.left = `calc(9px + (100% - 18px) * ${(i - 1) / 9})`;
+    t.textContent = i;
+    c.appendChild(t);
+  }
+}
+
+/* ---------- Question flow ---------- */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-' + name).classList.add('active');
+}
+
+function showQuestion() {
+  const q = state.questions[state.index];
+  $('a-slider-a').value = 1;
+  $('a-slider-b').value = 1;
+  $('a-sum').value = '';
+  q.studentA = 1; q.studentB = 1; q.studentSum = '';
+  q.checked = false;
+
+  updateAnswerDisplay();
+  renderTarget(q);
+
+  $('q-num').textContent = state.index + 1;
+  $('progress-fill').style.width = `${(state.index / QUIZ_LENGTH) * 100}%`;
+  updateScoreDisplay();
+
+  $('feedback').className = 'feedback';
+  $('feedback').innerHTML = '';
+  $('check-btn').style.display = '';
+  $('check-btn').disabled = true;
+  $('next-btn').style.display = 'none';
+
+  $('a-slider-a').disabled = false;
+  $('a-slider-b').disabled = false;
+  $('a-sum').disabled = false;
+}
+
+function updateAnswerDisplay() {
+  const a = parseInt($('a-slider-a').value);
+  const b = parseInt($('a-slider-b').value);
+  $('a-val-a').textContent = a;
+  $('a-val-b').textContent = b;
+  $('a-exp-a').textContent = a;
+  $('a-exp-b').textContent = b;
+  buildTicks('a-ticks-a', a);
+  buildTicks('a-ticks-b', b);
+}
+
+function updateScoreDisplay() {
+  let s = 0;
+  state.questions.slice(0, state.index).forEach(q => {
+    if (q.addendsCorrect) s += 0.5;
+    if (q.sumCorrect) s += 0.5;
+  });
+  $('q-score').textContent = s % 1 === 0 ? s : s.toFixed(1);
+}
+
+/* ---------- Check (commutative) ---------- */
+function checkAnswer() {
+  const q = state.questions[state.index];
+  q.studentA = parseInt($('a-slider-a').value);
+  q.studentB = parseInt($('a-slider-b').value);
+  q.studentSum = parseInt($('a-sum').value);
+
+  // Commutative: accept either order
+  const expected = [q.a, q.b].sort((x,y) => x-y);
+  const got = [q.studentA, q.studentB].sort((x,y) => x-y);
+  q.addendsCorrect = expected[0] === got[0] && expected[1] === got[1];
+  q.sumCorrect = q.studentSum === q.a + q.b;
+  q.checked = true;
+
+  $('a-slider-a').disabled = true;
+  $('a-slider-b').disabled = true;
+  $('a-sum').disabled = true;
+
+  const fb = $('feedback');
+  const both = q.addendsCorrect && q.sumCorrect;
+  const sum = q.a + q.b;
+  let html = '';
+  if (both) {
+    fb.className = 'feedback show correct';
+    html += `<div><span class="mark ok">&check;</span> Nice work — that's right!</div>`;
+  } else if (q.addendsCorrect && !q.sumCorrect) {
+    fb.className = 'feedback show wrong';
+    html += `<div><span class="mark ok">&check;</span> You read the addends correctly.</div>`;
+    html += `<div class="feedback-detail"><span class="mark no">&times;</span> The total isn't quite right.</div>`;
+    html += `<div class="feedback-correct-answer">${q.a} + ${q.b} = ${sum}</div>`;
+  } else if (!q.addendsCorrect && q.sumCorrect) {
+    fb.className = 'feedback show wrong';
+    html += `<div><span class="mark ok">&check;</span> The total is right.</div>`;
+    html += `<div class="feedback-detail"><span class="mark no">&times;</span> But the addends don't match the model.</div>`;
+    html += `<div class="feedback-correct-answer">${q.a} + ${q.b} = ${sum}</div>`;
+  } else {
+    fb.className = 'feedback show wrong';
+    html += `<div><span class="mark no">&times;</span> Not quite. The correct answer is:</div>`;
+    html += `<div class="feedback-correct-answer">${q.a} + ${q.b} = ${sum}</div>`;
+  }
+  fb.innerHTML = html;
+
+  $('check-btn').style.display = 'none';
+  $('next-btn').style.display = '';
+
+  let s = 0;
+  state.questions.slice(0, state.index + 1).forEach(qq => {
+    if (qq.addendsCorrect) s += 0.5;
+    if (qq.sumCorrect) s += 0.5;
+  });
+  $('q-score').textContent = s % 1 === 0 ? s : s.toFixed(1);
+}
+
+function nextQuestion() {
+  if (mode === 'practice') {
+    startPracticeQuestion();
+    return;
+  }
+  state.index++;
+  if (state.index >= QUIZ_LENGTH) showSummary();
+  else showQuestion();
+}
+
+/* ---------- Practice mode ---------- */
+let mode = 'assessment';
+let practiceCount = 0;
+
+function startPracticeQuestion() {
+  practiceCount++;
+  state.questions = [{
+    type: MODEL_TYPES[randInt(0, MODEL_TYPES.length - 1)],
+    a: randInt(1, 10), b: randInt(1, 10),
+    studentA: 1, studentB: 1, studentSum: '',
+    checked: false,
+    addendsCorrect: null, sumCorrect: null
+  }];
+  state.index = 0;
+  $('practice-q-num').textContent = practiceCount;
+  showScreen('question');
+  showQuestion();
+}
+function enterAssessmentMode() {
+  mode = 'assessment';
+  $('progress-row-assessment').style.display = '';
+  $('progress-row-practice').style.display = 'none';
+  state.questions = generateQuestions();
+  state.index = 0;
+  showScreen('question');
+  showQuestion();
+}
+function enterPracticeMode() {
+  mode = 'practice';
+  practiceCount = 0;
+  $('progress-row-assessment').style.display = 'none';
+  $('progress-row-practice').style.display = '';
+  startPracticeQuestion();
+}
+
+/* ---------- Summary ---------- */
+function showSummary() {
+  showScreen('summary'); window.nhTrack&&nhTrack('game_complete',{game:'Addition Assessment'});
+  let reading = 0, facts = 0;
+  state.questions.forEach(q => {
+    if (q.addendsCorrect) reading++;
+    if (q.sumCorrect) facts++;
+  });
+  $('sum-reading').textContent = reading;
+  $('sum-facts').textContent = facts;
+
+  const breakdown = MODEL_TYPES.map(type => {
+    const qs = state.questions.filter(q => q.type === type);
+    const r = qs.filter(q => q.addendsCorrect).length;
+    const f = qs.filter(q => q.sumCorrect).length;
+    return { type, total: qs.length, reading: r, facts: f };
+  });
+  $('model-breakdown').innerHTML = breakdown.map(b => `
+    <div class="model-stat">
+      <span class="name">${MODEL_NAMES[b.type]}</span>
+      <span class="score">Reading: ${b.reading}/${b.total}</span>
+      <span class="score">Total: ${b.facts}/${b.total}</span>
+    </div>
+  `).join('');
+
+  $('q-grid').innerHTML = state.questions.map((q, i) => {
+    const cls = q.addendsCorrect && q.sumCorrect
+      ? 'right'
+      : (q.addendsCorrect || q.sumCorrect ? 'partial' : 'wrong');
+    const rm = q.addendsCorrect ? '<span class="mark ok">&check;</span>' : '<span class="mark no">&times;</span>';
+    const fm = q.sumCorrect ? '<span class="mark ok">&check;</span>' : '<span class="mark no">&times;</span>';
+    return `<div class="q-card ${cls}">
+      <div class="qnum">Q${i + 1}</div>
+      <div class="qmodel">${MODEL_NAMES[q.type]}</div>
+      <div class="qanswer">${q.a} + ${q.b} = ${q.a + q.b}</div>
+      <div style="font-size:13px;margin-top:4px;">${rm}reading ${fm}total</div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- Wiring ---------- */
+$('start-btn').addEventListener('click', enterAssessmentMode);
+$('practice-btn').addEventListener('click', enterPracticeMode);
+$('switch-to-assessment').addEventListener('click', enterAssessmentMode);
+
+$('a-slider-a').addEventListener('input', () => {
+  if (state.questions[state.index]?.checked) return;
+  updateAnswerDisplay();
+});
+$('a-slider-b').addEventListener('input', () => {
+  if (state.questions[state.index]?.checked) return;
+  updateAnswerDisplay();
+});
+$('a-sum').addEventListener('input', () => {
+  const v = $('a-sum').value.trim();
+  $('check-btn').disabled = v === '' || isNaN(parseInt(v));
+});
+
+$('check-btn').addEventListener('click', checkAnswer);
+$('next-btn').addEventListener('click', nextQuestion);
+$('restart-btn').addEventListener('click', () => showScreen('welcome'));
+
+buildTicks('a-ticks-a', 1);
+buildTicks('a-ticks-b', 1);
+</script>
+<div style="text-align:center;font-size:12px;color:#8A7A63;margin:22px 0 8px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener" style="color:#C77B12;text-decoration:none">numberhive.app</a></div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Number Hive · Teaching Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#4A3618;--honey:#F5A623;--honey-dark:#C77B12;--cream:#FFFDF7;--line:#E7D6B0;
+    --teach:#4A78D6;--teach-dark:#2F55A6;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%;font-family:"Baloo 2",ui-rounded,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
+  body{background:url('scene-main.jpg') center top/cover no-repeat fixed, #F6E7C4;min-height:100vh}
+  .wrap{max-width:920px;margin:0 auto;padding:26px 16px 40px;display:flex;flex-direction:column;min-height:100vh}
+
+  .back{position:fixed;top:12px;left:12px;z-index:10;display:inline-flex;align-items:center;gap:6px;
+    font-family:"Fredoka";font-weight:600;font-size:14px;text-decoration:none;color:var(--honey-dark);
+    background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:999px;padding:8px 15px;
+    box-shadow:0 2px 8px rgba(120,90,30,.18)}
+
+  .brand{display:flex;flex-direction:column;align-items:center;gap:2px;margin:6px 0 4px;text-align:center}
+  .logo-img{width:min(150px,32vw);height:auto;filter:drop-shadow(0 4px 10px rgba(120,90,30,.22))}
+  .title{font-family:"Fredoka";font-weight:700;font-size:clamp(32px,7vw,56px);line-height:1;letter-spacing:.5px;
+    color:#fff;-webkit-text-stroke:2.5px var(--teach-dark);paint-order:stroke fill;
+    text-shadow:0 5px 0 rgba(47,85,166,.3), 0 10px 20px rgba(0,0,0,.15);margin-top:8px}
+  .sub{font-family:"Fredoka";font-weight:500;font-size:15px;color:#3c4b6b;background:rgba(255,255,255,.75);
+    padding:5px 14px;border-radius:999px;margin-top:10px}
+
+  .panel{background:rgba(255,253,247,.88);border:1px solid var(--line);border-radius:22px;
+    padding:16px;margin:22px 0 16px;backdrop-filter:blur(3px);box-shadow:0 10px 30px rgba(120,90,30,.15)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:640px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  @media(max-width:400px){ .grid{grid-template-columns:1fr} }
+  a.card{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--ink);
+    background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 14px 13px;position:relative;overflow:hidden;
+    transition:transform .12s,box-shadow .12s;min-height:104px}
+  a.card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(120,90,30,.18)}
+  .card .ic{font-size:26px;line-height:1}
+  .card .nm{font-family:"Fredoka";font-weight:600;font-size:18px;margin-top:4px}
+  .card .ds{font-size:12.5px;color:#8a7a63;line-height:1.35}
+  .card .tagpill{position:absolute;top:10px;right:10px;font-size:9.5px;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;padding:3px 7px;border-radius:999px;color:#fff;background:var(--teach)}
+  .card::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--teach)}
+
+  .foot{margin-top:auto;text-align:center;padding-top:8px;font-size:12px;color:#6b5326;font-family:"Baloo 2"}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<a class="back" href="index.html">&larr; Playground</a>
+<div class="wrap">
+
+  <div class="brand">
+    <img class="logo-img" src="nh-logo.png" alt="Number Hive">
+    <div class="title">Teaching Tools</div>
+    <div class="sub">📘 explore how the operations work</div>
+  </div>
+
+  <div class="panel">
+    <div class="grid" id="tools"></div>
+  </div>
+
+  <div class="foot">Models show what each operation <i>means</i>. Strategies show how to <i>work it out</i>.</div>
+
+</div>
+
+<script>
+const TOOLS=[
+  {nm:"Addition", file:"addition-models.html", ic:"➕", ds:"See it as sets, number line, bar & ten frame", tag:"Models"},
+  {nm:"Subtraction", file:"subtraction-models.html", ic:"➖", ds:"Take away, compare & count back — four ways", tag:"Models"},
+  {nm:"Multiplication", file:"multiplication-models.html", ic:"✖️", ds:"Arrays, area, groups & repeated addition", tag:"Models"},
+  {nm:"Division", file:"division-models.html", ic:"➗", ds:"Sharing, grouping & the inverse of ×", tag:"Models"},
+  {nm:"Strategies", file:"strategies.html", ic:"💡", ds:"Double & halve, partition, factor & derive", tag:"Strategy"},
+];
+const tools=document.getElementById("tools");
+TOOLS.forEach(t=>{
+  const a=document.createElement("a");
+  a.className="card"; a.href=t.file;
+  a.innerHTML=`<span class="tagpill">${t.tag}</span>`+
+              `<span class="ic">${t.ic}</span>`+
+              `<span class="nm">${t.nm}</span>`+
+              `<span class="ds">${t.ds}</span>`;
+  a.addEventListener("click",()=>{ window.nhTrack&&nhTrack('game_open',{game:t.nm+" Models"}); });
+  tools.appendChild(a);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Subtraction Models</title>
+<style>
+:root {
+  --primary: #F5A623;
+  --primary-dark: #C77B12;
+  --purple: #F5A623;
+  --purple-deep: #C77B12;
+  --purple-light: #F5E4C0;
+  --purple-subtle: #FFF6E5;
+  --kept: #F5A623;        /* difference dots, kept side */
+  --taken: #B0B0B0;       /* taken dots */
+  --strike: #D9534F;      /* strike-through for take-away */
+  --accent: #4A78D6;
+  --bg: #FFFDF7;
+  --card: #ffffff;
+  --muted: #9aa6b1;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  background: var(--bg);
+  color: #333;
+  margin: 0;
+  padding: 24px;
+}
+.wrap { max-width: 1400px; margin: 0 auto; }
+
+.header { text-align: center; margin-bottom: 24px; }
+h1 {
+  color: var(--purple-deep);
+  font-size: 32px;
+  margin: 0 0 16px 0;
+  letter-spacing: 0.5px;
+}
+.expression {
+  display: inline-block;
+  font-size: 56px;
+  font-weight: 800;
+  color: var(--purple-deep);
+  background: var(--card);
+  padding: 8px 36px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.expression .minus-sym { color: var(--accent); padding: 0 8px; }
+.expression .eq-sym { color: var(--accent); padding: 0 8px; }
+.expression .minuend { color: var(--purple-deep); }
+.expression .subtrahend { color: var(--strike); }
+.expression .difference { color: var(--kept); }
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  background: var(--card);
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.slider-group label {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--purple-deep);
+  font-size: 16px;
+}
+.slider-hint { font-size: 12px; color: var(--muted); font-weight: 600; margin-left: 8px; }
+.slider-value {
+  display: inline-block;
+  background: var(--purple);
+  color: white;
+  padding: 2px 12px;
+  border-radius: 6px;
+  margin-left: 10px;
+  min-width: 36px;
+  text-align: center;
+  font-weight: 800;
+}
+.slider-group.s .slider-value { background: var(--strike); }
+input[type=range] { width: 100%; accent-color: var(--purple); height: 28px; margin: 0; }
+.slider-group.s input[type=range] { accent-color: var(--strike); }
+.slider-ticks { position: relative; height: 22px; margin-top: 2px; padding: 0 9px; }
+.slider-ticks .tick {
+  position: absolute; top: 0; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  font-size: 11px; color: #9aa6b1; font-weight: 700;
+  user-select: none; pointer-events: none;
+}
+.slider-ticks .tick::before { content: ''; width: 1px; height: 5px; background: #c8d0d8; margin-bottom: 2px; }
+.slider-ticks .tick.current { color: var(--purple); }
+.slider-ticks .tick.current::before { background: var(--purple); height: 7px; width: 2px; }
+.slider-group.s .slider-ticks .tick.current { color: var(--strike); }
+.slider-group.s .slider-ticks .tick.current::before { background: var(--strike); }
+
+/* Walkthrough panel */
+.walkthrough-panel {
+  background: var(--card);
+  padding: 22px 28px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-left: 5px solid var(--purple);
+}
+.walkthrough-panel.hidden { display: none; }
+.step-indicator {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px;
+  color: var(--purple);
+  font-weight: 700; font-size: 12px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+.step-dots { display: flex; gap: 7px; }
+.step-dot { width: 9px; height: 9px; border-radius: 50%; background: #E7DBC5; transition: all 0.2s; }
+.step-dot.current { background: var(--purple); transform: scale(1.4); }
+.step-dot.done { background: var(--purple-deep); }
+.walkthrough-title {
+  color: var(--purple-deep);
+  font-size: 24px; font-weight: 800;
+  margin: 0 0 8px 0; letter-spacing: 0.5px;
+}
+.walkthrough-body { color: #333; font-size: 16px; line-height: 1.5; margin-bottom: 6px; }
+.walkthrough-prompt { color: var(--purple); font-style: italic; font-size: 15px; }
+.walkthrough-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 20px;
+  background: var(--card);
+  padding: 14px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.walkthrough-nav .nav-left, .walkthrough-nav .nav-right { display: flex; gap: 10px; align-items: center; }
+.nav-btn {
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  padding: 10px 22px; border-radius: 8px; cursor: pointer;
+  transition: all 0.15s; border: 2px solid transparent;
+}
+.nav-btn.primary { background: var(--purple); color: white; border-color: var(--purple); }
+.nav-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(142,91,170,0.3); }
+.nav-btn.ghost { background: transparent; color: var(--purple); }
+.nav-btn.ghost:hover { background: #F2E9D6; }
+.nav-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.toggles {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.toggles.hidden { display: none; }
+.toggles button {
+  background: var(--card);
+  color: var(--purple-deep);
+  border: 2px solid var(--purple);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.toggles button.active {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: white;
+}
+.toggles button:hover { transform: translateY(-1px); }
+
+.models {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.models.walkthrough-mode { display: flex; justify-content: center; }
+.models.walkthrough-mode .model { max-width: 760px; width: 100%; }
+.model {
+  background: var(--card);
+  padding: 28px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+.model h2 {
+  color: var(--purple-deep);
+  margin: 0 0 6px 0;
+  font-size: 22px;
+  letter-spacing: 0.5px;
+}
+.model-question { color: var(--purple); font-style: italic; margin-bottom: 16px; font-size: 14px; }
+.model.hidden { display: none; }
+.model-body {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+  padding: 8px 0;
+}
+
+/* Take Away */
+.takeaway-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.takeaway-caption {
+  font-size: 15px;
+  color: var(--purple-deep);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.takeaway-caption .num-kept { color: var(--kept); }
+.takeaway-caption .num-taken { color: var(--strike); text-decoration: line-through; }
+
+/* Bar (Part-Part-Whole) */
+.bar-model { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 480px; }
+.bar-row { display: flex; align-items: center; gap: 12px; }
+.bar-label {
+  min-width: 64px; text-align: right;
+  font-weight: 700; color: var(--purple-deep); font-size: 14px;
+}
+.bar-track { flex: 1; display: flex; height: 56px; border-radius: 6px; overflow: hidden; }
+.bar-piece {
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 22px; color: white;
+  border-right: 2px solid white;
+  transition: width 0.2s ease;
+}
+.bar-piece:last-child { border-right: none; }
+.bar-piece.whole { background: var(--purple-deep); width: 100%; }
+.bar-piece.known { background: var(--strike); }
+.bar-piece.unknown { background: var(--kept); }
+
+/* Comparison */
+.comparison { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 480px; }
+.comp-row { display: flex; align-items: center; gap: 12px; }
+.comp-label {
+  min-width: 64px; text-align: right;
+  font-weight: 700; color: var(--purple-deep); font-size: 14px;
+}
+.comp-track-wrap { flex: 1; position: relative; height: 50px; }
+.comp-bar {
+  position: absolute; left: 0; height: 50px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 20px; color: white;
+  border-radius: 6px;
+}
+.comp-bar.minuend { background: var(--purple-deep); }
+.comp-bar.subtrahend { background: var(--strike); }
+.comp-diff-overlay {
+  position: absolute; height: 50px;
+  background: repeating-linear-gradient(45deg, var(--kept), var(--kept) 8px, #F5A623 8px, #F5A623 16px);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 800; font-size: 16px;
+  border-radius: 6px;
+  border: 2px dashed white;
+}
+
+/* Number line */
+.numberline-wrap { width: 100%; max-width: 600px; padding: 0 12px; }
+
+@media (max-width: 980px) {
+  .models { grid-template-columns: 1fr; }
+  .controls { grid-template-columns: 1fr; }
+  .expression { font-size: 42px; }
+}
+
+  /* fallback scene background */
+  body{background:url('scene-main.jpg') center center/cover no-repeat fixed, #F6E7C4 !important;min-height:100vh}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
+<a href="subtraction-assessment.html" style="position:fixed;top:10px;right:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#fff;background:#C77B12;border-radius:999px;padding:8px 15px;box-shadow:0 2px 8px rgba(120,90,30,.28)">Test yourself &rarr;</a>
+<div class="wrap">
+
+  <div class="header">
+    <h1>SUBTRACTION MODELS</h1>
+    <div class="expression">
+      <span class="minuend" id="exp-min">12</span>
+      <span class="minus-sym">&minus;</span>
+      <span class="subtrahend" id="exp-sub">5</span>
+      <span class="eq-sym">=</span>
+      <span class="difference" id="exp-diff">7</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="slider-group s">
+      <label>Subtrahend <span class="slider-hint">(the number being taken away)</span> <span class="slider-value" id="val-sub">5</span></label>
+      <input type="range" min="1" max="10" value="5" id="slider-sub">
+      <div class="slider-ticks" id="ticks-sub"></div>
+    </div>
+    <div class="slider-group">
+      <label>Difference <span class="slider-hint">(what's left)</span> <span class="slider-value" id="val-diff">7</span></label>
+      <input type="range" min="1" max="10" value="7" id="slider-diff">
+      <div class="slider-ticks" id="ticks-diff"></div>
+    </div>
+  </div>
+
+  <div class="walkthrough-panel" id="walkthrough-panel">
+    <div class="step-indicator">
+      <span id="step-label">Step 1 of 5</span>
+      <div class="step-dots" id="step-dots"></div>
+    </div>
+    <h2 class="walkthrough-title" id="walkthrough-title"></h2>
+    <div class="walkthrough-body" id="walkthrough-body"></div>
+    <div class="walkthrough-prompt" id="walkthrough-prompt"></div>
+  </div>
+
+  <div class="toggles" id="toggles">
+    <button data-toggle="takeaway" class="active">Take Away</button>
+    <button data-toggle="countback" class="active">Counting Back</button>
+    <button data-toggle="bar" class="active">Part-Part-Whole</button>
+    <button data-toggle="comparison" class="active">Comparison</button>
+  </div>
+
+  <div class="models">
+
+    <div class="model" id="model-takeaway">
+      <h2>Take Away</h2>
+      <div class="model-question">Start with the whole. Cross out what you take away. What's left?</div>
+      <div class="model-body">
+        <div class="takeaway-display" id="takeaway-display"></div>
+      </div>
+    </div>
+
+    <div class="model" id="model-countback">
+      <h2>Counting Back</h2>
+      <div class="model-question">Start at the bigger number. Hop backward to subtract.</div>
+      <div class="model-body">
+        <div class="numberline-wrap" id="countback-display"></div>
+      </div>
+    </div>
+
+    <div class="model" id="model-bar">
+      <h2>Part-Part-Whole</h2>
+      <div class="model-question">The whole equals the known part plus the missing part.</div>
+      <div class="model-body">
+        <div class="bar-model" id="bar-display"></div>
+      </div>
+    </div>
+
+    <div class="model" id="model-comparison">
+      <h2>Comparison</h2>
+      <div class="model-question">Compare the two amounts. How much bigger is the first?</div>
+      <div class="model-body">
+        <div class="comparison" id="comparison-display"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="walkthrough-nav" id="walkthrough-nav">
+    <div class="nav-left">
+      <button class="nav-btn ghost" id="back-btn">&larr; Back</button>
+    </div>
+    <div class="nav-right">
+      <button class="nav-btn ghost" id="skip-btn">Skip walkthrough</button>
+      <button class="nav-btn primary" id="next-btn">Got it &rarr;</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const KEPT = '#F5A623';
+const TAKEN = '#B0B0B0';
+const STRIKE = '#D9534F';
+const STROKE = '#C77B12';
+
+/* Clean circle (4-cubic-bezier) */
+function handDrawnCircle(cx, cy, r, seed) {
+  const k = 0.5522847;
+  const dx = r * k;
+  return `M ${cx - r} ${cy}
+    C ${cx - r} ${cy - dx}, ${cx - dx} ${cy - r}, ${cx} ${cy - r}
+    C ${cx + dx} ${cy - r}, ${cx + r} ${cy - dx}, ${cx + r} ${cy}
+    C ${cx + r} ${cy + dx}, ${cx + dx} ${cy + r}, ${cx} ${cy + r}
+    C ${cx - dx} ${cy + r}, ${cx - r} ${cy + dx}, ${cx - r} ${cy} Z`;
+}
+function dotPositions(n, R) {
+  if (n === 0) return [];
+  if (n === 1) return [[0, 0]];
+  const cols = Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const spacing = Math.min((R * 1.7) / Math.max(cols, rows), 14);
+  const positions = [];
+  let placed = 0;
+  for (let r = 0; r < rows && placed < n; r++) {
+    const remaining = n - placed;
+    const inRow = Math.min(cols, remaining);
+    for (let c = 0; c < inRow; c++) {
+      const x = (c - (inRow - 1) / 2) * spacing;
+      const y = (r - (rows - 1) / 2) * spacing;
+      positions.push([x, y]);
+      placed++;
+    }
+  }
+  return positions;
+}
+
+/* ---------- Take Away ---------- */
+function renderTakeAway(sub, diff) {
+  const min = sub + diff;
+  const c = $('takeaway-display');
+  const size = 200;
+  const cx = size / 2, cy = size / 2, R = size * 0.4;
+  const pos = dotPositions(min, R - 8);
+  // First `diff` dots: kept; last `sub` dots: taken (with X)
+  let dotsKept = '', dotsTaken = '';
+  for (let i = 0; i < pos.length; i++) {
+    const [px, py] = pos[i];
+    const x = cx + px, y = cy + py;
+    if (i < diff) {
+      dotsKept += `<circle cx="${x}" cy="${y}" r="5" fill="${KEPT}"/>`;
+    } else {
+      dotsTaken += `<circle cx="${x}" cy="${y}" r="5" fill="${TAKEN}"/>`;
+      // red X over the dot
+      dotsTaken += `<line x1="${x-5}" y1="${y-5}" x2="${x+5}" y2="${y+5}" stroke="${STRIKE}" stroke-width="2" stroke-linecap="round"/>`;
+      dotsTaken += `<line x1="${x-5}" y1="${y+5}" x2="${x+5}" y2="${y-5}" stroke="${STRIKE}" stroke-width="2" stroke-linecap="round"/>`;
+    }
+  }
+  c.innerHTML = `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <path d="${handDrawnCircle(cx, cy, R, 2.1)}" stroke="${STROKE}" stroke-width="2.5" fill="#FFF6E5"/>
+      ${dotsKept}
+      ${dotsTaken}
+    </svg>
+    <div class="takeaway-caption">
+      Start with <span class="num-kept">${min}</span>,
+      take away <span class="num-taken">${sub}</span>,
+      leaves <span class="num-kept">${diff}</span>
+    </div>
+  `;
+}
+
+/* ---------- Counting Back (Number Line) ---------- */
+function renderCountBack(sub, diff) {
+  const min = sub + diff;
+  const c = $('countback-display');
+  const maxN = 20;
+  const totalW = 560;
+  const padX = 18;
+  const usable = totalW - padX * 2;
+  const xs = [];
+  for (let i = 0; i <= maxN; i++) xs.push(padX + usable * (i / maxN));
+  const baseY = 70;
+  const arcHeight = 26;
+  const height = baseY + 28;
+
+  // sub backward hops from min to diff (each arc covers 1)
+  let arcs = '';
+  for (let i = 0; i < sub; i++) {
+    const xStart = xs[min - i];
+    const xEnd = xs[min - i - 1];
+    const midX = (xStart + xEnd) / 2;
+    const midY = baseY - arcHeight;
+    arcs += `<path d="M ${xStart} ${baseY} Q ${midX} ${midY} ${xEnd} ${baseY}"
+      stroke="${STRIKE}" stroke-width="2.2" fill="none" stroke-linecap="round"
+      marker-end="url(#cbArrow)"/>`;
+  }
+  let ticks = `<line x1="${xs[0]}" y1="${baseY}" x2="${xs[xs.length-1]}" y2="${baseY}" stroke="${STROKE}" stroke-width="2"/>`;
+  for (let i = 0; i <= maxN; i++) {
+    ticks += `<line x1="${xs[i]}" y1="${baseY-4}" x2="${xs[i]}" y2="${baseY+4}" stroke="${STROKE}" stroke-width="1.5"/>`;
+    ticks += `<text x="${xs[i]}" y="${baseY+18}" text-anchor="middle" font-size="11" font-weight="700" fill="${STROKE}">${i}</text>`;
+  }
+  const startMarker = `<circle cx="${xs[min]}" cy="${baseY}" r="6" fill="${STROKE}"/>`;
+  const endMarker = `<circle cx="${xs[diff]}" cy="${baseY}" r="6" fill="white" stroke="${KEPT}" stroke-width="3"/>`;
+  const labelX = (xs[min] + xs[diff]) / 2;
+  const labelY = baseY - arcHeight - 6;
+  const hopLabel = `<text x="${labelX}" y="${labelY}" text-anchor="middle" font-size="13" font-weight="800" fill="${STRIKE}">&minus;${sub}</text>`;
+
+  c.innerHTML = `
+    <svg viewBox="0 0 ${totalW} ${height}" width="100%" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="cbArrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="strokeWidth">
+          <path d="M0 0 L7 3.5 L0 7 Z" fill="${STRIKE}"/>
+        </marker>
+      </defs>
+      ${ticks}
+      ${arcs}
+      ${hopLabel}
+      ${startMarker}
+      ${endMarker}
+    </svg>
+  `;
+}
+
+/* ---------- Part-Part-Whole ---------- */
+function renderBar(sub, diff) {
+  const min = sub + diff;
+  const subPct = (sub / min) * 100;
+  const diffPct = (diff / min) * 100;
+  $('bar-display').innerHTML = `
+    <div class="bar-row">
+      <span class="bar-label">Whole</span>
+      <div class="bar-track">
+        <div class="bar-piece whole">${min}</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">Parts</span>
+      <div class="bar-track">
+        <div class="bar-piece known" style="width: ${subPct}%">${sub}</div>
+        <div class="bar-piece unknown" style="width: ${diffPct}%">${diff}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- Comparison ---------- */
+function renderComparison(sub, diff) {
+  const min = sub + diff;
+  const unit = 100 / min;
+  const subPct = sub * unit;
+  // The "minuend" bar goes from 0 to 100%
+  // The "subtrahend" bar goes from 0 to subPct
+  // The difference is the gap from subPct to 100%
+  $('comparison-display').innerHTML = `
+    <div class="comp-row">
+      <span class="comp-label">Bigger</span>
+      <div class="comp-track-wrap">
+        <div class="comp-bar minuend" style="width: 100%">${min}</div>
+      </div>
+    </div>
+    <div class="comp-row">
+      <span class="comp-label">Smaller</span>
+      <div class="comp-track-wrap">
+        <div class="comp-bar subtrahend" style="width: ${subPct}%">${sub}</div>
+        <div class="comp-diff-overlay" style="left: ${subPct}%; width: ${100 - subPct}%">+${diff}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- Tick marks ---------- */
+function buildTicks(containerId, current) {
+  const c = $(containerId);
+  c.innerHTML = '';
+  for (let i = 1; i <= 10; i++) {
+    const t = document.createElement('div');
+    t.className = 'tick' + (i === current ? ' current' : '');
+    t.style.left = `calc(9px + (100% - 18px) * ${(i - 1) / 9})`;
+    t.textContent = i;
+    c.appendChild(t);
+  }
+}
+
+/* ---------- Master ---------- */
+function render() {
+  const sub = parseInt($('slider-sub').value);
+  const diff = parseInt($('slider-diff').value);
+  const min = sub + diff;
+  $('exp-min').textContent = min;
+  $('exp-sub').textContent = sub;
+  $('exp-diff').textContent = diff;
+  $('val-sub').textContent = sub;
+  $('val-diff').textContent = diff;
+  buildTicks('ticks-sub', sub);
+  buildTicks('ticks-diff', diff);
+  renderTakeAway(sub, diff);
+  renderCountBack(sub, diff);
+  renderBar(sub, diff);
+  renderComparison(sub, diff);
+}
+
+$('slider-sub').addEventListener('input', render);
+$('slider-diff').addEventListener('input', render);
+
+/* ---------- Walkthrough state machine ---------- */
+const STEPS = [
+  {
+    model: 'takeaway',
+    title: 'Take Away',
+    body: 'Subtraction often means "take away". Start with the whole, cross out what you remove, count what\'s left.',
+    prompt: 'Try changing the sliders. Watch the cross-outs and what remains.'
+  },
+  {
+    model: 'countback',
+    title: 'Counting Back',
+    body: 'Subtraction can mean hopping backward. Start at the bigger number and step backward one unit at a time.',
+    prompt: 'Count the backward hops — that\'s the subtrahend. Where do you land?'
+  },
+  {
+    model: 'bar',
+    title: 'Part-Part-Whole',
+    body: 'The whole equals one known part plus a missing part. Subtraction finds the missing part.',
+    prompt: 'The red bar is what was taken. The purple bar is what\'s left. Together they make the whole above.'
+  },
+  {
+    model: 'comparison',
+    title: 'Comparison',
+    body: 'Subtraction also means "how many more?". Compare the two bars — the gap between them is the difference.',
+    prompt: 'Same numbers as the other models, but a different way of seeing subtraction.'
+  },
+  {
+    model: null,
+    title: 'Explore them all',
+    body: 'Now you can see all four models together. Use the toggle buttons to focus on any one, or compare them side by side.',
+    prompt: null
+  }
+];
+
+let currentStep = 1;
+const ALL_MODELS = ['takeaway', 'countback', 'bar', 'comparison'];
+const userToggleState = { takeaway: true, countback: true, bar: true, comparison: true };
+
+function applyStep() {
+  const step = STEPS[currentStep - 1];
+  const isFinal = currentStep === STEPS.length;
+  $('step-label').textContent = `Step ${currentStep} of ${STEPS.length}`;
+  const dots = $('step-dots');
+  dots.innerHTML = '';
+  for (let i = 1; i <= STEPS.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'step-dot' + (i === currentStep ? ' current' : (i < currentStep ? ' done' : ''));
+    dots.appendChild(dot);
+  }
+  $('walkthrough-title').textContent = step.title;
+  $('walkthrough-body').textContent = step.body;
+  $('walkthrough-prompt').textContent = step.prompt || '';
+  $('walkthrough-prompt').style.display = step.prompt ? '' : 'none';
+
+  const modelsContainer = document.querySelector('.models');
+  const togglesEl = $('toggles');
+  if (isFinal) {
+    ALL_MODELS.forEach(m => {
+      const el = $('model-' + m);
+      if (userToggleState[m]) el.classList.remove('hidden');
+      else el.classList.add('hidden');
+      const btn = document.querySelector(`.toggles button[data-toggle="${m}"]`);
+      if (userToggleState[m]) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    togglesEl.classList.remove('hidden');
+    modelsContainer.classList.remove('walkthrough-mode');
+  } else {
+    ALL_MODELS.forEach(m => {
+      const el = $('model-' + m);
+      if (m === step.model) el.classList.remove('hidden');
+      else el.classList.add('hidden');
+    });
+    togglesEl.classList.add('hidden');
+    modelsContainer.classList.add('walkthrough-mode');
+  }
+  $('back-btn').disabled = currentStep === 1;
+  $('skip-btn').style.display = isFinal ? 'none' : '';
+  if (isFinal) $('next-btn').textContent = '↻ Replay walkthrough';
+  else if (currentStep === STEPS.length - 1) $('next-btn').textContent = 'See all four →';
+  else $('next-btn').textContent = 'Got it →';
+  render();
+}
+
+function nextStep() {
+  if (currentStep < STEPS.length) currentStep++;
+  else currentStep = 1;
+  applyStep();
+}
+function backStep() { if (currentStep > 1) { currentStep--; applyStep(); } }
+function skipWalkthrough() { currentStep = STEPS.length; applyStep(); }
+
+$('next-btn').addEventListener('click', nextStep);
+$('back-btn').addEventListener('click', backStep);
+$('skip-btn').addEventListener('click', skipWalkthrough);
+
+document.querySelectorAll('.toggles button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.classList.toggle('active');
+    const model = btn.dataset.toggle;
+    userToggleState[model] = btn.classList.contains('active');
+    $('model-' + model).classList.toggle('hidden');
+    render();
+  });
+});
+
+applyStep();
+</script>
+<div style="text-align:center;font-size:12px;color:#8A7A63;margin:22px 0 8px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener" style="color:#C77B12;text-decoration:none">numberhive.app</a></div>
+</body>
+</html>

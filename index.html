@@ -56,6 +56,17 @@
     box-shadow:0 6px 0 #9c5f0e, 0 10px 20px rgba(0,0,0,.15);transition:transform .1s, box-shadow .1s}
   .cta a:hover{transform:translateY(-2px)} .cta a:active{transform:translateY(3px);box-shadow:0 3px 0 #9c5f0e}
   .cta .small{display:block;margin-top:10px;font-size:12px;color:#6b5326;font-family:"Baloo 2"}
+
+  /* ---- teaching-tools doorway ---- */
+  .doorway{display:flex;align-items:center;gap:16px;text-decoration:none;color:#fff;
+    background:linear-gradient(135deg,#4A78D6,#2F55A6);border:1px solid rgba(255,255,255,.15);border-radius:20px;
+    padding:18px 24px;margin:0 0 18px;box-shadow:0 8px 22px rgba(47,85,166,.28);transition:transform .12s,box-shadow .12s}
+  .doorway:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(47,85,166,.34)}
+  .doorway .dw-ic{font-size:34px;line-height:1}
+  .doorway .dw-txt{display:flex;flex-direction:column}
+  .doorway .dw-nm{font-family:"Fredoka";font-weight:700;font-size:22px;line-height:1.1}
+  .doorway .dw-ds{font-size:13px;opacity:.92;font-family:"Baloo 2"}
+  .doorway .dw-arrow{margin-left:auto;font-size:26px;font-weight:800}
 </style>
   <script src="analytics.js"></script>
 </head>
@@ -65,12 +76,21 @@
   <div class="brand">
     <img class="logo-img" src="nh-logo.png" alt="Number Hive">
     <div class="playground">Playground</div>
-    <div class="sub">🐝 nine little games to play with numbers</div>
+    <div class="sub">🐝 little games & tools to play with numbers</div>
   </div>
 
   <div class="panel">
     <div class="grid" id="grid"></div>
   </div>
+
+  <a class="doorway" href="teaching-tools.html" onclick="window.nhTrack&&nhTrack('game_open',{game:'Teaching Tools'})">
+    <span class="dw-ic">📘</span>
+    <span class="dw-txt">
+      <span class="dw-nm">Teaching Tools</span>
+      <span class="dw-ds">Models &amp; strategies for the four operations</span>
+    </span>
+    <span class="dw-arrow">&rarr;</span>
+  </a>
 
   <div class="cta">
     <a href="https://play.numberhive.org" target="_blank" rel="noopener" onclick="window.nhTrack&&nhTrack('play_app_click')">Play the full Number Hive app →</a>
@@ -90,6 +110,9 @@ const GAMES=[
   {nm:"Top Cell", file:"hive-topcell.html", ic:"🔺", ds:"Each cell is the product of the two below", cat:"num", tag:"Number"},
   {nm:"Griddle", file:"hive-product-grid.html", ic:"✖️", ds:"Cross out cells so each line hits its product", cat:"num", tag:"Number"},
   {nm:"Hive Maze", file:"hive-maze-campaign.html", ic:"🧭", ds:"Steer through the times-table, one factor at a time", cat:"space", tag:"Maze"},
+  {nm:"Hive Circle", file:"hive-circle.html", ic:"⭕", ds:"Draw the perfect circle — how round can you go?", cat:"space", tag:"Skill"},
+  {nm:"Number Builder", file:"hive-place-value.html", ic:"🔢", ds:"Spin digits into places to build the biggest number", cat:"num", tag:"Place value"},
+  {nm:"Hive Smash", file:"hive-smash.html", ic:"💥", ds:"Smash all 7 cells in the cluster, one factor at a time", cat:"space", tag:"Smash"},
 ];
 const grid=document.getElementById("grid");
 GAMES.forEach(g=>{

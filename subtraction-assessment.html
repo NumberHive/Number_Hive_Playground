@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Subtraction Models Assessment</title>
+<style>
+:root {
+  --primary: #F5A623;
+  --primary-dark: #C77B12;
+  --purple: #F5A623;
+  --purple-deep: #C77B12;
+  --purple-light: #F5E4C0;
+  --purple-subtle: #FFF6E5;
+  --kept: #F5A623;
+  --taken: #B0B0B0;
+  --strike: #D9534F;
+  --accent: #4A78D6;
+  --bg: #FFFDF7;
+  --card: #ffffff;
+  --correct: #2ecc71;
+  --wrong: #e74c3c;
+  --muted: #9aa6b1;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  background: var(--bg);
+  color: #333;
+  margin: 0;
+  padding: 24px;
+}
+.wrap { max-width: 900px; margin: 0 auto; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+.app-header { text-align: center; margin-bottom: 24px; }
+.app-header h1 {
+  color: var(--purple-deep);
+  font-size: 30px;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Welcome */
+#screen-welcome { text-align: center; }
+.welcome-card {
+  background: var(--card);
+  padding: 48px 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.welcome-card p { font-size: 18px; color: var(--purple-deep); line-height: 1.5; margin: 0 0 16px 0; }
+.welcome-list {
+  text-align: left;
+  display: inline-block;
+  margin: 16px auto 32px auto;
+  color: var(--primary-dark);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.btn-primary {
+  background: var(--purple);
+  color: white;
+  border: none;
+  padding: 14px 36px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(142,91,170,0.3);
+  transition: all 0.15s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(142,91,170,0.4); }
+.btn-primary:disabled {
+  background: #d0d4d8;
+  color: #fff;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+.btn-secondary {
+  background: white;
+  color: var(--purple);
+  border: 2px solid var(--purple);
+  padding: 14px 36px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-secondary:hover { transform: translateY(-2px); background: #FFF6E5; }
+.welcome-buttons {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 8px;
+}
+.welcome-note {
+  font-size: 13px; color: var(--muted); font-style: italic; margin-top: 14px;
+}
+.practice-badge {
+  background: var(--purple); color: white;
+  padding: 4px 12px; border-radius: 6px;
+  font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+}
+.btn-mini {
+  background: white; color: var(--purple);
+  border: 2px solid var(--purple);
+  padding: 6px 14px; border-radius: 6px;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-mini:hover { background: #FFF6E5; }
+
+.progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 20px;
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  font-weight: 700;
+  color: var(--purple-deep);
+}
+.progress-track {
+  height: 6px;
+  background: #F2E9D6;
+  border-radius: 3px;
+  overflow: hidden;
+  flex: 1;
+  margin: 0 16px;
+}
+.progress-fill { height: 100%; background: var(--purple); transition: width 0.3s; }
+
+.target-card {
+  background: var(--card);
+  padding: 24px 28px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  text-align: center;
+}
+.target-label {
+  color: var(--purple-deep);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.target-question { color: var(--purple); font-style: italic; font-size: 14px; margin-bottom: 14px; }
+.target-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 160px;
+  overflow: auto;
+}
+
+.answer-card {
+  background: var(--card);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.answer-card h3 {
+  margin: 0 0 16px 0;
+  color: var(--purple-deep);
+  font-size: 18px;
+  font-weight: 700;
+}
+.slider-row { margin-bottom: 18px; }
+.slider-row label {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: var(--purple-deep);
+  margin-bottom: 8px;
+}
+.slider-hint { font-size: 12px; color: var(--muted); font-weight: 600; margin-left: 8px; }
+.slider-value {
+  display: inline-block;
+  background: var(--purple);
+  color: white;
+  padding: 2px 12px;
+  border-radius: 6px;
+  margin-left: 10px;
+  min-width: 36px;
+  text-align: center;
+  font-weight: 800;
+}
+.slider-row.s .slider-value { background: var(--strike); }
+input[type=range] { width: 100%; accent-color: var(--purple); height: 26px; margin: 0; }
+.slider-row.s input[type=range] { accent-color: var(--strike); }
+.slider-ticks { position: relative; height: 22px; margin-top: 2px; padding: 0 9px; }
+.slider-ticks .tick {
+  position: absolute; top: 0; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  font-size: 11px; color: #9aa6b1; font-weight: 700;
+  user-select: none; pointer-events: none;
+}
+.slider-ticks .tick::before { content: ''; width: 1px; height: 5px; background: #c8d0d8; margin-bottom: 2px; }
+.slider-ticks .tick.current { color: var(--purple); }
+.slider-ticks .tick.current::before { background: var(--purple); height: 7px; width: 2px; }
+.slider-row.s .slider-ticks .tick.current { color: var(--strike); }
+.slider-row.s .slider-ticks .tick.current::before { background: var(--strike); }
+
+.expression-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--purple-deep);
+  margin: 22px 0 18px 0;
+  flex-wrap: wrap;
+}
+.expr-fixed { display: inline-block; min-width: 60px; text-align: center; }
+.expr-fixed.sub { color: var(--strike); }
+.expr-fixed.diff { color: var(--kept); }
+.expression-row .minus-sym { color: var(--accent); }
+.expression-row .eq-sym { color: var(--accent); }
+.min-input {
+  width: 130px;
+  font-family: inherit;
+  font-size: 38px;
+  font-weight: 800;
+  text-align: center;
+  border: 3px solid var(--purple);
+  border-radius: 10px;
+  padding: 4px 8px;
+  color: var(--purple-deep);
+  background: #FFFDF7;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.min-input::-webkit-outer-spin-button,
+.min-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.min-input:focus { border-color: var(--accent); }
+
+.feedback {
+  padding: 16px 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  font-weight: 700;
+  display: none;
+}
+.feedback.show { display: block; }
+.feedback.correct { background: #eafaf0; border-left: 5px solid var(--correct); color: #1d6b3c; }
+.feedback.wrong { background: #fdecea; border-left: 5px solid var(--wrong); color: #8a2424; }
+.feedback-detail { font-weight: 600; font-size: 14px; margin-top: 6px; }
+.feedback-correct-answer {
+  margin-top: 8px; font-size: 18px; font-weight: 800; color: var(--purple-deep);
+}
+.mark { font-size: 22px; margin-right: 6px; }
+.mark.ok { color: var(--correct); }
+.mark.no { color: var(--wrong); }
+
+.actions { display: flex; justify-content: center; gap: 12px; margin-top: 8px; }
+
+.summary-score {
+  text-align: center;
+  background: var(--card);
+  padding: 32px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.summary-score h2 { color: var(--purple-deep); margin: 0 0 8px 0; font-size: 28px; }
+.score-line { font-size: 22px; color: var(--purple); margin: 10px 0; font-weight: 700; }
+.score-big { color: var(--purple-deep); font-size: 30px; font-weight: 800; }
+
+.summary-section {
+  background: var(--card);
+  padding: 20px 24px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.summary-section h3 { color: var(--purple-deep); margin: 0 0 14px 0; font-size: 18px; }
+.model-stat {
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #F2E9D6;
+}
+.model-stat:last-child { border-bottom: none; }
+.model-stat .name { font-weight: 700; color: var(--purple-deep); }
+.model-stat .score { font-weight: 700; color: var(--purple); }
+
+.q-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+.q-card {
+  background: #FFFDF7;
+  border: 2px solid #FBF3E2;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.q-card.right { border-color: var(--correct); background: #eafaf0; }
+.q-card.partial { border-color: var(--accent); background: #FFF6E5; }
+.q-card.wrong { border-color: var(--wrong); background: #fdecea; }
+.q-card .qnum { font-weight: 800; font-size: 13px; color: var(--purple-deep); margin-bottom: 4px; }
+.q-card .qmodel { font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.q-card .qanswer { font-weight: 800; font-size: 15px; color: var(--purple-deep); }
+
+/* Targets */
+.bar-target { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 460px; }
+.bar-target-track { display: flex; height: 56px; border-radius: 6px; overflow: hidden; }
+.bar-piece {
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 22px; color: white;
+  border-right: 2px solid white;
+}
+.bar-piece:last-child { border-right: none; }
+.bar-piece.sub { background: var(--strike); }
+.bar-piece.diff { background: var(--kept); }
+.comp-target { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 480px; }
+.comp-row { display: flex; align-items: center; gap: 12px; }
+.comp-label { min-width: 64px; text-align: right; font-weight: 700; color: var(--purple-deep); font-size: 14px; }
+.comp-track-wrap { flex: 1; position: relative; height: 50px; }
+.comp-bar {
+  position: absolute; left: 0; height: 50px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 18px; color: white;
+  border-radius: 6px;
+}
+.comp-bar.minuend {
+  background: #d6c6e0;
+  color: var(--purple-deep);
+  border: 2px dashed var(--purple-deep);
+}
+.comp-bar.subtrahend { background: var(--strike); }
+.comp-bar.diff {
+  background: var(--kept);
+}
+.numberline-wrap { width: 100%; padding: 0 12px; max-width: 600px; }
+
+@media (max-width: 720px) {
+  .expression-row { font-size: 30px; }
+  .min-input { font-size: 30px; width: 100px; }
+}
+
+  /* fallback scene background */
+  body{background:url('scene-main.jpg') center center/cover no-repeat fixed, #F6E7C4 !important;min-height:100vh}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
+<a href="subtraction-models.html" style="position:fixed;top:10px;right:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#fff;background:#C77B12;border-radius:999px;padding:8px 15px;box-shadow:0 2px 8px rgba(120,90,30,.28)">Explore models &rarr;</a>
+<div class="wrap">
+
+  <div class="app-header">
+    <h1>SUBTRACTION MODELS ASSESSMENT</h1>
+  </div>
+
+  <!-- WELCOME -->
+  <div class="screen active" id="screen-welcome">
+    <div class="welcome-card">
+      <p><strong>Look at each model.</strong> Use the sliders to set the subtrahend and difference, then type the starting whole (minuend).</p>
+      <ul class="welcome-list">
+        <li>10 questions, random subtraction models</li>
+        <li>You'll see if you got each one right</li>
+        <li>Final results at the end</li>
+      </ul>
+      <div class="welcome-buttons">
+        <button class="btn-secondary" id="practice-btn">Practice First</button>
+        <button class="btn-primary" id="start-btn">Start Assessment</button>
+      </div>
+      <div class="welcome-note">Practice = unlimited questions, no score tracked</div>
+    </div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="screen" id="screen-question">
+    <div class="progress-row" id="progress-row-assessment">
+      <span>Question <span id="q-num">1</span>/10</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <span>Score: <span id="q-score">0</span></span>
+    </div>
+    <div class="progress-row" id="progress-row-practice" style="display:none">
+      <span class="practice-badge">Practice Mode</span>
+      <span>Question <span id="practice-q-num">1</span></span>
+      <button class="btn-mini" id="switch-to-assessment">Start real assessment &rarr;</button>
+    </div>
+
+    <div class="target-card">
+      <div class="target-label" id="target-label">Take Away</div>
+      <div class="target-question" id="target-question"></div>
+      <div class="target-display" id="target-display"></div>
+    </div>
+
+    <div class="answer-card">
+      <h3>Match the sliders to the model, then find the starting whole:</h3>
+      <div class="slider-row s">
+        <label>Subtrahend <span class="slider-hint">(the number taken away)</span> <span class="slider-value" id="a-val-sub">1</span></label>
+        <input type="range" min="1" max="10" value="1" id="a-slider-sub">
+        <div class="slider-ticks" id="a-ticks-sub"></div>
+      </div>
+      <div class="slider-row">
+        <label>Difference <span class="slider-hint">(what's left)</span> <span class="slider-value" id="a-val-diff">1</span></label>
+        <input type="range" min="1" max="10" value="1" id="a-slider-diff">
+        <div class="slider-ticks" id="a-ticks-diff"></div>
+      </div>
+      <div class="expression-row">
+        <input type="number" class="min-input" id="a-min" min="1" max="999" placeholder="?">
+        <span class="minus-sym">&minus;</span>
+        <span class="expr-fixed sub" id="a-exp-sub">1</span>
+        <span class="eq-sym">=</span>
+        <span class="expr-fixed diff" id="a-exp-diff">1</span>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="actions">
+        <button class="btn-primary" id="check-btn" disabled>Check</button>
+        <button class="btn-primary" id="next-btn" style="display:none">Next &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="screen" id="screen-summary">
+    <div class="summary-score">
+      <h2>Assessment Complete!</h2>
+      <div class="score-line">Model reading: <span class="score-big" id="sum-reading">0</span>/10</div>
+      <div class="score-line">Subtraction facts: <span class="score-big" id="sum-facts">0</span>/10</div>
+    </div>
+    <div class="summary-section">
+      <h3>By Model Type</h3>
+      <div id="model-breakdown"></div>
+    </div>
+    <div class="summary-section">
+      <h3>Question by Question</h3>
+      <div class="q-grid" id="q-grid"></div>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" id="restart-btn">Take Another Assessment</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const QUIZ_LENGTH = 10;
+const MODEL_TYPES = ['takeaway', 'countback', 'bar', 'comparison'];
+const MODEL_NAMES = {
+  takeaway: 'Take Away',
+  countback: 'Counting Back',
+  bar: 'Part-Part-Whole',
+  comparison: 'Comparison'
+};
+const KEPT = '#F5A623';
+const TAKEN = '#B0B0B0';
+const STRIKE = '#D9534F';
+const STROKE = '#C77B12';
+
+const state = { questions: [], index: 0 };
+
+/* ---------- Question generation ---------- */
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function generateQuestions() {
+  const qs = [];
+  const baseMix = [...MODEL_TYPES, ...MODEL_TYPES];
+  while (baseMix.length < QUIZ_LENGTH) baseMix.push(MODEL_TYPES[randInt(0, 3)]);
+  for (let i = baseMix.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [baseMix[i], baseMix[j]] = [baseMix[j], baseMix[i]];
+  }
+  for (let i = 0; i < QUIZ_LENGTH; i++) {
+    qs.push({
+      type: baseMix[i],
+      sub: randInt(1, 10),
+      diff: randInt(1, 10),
+      studentSub: 1, studentDiff: 1, studentMin: '',
+      checked: false,
+      readingCorrect: null,
+      factCorrect: null
+    });
+  }
+  return qs;
+}
+
+/* ---------- Clean circle (4-cubic-bezier) ---------- */
+function handDrawnCircle(cx, cy, r, seed) {
+  const k = 0.5522847;
+  const dx = r * k;
+  return `M ${cx - r} ${cy}
+    C ${cx - r} ${cy - dx}, ${cx - dx} ${cy - r}, ${cx} ${cy - r}
+    C ${cx + dx} ${cy - r}, ${cx + r} ${cy - dx}, ${cx + r} ${cy}
+    C ${cx + r} ${cy + dx}, ${cx + dx} ${cy + r}, ${cx} ${cy + r}
+    C ${cx - dx} ${cy + r}, ${cx - r} ${cy + dx}, ${cx - r} ${cy} Z`;
+}
+function dotPositions(n, R) {
+  if (n === 0) return [];
+  if (n === 1) return [[0, 0]];
+  const cols = Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const spacing = Math.min((R * 1.7) / Math.max(cols, rows), 14);
+  const positions = [];
+  let placed = 0;
+  for (let r = 0; r < rows && placed < n; r++) {
+    const remaining = n - placed;
+    const inRow = Math.min(cols, remaining);
+    for (let c = 0; c < inRow; c++) {
+      const x = (c - (inRow - 1) / 2) * spacing;
+      const y = (r - (rows - 1) / 2) * spacing;
+      positions.push([x, y]);
+      placed++;
+    }
+  }
+  return positions;
+}
+
+/* ---------- Targets ---------- */
+function renderTargetTakeAway(sub, diff) {
+  const min = sub + diff;
+  const c = $('target-display');
+  const size = 200;
+  const cx = size / 2, cy = size / 2, R = size * 0.4;
+  const pos = dotPositions(min, R - 8);
+  let dotsKept = '', dotsTaken = '';
+  for (let i = 0; i < pos.length; i++) {
+    const [px, py] = pos[i];
+    const x = cx + px, y = cy + py;
+    if (i < diff) {
+      dotsKept += `<circle cx="${x}" cy="${y}" r="5" fill="${KEPT}"/>`;
+    } else {
+      dotsTaken += `<circle cx="${x}" cy="${y}" r="5" fill="${TAKEN}"/>`;
+      dotsTaken += `<line x1="${x-5}" y1="${y-5}" x2="${x+5}" y2="${y+5}" stroke="${STRIKE}" stroke-width="2" stroke-linecap="round"/>`;
+      dotsTaken += `<line x1="${x-5}" y1="${y+5}" x2="${x+5}" y2="${y-5}" stroke="${STRIKE}" stroke-width="2" stroke-linecap="round"/>`;
+    }
+  }
+  c.innerHTML = `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <path d="${handDrawnCircle(cx, cy, R, 2.1)}" stroke="${STROKE}" stroke-width="2.5" fill="#FFF6E5"/>
+      ${dotsKept}
+      ${dotsTaken}
+    </svg>`;
+  $('target-question').textContent = 'Crossed-out dots were taken away. What was the starting whole?';
+}
+
+function renderTargetCountBack(sub, diff) {
+  const min = sub + diff;
+  const c = $('target-display');
+  const maxN = 20;
+  const totalW = 560;
+  const padX = 18;
+  const usable = totalW - padX * 2;
+  const xs = [];
+  for (let i = 0; i <= maxN; i++) xs.push(padX + usable * (i / maxN));
+  const baseY = 70;
+  const arcHeight = 26;
+  const height = baseY + 28;
+  let arcs = '';
+  for (let i = 0; i < sub; i++) {
+    const xStart = xs[min - i];
+    const xEnd = xs[min - i - 1];
+    const midX = (xStart + xEnd) / 2;
+    const midY = baseY - arcHeight;
+    arcs += `<path d="M ${xStart} ${baseY} Q ${midX} ${midY} ${xEnd} ${baseY}"
+      stroke="${STRIKE}" stroke-width="2.2" fill="none" stroke-linecap="round"
+      marker-end="url(#cbArrow)"/>`;
+  }
+  let ticks = `<line x1="${xs[0]}" y1="${baseY}" x2="${xs[xs.length-1]}" y2="${baseY}" stroke="${STROKE}" stroke-width="2"/>`;
+  for (let i = 0; i <= maxN; i++) {
+    ticks += `<line x1="${xs[i]}" y1="${baseY-4}" x2="${xs[i]}" y2="${baseY+4}" stroke="${STROKE}" stroke-width="1.5"/>`;
+    ticks += `<text x="${xs[i]}" y="${baseY+18}" text-anchor="middle" font-size="11" font-weight="700" fill="${STROKE}">${i}</text>`;
+  }
+  const startMarker = `<circle cx="${xs[min]}" cy="${baseY}" r="6" fill="${STROKE}"/>`;
+  const endMarker = `<circle cx="${xs[diff]}" cy="${baseY}" r="6" fill="white" stroke="${KEPT}" stroke-width="3"/>`;
+  c.innerHTML = `
+    <div class="numberline-wrap">
+      <svg viewBox="0 0 ${totalW} ${height}" width="100%" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="cbArrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0 0 L7 3.5 L0 7 Z" fill="${STRIKE}"/>
+          </marker>
+        </defs>
+        ${ticks}
+        ${arcs}
+        ${startMarker}
+        ${endMarker}
+      </svg>
+    </div>`;
+  $('target-question').textContent = 'Start at the purple dot, hop backward, land at the ringed dot. What did you start with?';
+}
+
+function renderTargetBar(sub, diff) {
+  const min = sub + diff;
+  const c = $('target-display');
+  const subPct = (sub / min) * 100;
+  const diffPct = (diff / min) * 100;
+  c.innerHTML = `
+    <div class="bar-target">
+      <div class="bar-target-track">
+        <div class="bar-piece sub" style="width: ${subPct}%">${sub}</div>
+        <div class="bar-piece diff" style="width: ${diffPct}%">${diff}</div>
+      </div>
+    </div>`;
+  $('target-question').textContent = 'These two parts make up a whole. What is the whole?';
+}
+
+function renderTargetComparison(sub, diff) {
+  const min = sub + diff;
+  const subPct = (sub / min) * 100;
+  const diffPct = (diff / min) * 100;
+  const c = $('target-display');
+  c.innerHTML = `
+    <div class="comp-target">
+      <div class="comp-row">
+        <span class="comp-label">Bigger</span>
+        <div class="comp-track-wrap">
+          <div class="comp-bar minuend" style="width: 100%">?</div>
+        </div>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">Smaller</span>
+        <div class="comp-track-wrap">
+          <div class="comp-bar subtrahend" style="width: ${subPct}%">${sub}</div>
+          <div class="comp-bar diff" style="left: ${subPct}%; width: ${diffPct}%">+${diff}</div>
+        </div>
+      </div>
+    </div>`;
+  $('target-question').textContent = 'The smaller bar plus the gap equals the bigger bar. How big is the bigger bar?';
+}
+
+function renderTarget(q) {
+  $('target-label').textContent = MODEL_NAMES[q.type];
+  if (q.type === 'takeaway')   renderTargetTakeAway(q.sub, q.diff);
+  else if (q.type === 'countback')  renderTargetCountBack(q.sub, q.diff);
+  else if (q.type === 'bar')        renderTargetBar(q.sub, q.diff);
+  else if (q.type === 'comparison') renderTargetComparison(q.sub, q.diff);
+}
+
+/* ---------- Ticks ---------- */
+function buildTicks(containerId, current) {
+  const c = $(containerId);
+  c.innerHTML = '';
+  for (let i = 1; i <= 10; i++) {
+    const t = document.createElement('div');
+    t.className = 'tick' + (i === current ? ' current' : '');
+    t.style.left = `calc(9px + (100% - 18px) * ${(i - 1) / 9})`;
+    t.textContent = i;
+    c.appendChild(t);
+  }
+}
+
+/* ---------- Question flow ---------- */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-' + name).classList.add('active');
+}
+
+function showQuestion() {
+  const q = state.questions[state.index];
+  $('a-slider-sub').value = 1;
+  $('a-slider-diff').value = 1;
+  $('a-min').value = '';
+  q.studentSub = 1; q.studentDiff = 1; q.studentMin = '';
+  q.checked = false;
+
+  updateAnswerDisplay();
+  renderTarget(q);
+
+  $('q-num').textContent = state.index + 1;
+  $('progress-fill').style.width = `${(state.index / QUIZ_LENGTH) * 100}%`;
+  updateScoreDisplay();
+
+  $('feedback').className = 'feedback';
+  $('feedback').innerHTML = '';
+  $('check-btn').style.display = '';
+  $('check-btn').disabled = true;
+  $('next-btn').style.display = 'none';
+
+  $('a-slider-sub').disabled = false;
+  $('a-slider-diff').disabled = false;
+  $('a-min').disabled = false;
+}
+
+function updateAnswerDisplay() {
+  const s = parseInt($('a-slider-sub').value);
+  const d = parseInt($('a-slider-diff').value);
+  $('a-val-sub').textContent = s;
+  $('a-val-diff').textContent = d;
+  $('a-exp-sub').textContent = s;
+  $('a-exp-diff').textContent = d;
+  buildTicks('a-ticks-sub', s);
+  buildTicks('a-ticks-diff', d);
+}
+
+function updateScoreDisplay() {
+  let s = 0;
+  state.questions.slice(0, state.index).forEach(q => {
+    if (q.readingCorrect) s += 0.5;
+    if (q.factCorrect) s += 0.5;
+  });
+  $('q-score').textContent = s % 1 === 0 ? s : s.toFixed(1);
+}
+
+/* ---------- Check (strict — order matters in subtraction) ---------- */
+function checkAnswer() {
+  const q = state.questions[state.index];
+  q.studentSub = parseInt($('a-slider-sub').value);
+  q.studentDiff = parseInt($('a-slider-diff').value);
+  q.studentMin = parseInt($('a-min').value);
+
+  // Strict: subtrahend and difference have specific roles (subtraction not commutative)
+  q.readingCorrect = q.studentSub === q.sub && q.studentDiff === q.diff;
+  q.factCorrect = q.studentMin === q.sub + q.diff;
+  q.checked = true;
+
+  $('a-slider-sub').disabled = true;
+  $('a-slider-diff').disabled = true;
+  $('a-min').disabled = true;
+
+  const fb = $('feedback');
+  const both = q.readingCorrect && q.factCorrect;
+  const minTrue = q.sub + q.diff;
+  let html = '';
+  if (both) {
+    fb.className = 'feedback show correct';
+    html += `<div><span class="mark ok">&check;</span> Nice work — that's right!</div>`;
+  } else if (q.readingCorrect && !q.factCorrect) {
+    fb.className = 'feedback show wrong';
+    html += `<div><span class="mark ok">&check;</span> You read the model correctly.</div>`;
+    html += `<div class="feedback-detail"><span class="mark no">&times;</span> The whole isn't quite right.</div>`;
+    html += `<div class="feedback-correct-answer">${minTrue} &minus; ${q.sub} = ${q.diff}</div>`;
+  } else if (!q.readingCorrect && q.factCorrect) {
+    fb.className = 'feedback show wrong';
+    html += `<div><span class="mark ok">&check;</span> The whole is right.</div>`;
+    html += `<div class="feedback-detail"><span class="mark no">&times;</span> But the subtrahend and difference don't match the model.</div>`;
+    html += `<div class="feedback-correct-answer">${minTrue} &minus; ${q.sub} = ${q.diff}</div>`;
+  } else {
+    fb.className = 'feedback show wrong';
+    html += `<div><span class="mark no">&times;</span> Not quite. The correct answer is:</div>`;
+    html += `<div class="feedback-correct-answer">${minTrue} &minus; ${q.sub} = ${q.diff}</div>`;
+  }
+  fb.innerHTML = html;
+
+  $('check-btn').style.display = 'none';
+  $('next-btn').style.display = '';
+
+  let s = 0;
+  state.questions.slice(0, state.index + 1).forEach(qq => {
+    if (qq.readingCorrect) s += 0.5;
+    if (qq.factCorrect) s += 0.5;
+  });
+  $('q-score').textContent = s % 1 === 0 ? s : s.toFixed(1);
+}
+
+function nextQuestion() {
+  if (mode === 'practice') {
+    startPracticeQuestion();
+    return;
+  }
+  state.index++;
+  if (state.index >= QUIZ_LENGTH) showSummary();
+  else showQuestion();
+}
+
+/* ---------- Practice mode ---------- */
+let mode = 'assessment';
+let practiceCount = 0;
+
+function startPracticeQuestion() {
+  practiceCount++;
+  state.questions = [{
+    type: MODEL_TYPES[randInt(0, MODEL_TYPES.length - 1)],
+    sub: randInt(1, 10), diff: randInt(1, 10),
+    studentSub: 1, studentDiff: 1, studentMin: '',
+    checked: false,
+    readingCorrect: null, factCorrect: null
+  }];
+  state.index = 0;
+  $('practice-q-num').textContent = practiceCount;
+  showScreen('question');
+  showQuestion();
+}
+function enterAssessmentMode() {
+  mode = 'assessment';
+  $('progress-row-assessment').style.display = '';
+  $('progress-row-practice').style.display = 'none';
+  state.questions = generateQuestions();
+  state.index = 0;
+  showScreen('question');
+  showQuestion();
+}
+function enterPracticeMode() {
+  mode = 'practice';
+  practiceCount = 0;
+  $('progress-row-assessment').style.display = 'none';
+  $('progress-row-practice').style.display = '';
+  startPracticeQuestion();
+}
+
+/* ---------- Summary ---------- */
+function showSummary() {
+  showScreen('summary'); window.nhTrack&&nhTrack('game_complete',{game:'Subtraction Assessment'});
+  let reading = 0, facts = 0;
+  state.questions.forEach(q => {
+    if (q.readingCorrect) reading++;
+    if (q.factCorrect) facts++;
+  });
+  $('sum-reading').textContent = reading;
+  $('sum-facts').textContent = facts;
+
+  const breakdown = MODEL_TYPES.map(type => {
+    const qs = state.questions.filter(q => q.type === type);
+    const r = qs.filter(q => q.readingCorrect).length;
+    const f = qs.filter(q => q.factCorrect).length;
+    return { type, total: qs.length, reading: r, facts: f };
+  });
+  $('model-breakdown').innerHTML = breakdown.map(b => `
+    <div class="model-stat">
+      <span class="name">${MODEL_NAMES[b.type]}</span>
+      <span class="score">Reading: ${b.reading}/${b.total}</span>
+      <span class="score">Whole: ${b.facts}/${b.total}</span>
+    </div>
+  `).join('');
+
+  $('q-grid').innerHTML = state.questions.map((q, i) => {
+    const cls = q.readingCorrect && q.factCorrect
+      ? 'right'
+      : (q.readingCorrect || q.factCorrect ? 'partial' : 'wrong');
+    const rm = q.readingCorrect ? '<span class="mark ok">&check;</span>' : '<span class="mark no">&times;</span>';
+    const fm = q.factCorrect ? '<span class="mark ok">&check;</span>' : '<span class="mark no">&times;</span>';
+    return `<div class="q-card ${cls}">
+      <div class="qnum">Q${i + 1}</div>
+      <div class="qmodel">${MODEL_NAMES[q.type]}</div>
+      <div class="qanswer">${q.sub + q.diff} &minus; ${q.sub} = ${q.diff}</div>
+      <div style="font-size:13px;margin-top:4px;">${rm}reading ${fm}whole</div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- Wiring ---------- */
+$('start-btn').addEventListener('click', enterAssessmentMode);
+$('practice-btn').addEventListener('click', enterPracticeMode);
+$('switch-to-assessment').addEventListener('click', enterAssessmentMode);
+
+$('a-slider-sub').addEventListener('input', () => {
+  if (state.questions[state.index]?.checked) return;
+  updateAnswerDisplay();
+});
+$('a-slider-diff').addEventListener('input', () => {
+  if (state.questions[state.index]?.checked) return;
+  updateAnswerDisplay();
+});
+$('a-min').addEventListener('input', () => {
+  const v = $('a-min').value.trim();
+  $('check-btn').disabled = v === '' || isNaN(parseInt(v));
+});
+
+$('check-btn').addEventListener('click', checkAnswer);
+$('next-btn').addEventListener('click', nextQuestion);
+$('restart-btn').addEventListener('click', () => showScreen('welcome'));
+
+buildTicks('a-ticks-sub', 1);
+buildTicks('a-ticks-diff', 1);
+</script>
+<div style="text-align:center;font-size:12px;color:#8A7A63;margin:22px 0 8px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener" style="color:#C77B12;text-decoration:none">numberhive.app</a></div>
+</body>
+</html>

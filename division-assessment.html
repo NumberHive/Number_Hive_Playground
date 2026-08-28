@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Division Models Assessment</title>
+<style>
+:root {
+  --primary: #F5A623;
+  --primary-dark: #C77B12;
+  --green: #84A856;
+  --green-dark: #5C7A2E;
+  --green-light: #E8F0DC;
+  --green-subtle: #F4F8EC;
+  --accent: #4A78D6;
+  --accent-light: #FCE9C4;
+  --grid-line: #222;
+  --bg: #FFFDF7;
+  --card: #ffffff;
+  --correct: #2ecc71;
+  --wrong: #e74c3c;
+  --muted: #9aa6b1;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  background: var(--bg);
+  color: #333;
+  margin: 0;
+  padding: 24px;
+}
+.wrap { max-width: 900px; margin: 0 auto; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+.app-header { text-align: center; margin-bottom: 24px; }
+.app-header h1 {
+  color: var(--green-dark);
+  font-size: 30px;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Welcome */
+#screen-welcome { text-align: center; }
+.welcome-card {
+  background: var(--card);
+  padding: 48px 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.welcome-card p {
+  font-size: 18px;
+  color: var(--green-dark);
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.welcome-list {
+  text-align: left;
+  display: inline-block;
+  margin: 16px auto 32px auto;
+  color: var(--primary-dark);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--green);
+  color: white;
+  border: none;
+  padding: 14px 36px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(132,168,86,0.3);
+  transition: all 0.15s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(132,168,86,0.4); }
+.btn-primary:disabled {
+  background: #d0d4d8;
+  color: #fff;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+.btn-secondary {
+  background: white;
+  color: var(--green);
+  border: 2px solid var(--green);
+  padding: 14px 36px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-secondary:hover { transform: translateY(-2px); background: #f4f8ec; }
+.welcome-buttons {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 8px;
+}
+.welcome-note {
+  font-size: 13px; color: var(--muted); font-style: italic; margin-top: 14px;
+}
+.practice-badge {
+  background: var(--green);
+  color: white;
+  padding: 4px 12px; border-radius: 6px;
+  font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+}
+.btn-mini {
+  background: white; color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 6px 14px; border-radius: 6px;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-mini:hover { background: #F2E9D6; }
+
+/* Progress */
+.progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 20px;
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  font-weight: 700;
+  color: var(--green-dark);
+}
+.progress-track {
+  height: 6px;
+  background: #F2E9D6;
+  border-radius: 3px;
+  overflow: hidden;
+  flex: 1;
+  margin: 0 16px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--green);
+  transition: width 0.3s;
+}
+
+/* Target card */
+.target-card {
+  background: var(--card);
+  padding: 24px 28px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  text-align: center;
+}
+.target-label {
+  color: var(--green-dark);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.target-question {
+  color: var(--primary);
+  font-style: italic;
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+.target-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 160px;
+  overflow: auto;
+}
+
+/* Answer card */
+.answer-card {
+  background: var(--card);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.answer-card h3 {
+  margin: 0 0 16px 0;
+  color: var(--green-dark);
+  font-size: 18px;
+  font-weight: 700;
+}
+.slider-row { margin-bottom: 18px; }
+.slider-row label {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: var(--green-dark);
+  margin-bottom: 8px;
+}
+.slider-hint { font-size: 12px; color: var(--muted); font-weight: 600; margin-left: 8px; }
+.slider-value {
+  display: inline-block;
+  background: var(--green);
+  color: white;
+  padding: 2px 12px;
+  border-radius: 6px;
+  margin-left: 10px;
+  min-width: 36px;
+  text-align: center;
+  font-weight: 800;
+}
+input[type=range] {
+  width: 100%;
+  accent-color: var(--green);
+  height: 26px;
+  margin: 0;
+}
+.slider-ticks { position: relative; height: 22px; margin-top: 2px; padding: 0 9px; }
+.slider-ticks .tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+  color: #9aa6b1;
+  font-weight: 700;
+  user-select: none;
+  pointer-events: none;
+}
+.slider-ticks .tick::before {
+  content: '';
+  width: 1px;
+  height: 5px;
+  background: #c8d0d8;
+  margin-bottom: 2px;
+}
+.slider-ticks .tick.current { color: var(--green); }
+.slider-ticks .tick.current::before { background: var(--green); height: 7px; width: 2px; }
+
+/* Expression input */
+.expression-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--green-dark);
+  margin: 22px 0 18px 0;
+  flex-wrap: wrap;
+}
+.expr-fixed {
+  display: inline-block;
+  min-width: 60px;
+  text-align: center;
+  color: var(--green-dark);
+}
+.dividend-input {
+  width: 130px;
+  font-family: inherit;
+  font-size: 38px;
+  font-weight: 800;
+  text-align: center;
+  border: 3px solid var(--green);
+  border-radius: 10px;
+  padding: 4px 8px;
+  color: var(--green-dark);
+  background: #fafdf6;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.dividend-input::-webkit-outer-spin-button,
+.dividend-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.dividend-input:focus { border-color: var(--accent); }
+.expression-row .div-sym { color: var(--green); }
+.expression-row .eq-sym { color: var(--accent); }
+
+/* Feedback */
+.feedback {
+  padding: 16px 20px;
+  border-radius: 10px;
+  margin: 16px 0;
+  font-weight: 700;
+  display: none;
+}
+.feedback.show { display: block; }
+.feedback.correct { background: #eafaf0; border-left: 5px solid var(--correct); color: #1d6b3c; }
+.feedback.wrong { background: #fdecea; border-left: 5px solid var(--wrong); color: #8a2424; }
+.feedback-detail { font-weight: 600; font-size: 14px; margin-top: 6px; }
+.feedback-correct-answer {
+  margin-top: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--green-dark);
+}
+.mark { font-size: 22px; margin-right: 6px; }
+.mark.ok { color: var(--correct); }
+.mark.no { color: var(--wrong); }
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Summary */
+.summary-score {
+  text-align: center;
+  background: var(--card);
+  padding: 32px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.summary-score h2 { color: var(--green-dark); margin: 0 0 8px 0; font-size: 28px; }
+.score-line { font-size: 22px; color: var(--primary); margin: 10px 0; font-weight: 700; }
+.score-big { color: var(--green-dark); font-size: 30px; font-weight: 800; }
+
+.summary-section {
+  background: var(--card);
+  padding: 20px 24px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.summary-section h3 { color: var(--green-dark); margin: 0 0 14px 0; font-size: 18px; }
+.model-stat {
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #F2E9D6;
+}
+.model-stat:last-child { border-bottom: none; }
+.model-stat .name { font-weight: 700; color: var(--green-dark); }
+.model-stat .score { font-weight: 700; color: var(--primary); }
+
+.q-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+.q-card {
+  background: #FFFDF7;
+  border: 2px solid #FBF3E2;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.q-card.right { border-color: var(--correct); background: #eafaf0; }
+.q-card.partial { border-color: var(--accent); background: #FFF6E5; }
+.q-card.wrong { border-color: var(--wrong); background: #fdecea; }
+.q-card .qnum { font-weight: 800; font-size: 13px; color: var(--green-dark); margin-bottom: 4px; }
+.q-card .qmodel { font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.q-card .qanswer { font-weight: 800; font-size: 15px; color: var(--green-dark); }
+
+/* Reusable model styles */
+.circles-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  max-width: 600px;
+}
+.subtraction-display { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+.subtraction-chain {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+.subtraction-chain .row {
+  display: grid;
+  grid-template-columns: 56px 40px 22px 56px;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
+}
+.subtraction-chain .minus-pill {
+  display: inline-block;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  font-weight: 800;
+  border-radius: 50%;
+  padding: 0 6px;
+  font-size: 14px;
+  min-width: 30px;
+  text-align: center;
+}
+.subtraction-chain .eq { color: var(--muted); }
+.numberline-wrap { width: 100%; padding: 0 12px; max-width: 580px; }
+.inverse-display { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+.inverse-eq {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--green-dark);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.inverse-eq .blank-q {
+  display: inline-block;
+  border: 3px solid var(--accent);
+  background: #FFF6E5;
+  color: var(--accent);
+  border-radius: 8px;
+  min-width: 56px;
+  padding: 2px 12px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .expression-row { font-size: 30px; }
+  .dividend-input { font-size: 30px; width: 100px; }
+}
+
+  /* fallback scene background */
+  body{background:url('scene-main.jpg') center center/cover no-repeat fixed, #F6E7C4 !important;min-height:100vh}
+</style>
+  <script src="analytics.js"></script>
+</head>
+<body>
+<a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
+<a href="division-models.html" style="position:fixed;top:10px;right:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#fff;background:#C77B12;border-radius:999px;padding:8px 15px;box-shadow:0 2px 8px rgba(120,90,30,.28)">Explore models &rarr;</a>
+<div class="wrap">
+
+  <div class="app-header">
+    <h1>DIVISION MODELS ASSESSMENT</h1>
+  </div>
+
+  <!-- WELCOME -->
+  <div class="screen active" id="screen-welcome">
+    <div class="welcome-card">
+      <p><strong>Look at each model.</strong> Move the sliders to match what you see, then type the total (the dividend).</p>
+      <ul class="welcome-list">
+        <li>10 questions, random division models</li>
+        <li>You'll see if you got each one right</li>
+        <li>Final results at the end</li>
+      </ul>
+      <div class="welcome-buttons">
+        <button class="btn-secondary" id="practice-btn">Practice First</button>
+        <button class="btn-primary" id="start-btn">Start Assessment</button>
+      </div>
+      <div class="welcome-note">Practice = unlimited questions, no score tracked</div>
+    </div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="screen" id="screen-question">
+    <div class="progress-row" id="progress-row-assessment">
+      <span>Question <span id="q-num">1</span>/10</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <span>Score: <span id="q-score">0</span></span>
+    </div>
+    <div class="progress-row" id="progress-row-practice" style="display:none">
+      <span class="practice-badge">Practice Mode</span>
+      <span>Question <span id="practice-q-num">1</span></span>
+      <button class="btn-mini" id="switch-to-assessment">Start real assessment &rarr;</button>
+    </div>
+
+    <div class="target-card">
+      <div class="target-label" id="target-label">Sharing Model</div>
+      <div class="target-question" id="target-question"></div>
+      <div class="target-display" id="target-display"></div>
+    </div>
+
+    <div class="answer-card">
+      <h3>Set the sliders to match the model, then find the total:</h3>
+      <div class="slider-row">
+        <label>Divisor <span class="slider-hint">(the number we divide by)</span> <span class="slider-value" id="a-val-divisor">1</span></label>
+        <input type="range" min="1" max="12" value="1" id="a-slider-divisor">
+        <div class="slider-ticks" id="a-ticks-divisor"></div>
+      </div>
+      <div class="slider-row">
+        <label>Quotient <span class="slider-hint">(the answer to the division)</span> <span class="slider-value" id="a-val-quotient">1</span></label>
+        <input type="range" min="1" max="12" value="1" id="a-slider-quotient">
+        <div class="slider-ticks" id="a-ticks-quotient"></div>
+      </div>
+      <div class="expression-row">
+        <input type="number" class="dividend-input" id="a-dividend" min="1" max="999" placeholder="?">
+        <span class="div-sym">&divide;</span>
+        <span class="expr-fixed" id="a-exp-divisor">1</span>
+        <span class="eq-sym">=</span>
+        <span class="expr-fixed" id="a-exp-quotient">1</span>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="actions">
+        <button class="btn-primary" id="check-btn" disabled>Check</button>
+        <button class="btn-primary" id="next-btn" style="display:none">Next &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="screen" id="screen-summary">
+    <div class="summary-score">
+      <h2>Assessment Complete!</h2>
+      <div class="score-line">Model reading: <span class="score-big" id="sum-factors">0</span>/10</div>
+      <div class="score-line">Division facts: <span class="score-big" id="sum-products">0</span>/10</div>
+    </div>
+    <div class="summary-section">
+      <h3>By Model Type</h3>
+      <div id="model-breakdown"></div>
+    </div>
+    <div class="summary-section">
+      <h3>Question by Question</h3>
+      <div class="q-grid" id="q-grid"></div>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" id="restart-btn">Take Another Assessment</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const QUIZ_LENGTH = 10;
+const MODEL_TYPES = ['sharing', 'grouping', 'subtraction', 'inverse'];
+const MODEL_NAMES = {
+  sharing: 'Sharing Model',
+  grouping: 'Grouping Model',
+  subtraction: 'Repeated Subtraction',
+  inverse: 'Inverse Operation (×)'
+};
+const STROKE = '#5C7A2E';
+const STROKE_LIGHT = '#84A856';
+const FILL_LIGHT = '#E8F0DC';
+
+const state = { questions: [], index: 0 };
+
+/* ---------- Question generation ---------- */
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function generateQuestions() {
+  const qs = [];
+  const baseMix = [...MODEL_TYPES, ...MODEL_TYPES];
+  while (baseMix.length < QUIZ_LENGTH) baseMix.push(MODEL_TYPES[randInt(0, 3)]);
+  for (let i = baseMix.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [baseMix[i], baseMix[j]] = [baseMix[j], baseMix[i]];
+  }
+  for (let i = 0; i < QUIZ_LENGTH; i++) {
+    qs.push({
+      type: baseMix[i],
+      divisor: randInt(1, 12),
+      quotient: randInt(1, 12),
+      studentDivisor: 1,
+      studentQuotient: 1,
+      studentDividend: '',
+      checked: false,
+      readingCorrect: null,
+      factCorrect: null
+    });
+  }
+  return qs;
+}
+
+/* ---------- Clean circle (4-cubic-bezier) ---------- */
+function handDrawnCircle(cx, cy, r, seed) {
+  const k = 0.5522847;
+  const dx = r * k;
+  return `M ${cx - r} ${cy}
+    C ${cx - r} ${cy - dx}, ${cx - dx} ${cy - r}, ${cx} ${cy - r}
+    C ${cx + dx} ${cy - r}, ${cx + r} ${cy - dx}, ${cx + r} ${cy}
+    C ${cx + r} ${cy + dx}, ${cx + dx} ${cy + r}, ${cx} ${cy + r}
+    C ${cx - dx} ${cy + r}, ${cx - r} ${cy + dx}, ${cx - r} ${cy} Z`;
+}
+function dotPositions(n, R) {
+  if (n === 1) return [[0, 0]];
+  const cols = Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const spacing = Math.min((R * 1.7) / Math.max(cols, rows), 13);
+  const positions = [];
+  let placed = 0;
+  for (let r = 0; r < rows && placed < n; r++) {
+    const remaining = n - placed;
+    const inRow = Math.min(cols, remaining);
+    for (let c = 0; c < inRow; c++) {
+      const x = (c - (inRow - 1) / 2) * spacing;
+      const y = (r - (rows - 1) / 2) * spacing;
+      positions.push([x, y]);
+      placed++;
+    }
+  }
+  return positions;
+}
+
+function renderDottedCircles(container, groupCount, perGroup) {
+  container.innerHTML = '';
+  const size = 76, cx = size / 2, cy = size / 2, R = 32;
+  const section = document.createElement('div');
+  section.className = 'circles-section';
+  for (let g = 0; g < groupCount; g++) {
+    const seed = g + 0.7;
+    let dots = '';
+    const positions = dotPositions(perGroup, R - 8);
+    for (const [px, py] of positions) {
+      dots += `<circle cx="${cx + px}" cy="${cy + py}" r="3" fill="#222"/>`;
+    }
+    section.insertAdjacentHTML('beforeend', `
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <path d="${handDrawnCircle(cx, cy, R, seed)}" stroke="${STROKE}" stroke-width="2.5" fill="${FILL_LIGHT}"/>
+        ${dots}
+      </svg>`);
+  }
+  container.appendChild(section);
+}
+
+/* ---------- Targets ---------- */
+function renderTargetSharing(divisor, quotient) {
+  // divisor circles, each with quotient dots
+  renderDottedCircles($('target-display'), divisor, quotient);
+  $('target-question').textContent = '"How many in each group if we make these equal groups?"';
+}
+
+function renderTargetGrouping(divisor, quotient) {
+  // quotient circles, each with divisor dots
+  renderDottedCircles($('target-display'), quotient, divisor);
+  $('target-question').textContent = '"How many equal groups of this size?"';
+}
+
+function renderTargetSubtraction(divisor, quotient) {
+  const dividend = divisor * quotient;
+  const c = $('target-display');
+  c.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'subtraction-display';
+
+  const chain = document.createElement('div');
+  chain.className = 'subtraction-chain';
+  let current = dividend;
+  for (let i = 0; i < quotient; i++) {
+    const next = current - divisor;
+    chain.insertAdjacentHTML('beforeend', `
+      <div class="row">
+        <span>${current}</span>
+        <span class="minus-pill">-${divisor}</span>
+        <span class="eq">=</span>
+        <span><strong>${next}</strong></span>
+      </div>`);
+    current = next;
+  }
+  wrap.appendChild(chain);
+
+  // Number line
+  const nlWrap = document.createElement('div');
+  nlWrap.className = 'numberline-wrap';
+  const totalWidth = 540;
+  const arcHeight = 32;
+  const padX = 12;
+  const ticks = quotient + 1;
+  const xs = [];
+  for (let i = 0; i < ticks; i++) {
+    xs.push(padX + (totalWidth - padX * 2) * (i / (ticks - 1 || 1)));
+  }
+  const baseY = arcHeight + 4;
+  const height = arcHeight + 28;
+
+  let arcs = '';
+  for (let i = quotient; i > 0; i--) {
+    const xStart = xs[i], xEnd = xs[i - 1];
+    const midX = (xStart + xEnd) / 2;
+    const midY = baseY - arcHeight;
+    arcs += `<path d="M ${xStart} ${baseY} Q ${midX} ${midY} ${xEnd} ${baseY}"
+      stroke="${STROKE_LIGHT}" stroke-width="2" fill="none" stroke-linecap="round"
+      marker-end="url(#aHead)"/>`;
+    arcs += `<text x="${midX}" y="${midY + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="${STROKE}">-${divisor}</text>`;
+  }
+  let lineSvg = `<line x1="${xs[0]}" y1="${baseY}" x2="${xs[xs.length-1]}" y2="${baseY}" stroke="${STROKE}" stroke-width="2"/>`;
+  for (let i = 0; i < ticks; i++) {
+    lineSvg += `<line x1="${xs[i]}" y1="${baseY-4}" x2="${xs[i]}" y2="${baseY+4}" stroke="${STROKE}" stroke-width="2"/>`;
+    lineSvg += `<text x="${xs[i]}" y="${baseY+18}" text-anchor="middle" font-size="11" font-weight="700" fill="${STROKE}">${i * divisor}</text>`;
+  }
+  nlWrap.innerHTML = `
+    <svg viewBox="0 0 ${totalWidth} ${height}" width="100%" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="aHead" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="strokeWidth">
+          <path d="M0 0 L7 3.5 L0 7 Z" fill="${STROKE_LIGHT}"/>
+        </marker>
+      </defs>
+      ${lineSvg}${arcs}
+    </svg>`;
+  wrap.appendChild(nlWrap);
+
+  c.appendChild(wrap);
+  $('target-question').textContent = '"Start at the total and keep subtracting until you get to 0."';
+}
+
+function renderTargetInverse(divisor, quotient) {
+  const dividend = divisor * quotient;
+  const c = $('target-display');
+  c.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'inverse-display';
+  wrap.innerHTML = `
+    <div class="inverse-eq">
+      <span>${divisor}</span>
+      <span>&times;</span>
+      <span class="blank-q">?</span>
+      <span>=</span>
+      <span>${dividend}</span>
+    </div>`;
+  c.appendChild(wrap);
+  $('target-question').textContent = `"${divisor} multiplied by what number gets ${dividend}?"`;
+}
+
+function renderTarget(q) {
+  $('target-label').textContent = MODEL_NAMES[q.type];
+  if (q.type === 'sharing')          renderTargetSharing(q.divisor, q.quotient);
+  else if (q.type === 'grouping')    renderTargetGrouping(q.divisor, q.quotient);
+  else if (q.type === 'subtraction') renderTargetSubtraction(q.divisor, q.quotient);
+  else if (q.type === 'inverse')     renderTargetInverse(q.divisor, q.quotient);
+}
+
+/* ---------- Tick marks ---------- */
+function buildTicks(containerId, current) {
+  const c = $(containerId);
+  c.innerHTML = '';
+  for (let i = 1; i <= 12; i++) {
+    const t = document.createElement('div');
+    t.className = 'tick' + (i === current ? ' current' : '');
+    t.style.left = `calc(9px + (100% - 18px) * ${(i - 1) / 11})`;
+    t.textContent = i;
+    c.appendChild(t);
+  }
+}
+
+/* ---------- Question flow ---------- */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-' + name).classList.add('active');
+}
+
+function showQuestion() {
+  const q = state.questions[state.index];
+  $('a-slider-divisor').value = 1;
+  $('a-slider-quotient').value = 1;
+  $('a-dividend').value = '';
+  q.studentDivisor = 1; q.studentQuotient = 1; q.studentDividend = '';
+  q.checked = false;
+
+  updateAnswerDisplay();
+  renderTarget(q);
+
+  $('q-num').textContent = state.index + 1;
+  $('progress-fill').style.width = `${(state.index / QUIZ_LENGTH) * 100}%`;
+  updateScoreDisplay();
+
+  $('feedback').className = 'feedback';
+  $('feedback').innerHTML = '';
+  $('check-btn').style.display = '';
+  $('check-btn').disabled = true;
+  $('next-btn').style.display = 'none';
+
+  $('a-slider-divisor').disabled = false;
+  $('a-slider-quotient').disabled = false;
+  $('a-dividend').disabled = false;
+}
+
+function updateAnswerDisplay() {
+  const d = parseInt($('a-slider-divisor').value);
+  const q = parseInt($('a-slider-quotient').value);
+  $('a-val-divisor').textContent = d;
+  $('a-val-quotient').textContent = q;
+  $('a-exp-divisor').textContent = d;
+  $('a-exp-quotient').textContent = q;
+  buildTicks('a-ticks-divisor', d);
+  buildTicks('a-ticks-quotient', q);
+}
+
+function updateScoreDisplay() {
+  let s = 0;
+  state.questions.slice(0, state.index).forEach(q => {
+    if (q.readingCorrect) s += 0.5;
+    if (q.factCorrect) s += 0.5;
+  });
+  $('q-score').textContent = s % 1 === 0 ? s : s.toFixed(1);
+}
+
+/* ---------- Check ---------- */
+function checkAnswer() {
+  const q = state.questions[state.index];
+  q.studentDivisor = parseInt($('a-slider-divisor').value);
+  q.studentQuotient = parseInt($('a-slider-quotient').value);
+  q.studentDividend = parseInt($('a-dividend').value);
+
+  // Strict: divisor and quotient must match exactly (order matters in division)
+  q.readingCorrect = q.studentDivisor === q.divisor && q.studentQuotient === q.quotient;
+  q.factCorrect = q.studentDividend === q.divisor * q.quotient;
+  q.checked = true;
+
+  $('a-slider-divisor').disabled = true;
+  $('a-slider-quotient').disabled = true;
+  $('a-dividend').disabled = true;
+
+  const fb = $('feedback');
+  const both = q.readingCorrect && q.factCorrect;
+  const dividend = q.divisor * q.quotient;
+  let html = '';
+  if (both) {
+    fb.className = 'feedback show correct';
+    html += `<div><span class="mark ok">&check;</span> Nice work — that's right!</div>`;
+  } else if (q.readingCorrect && !q.factCorrect) {
+    fb.className = 'feedback show wrong';
+    html += `<div><span class="mark ok">&check;</span> You read the model correctly.</div>`;
+    html += `<div class="feedback-detail"><span class="mark no">&times;</span> The total isn't quite right.</div>`;
+    html += `<div class="feedback-correct-answer">${dividend} &divide; ${q.divisor} = ${q.quotient}</div>`;
+  } else if (!q.readingCorrect && q.factCorrect) {
+    fb.className = 'feedback show wrong';
+    html += `<div><span class="mark ok">&check;</span> The total is right.</div>`;
+    html += `<div class="feedback-detail"><span class="mark no">&times;</span> But the divisor and quotient don't match the model.</div>`;
+    html += `<div class="feedback-correct-answer">${dividend} &divide; ${q.divisor} = ${q.quotient}</div>`;
+  } else {
+    fb.className = 'feedback show wrong';
+    html += `<div><span class="mark no">&times;</span> Not quite. The correct answer is:</div>`;
+    html += `<div class="feedback-correct-answer">${dividend} &divide; ${q.divisor} = ${q.quotient}</div>`;
+  }
+  fb.innerHTML = html;
+
+  $('check-btn').style.display = 'none';
+  $('next-btn').style.display = '';
+
+  let s = 0;
+  state.questions.slice(0, state.index + 1).forEach(qq => {
+    if (qq.readingCorrect) s += 0.5;
+    if (qq.factCorrect) s += 0.5;
+  });
+  $('q-score').textContent = s % 1 === 0 ? s : s.toFixed(1);
+}
+
+function nextQuestion() {
+  if (mode === 'practice') {
+    startPracticeQuestion();
+    return;
+  }
+  state.index++;
+  if (state.index >= QUIZ_LENGTH) showSummary();
+  else showQuestion();
+}
+
+/* ---------- Practice mode ---------- */
+let mode = 'assessment';
+let practiceCount = 0;
+
+function startPracticeQuestion() {
+  practiceCount++;
+  state.questions = [{
+    type: MODEL_TYPES[randInt(0, MODEL_TYPES.length - 1)],
+    divisor: randInt(1, 12),
+    quotient: randInt(1, 12),
+    studentDivisor: 1, studentQuotient: 1, studentDividend: '',
+    checked: false,
+    readingCorrect: null, factCorrect: null
+  }];
+  state.index = 0;
+  $('practice-q-num').textContent = practiceCount;
+  showScreen('question');
+  showQuestion();
+}
+function enterAssessmentMode() {
+  mode = 'assessment';
+  $('progress-row-assessment').style.display = '';
+  $('progress-row-practice').style.display = 'none';
+  state.questions = generateQuestions();
+  state.index = 0;
+  showScreen('question');
+  showQuestion();
+}
+function enterPracticeMode() {
+  mode = 'practice';
+  practiceCount = 0;
+  $('progress-row-assessment').style.display = 'none';
+  $('progress-row-practice').style.display = '';
+  startPracticeQuestion();
+}
+
+/* ---------- Summary ---------- */
+function showSummary() {
+  showScreen('summary'); window.nhTrack&&nhTrack('game_complete',{game:'Division Assessment'});
+  let reading = 0, facts = 0;
+  state.questions.forEach(q => {
+    if (q.readingCorrect) reading++;
+    if (q.factCorrect) facts++;
+  });
+  $('sum-factors').textContent = reading;
+  $('sum-products').textContent = facts;
+
+  const breakdown = MODEL_TYPES.map(type => {
+    const qs = state.questions.filter(q => q.type === type);
+    const r = qs.filter(q => q.readingCorrect).length;
+    const f = qs.filter(q => q.factCorrect).length;
+    return { type, total: qs.length, reading: r, facts: f };
+  });
+  $('model-breakdown').innerHTML = breakdown.map(b => `
+    <div class="model-stat">
+      <span class="name">${MODEL_NAMES[b.type]}</span>
+      <span class="score">Reading: ${b.reading}/${b.total}</span>
+      <span class="score">Total: ${b.facts}/${b.total}</span>
+    </div>
+  `).join('');
+
+  $('q-grid').innerHTML = state.questions.map((q, i) => {
+    const cls = q.readingCorrect && q.factCorrect
+      ? 'right'
+      : (q.readingCorrect || q.factCorrect ? 'partial' : 'wrong');
+    const rm = q.readingCorrect ? '<span class="mark ok">&check;</span>' : '<span class="mark no">&times;</span>';
+    const fm = q.factCorrect ? '<span class="mark ok">&check;</span>' : '<span class="mark no">&times;</span>';
+    return `<div class="q-card ${cls}">
+      <div class="qnum">Q${i + 1}</div>
+      <div class="qmodel">${MODEL_NAMES[q.type]}</div>
+      <div class="qanswer">${q.divisor * q.quotient} &divide; ${q.divisor} = ${q.quotient}</div>
+      <div style="font-size:13px;margin-top:4px;">${rm}reading ${fm}total</div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- Wiring ---------- */
+$('start-btn').addEventListener('click', enterAssessmentMode);
+$('practice-btn').addEventListener('click', enterPracticeMode);
+$('switch-to-assessment').addEventListener('click', enterAssessmentMode);
+
+$('a-slider-divisor').addEventListener('input', () => {
+  if (state.questions[state.index]?.checked) return;
+  updateAnswerDisplay();
+});
+$('a-slider-quotient').addEventListener('input', () => {
+  if (state.questions[state.index]?.checked) return;
+  updateAnswerDisplay();
+});
+$('a-dividend').addEventListener('input', () => {
+  const v = $('a-dividend').value.trim();
+  $('check-btn').disabled = v === '' || isNaN(parseInt(v));
+});
+
+$('check-btn').addEventListener('click', checkAnswer);
+$('next-btn').addEventListener('click', nextQuestion);
+$('restart-btn').addEventListener('click', () => showScreen('welcome'));
+
+buildTicks('a-ticks-divisor', 1);
+buildTicks('a-ticks-quotient', 1);
+</script>
+<div style="text-align:center;font-size:12px;color:#8A7A63;margin:22px 0 8px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener" style="color:#C77B12;text-decoration:none">numberhive.app</a></div>
+</body>
+</html>
