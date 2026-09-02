@@ -274,10 +274,13 @@ function updateGhost(){
 
 /* ---------- pointer ---------- */
 function cellFromEvent(e){
-  const rect=svg.getBoundingClientRect();
-  const px=(e.clientX-rect.left)/rect.width*GRID;
-  const py=(e.clientY-rect.top)/rect.height*GRID;
-  return {col:Math.floor(px), row:Math.floor(py)};
+  // Map screen coords through the SVG's own matrix so it stays exact even when
+  // the SVG box is letterboxed (e.g. clamped by max-height) around the square board.
+  const ctm=svg.getScreenCTM();
+  if(!ctm) return {col:0,row:0};
+  const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+  const p=pt.matrixTransform(ctm.inverse());
+  return {col:Math.floor(p.x), row:Math.floor(p.y)};
 }
 svg.addEventListener("pointermove",e=>{
   if(over||!selectionValid()||(botMode&&turn===BOT)){ return; }
