@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Tower Match</title>
+<style>
+  :root{
+    --cream:#FFFDF7;--ink:#3B2E1A;--muted:#8A7A63;--line:#E7DBC5;
+    --honey:#F5A623;--honey-dark:#C77B12;--honey-pale:#FFF6E5;--honey-light:#FBE7BE;
+    --blue:#4A78D6;--blue-dark:#2F55A6;--blue-light:#D5E1F7;--good:#2E9E5B;--bad:#D6534A;
+    --wood:#B5793A;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100vh;background:var(--cream);color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+  .wrap{max-width:560px;margin:0 auto;padding:14px 14px 40px}
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em} h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px;color:var(--muted)}
+  .story{font-size:13.5px;color:var(--ink);text-align:center;margin:2px 0 8px}
+  .story b{color:var(--honey-dark)}
+
+  .bar{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin:8px 0}
+  .seg{display:flex;background:var(--honey-pale);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:transparent;padding:8px 14px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;min-height:38px;font-weight:700}
+  .seg button.on{background:var(--honey);color:#fff}
+  .streak{font-size:13px;font-weight:700;color:var(--muted)} .streak b{color:var(--good)}
+
+  .prompt{text-align:center;margin:8px 0 4px}
+  .chip{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:8px 16px;border-radius:16px;margin:3px 5px;line-height:1.15}
+  .chip.a{background:var(--honey-pale);color:var(--honey-dark);border:1.5px solid var(--honey)}
+  .chip.b{background:var(--blue-light);color:var(--blue-dark);border:1.5px solid var(--blue)}
+  .chip .title{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:800}
+  .chip .grp{font-size:13px;font-weight:700} .chip .grp b{font-size:18px}
+  .chip svg{display:block}
+  .sub{text-align:center;font-size:13px;color:var(--muted);margin:4px 0 8px}
+
+  .stage{display:grid;grid-template-columns:140px 140px;justify-content:center;column-gap:26px;align-items:end;min-height:210px;
+    background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 10px 14px;position:relative;overflow:visible;box-shadow:0 8px 30px rgba(120,90,30,.08)}
+  .twr{position:relative;display:flex;flex-direction:column;align-items:center;justify-self:center}
+  .hero{height:30px;display:flex;align-items:flex-end;justify-content:center}
+  .hero.idle svg{animation:idlebob 1.8s ease-in-out infinite}
+  @keyframes idlebob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  .cap{font-size:16px;font-weight:800;margin:2px 0 6px;min-height:20px}
+  .twr.a .cap{color:var(--honey-dark)} .twr.b .cap{color:var(--blue-dark)}
+  .colwrap{position:relative}
+  .col{display:flex;flex-direction:column-reverse;align-items:center;gap:0}
+  .block{width:46px;border:1px solid rgba(0,0,0,.14);animation:pop .16s ease}
+  @keyframes pop{from{transform:scale(.6);opacity:.3}to{transform:scale(1);opacity:1}}
+  .twr.a .block.g0{background:var(--honey)} .twr.a .block.g1{background:var(--honey-light)}
+  .twr.b .block.g0{background:var(--blue)} .twr.b .block.g1{background:var(--blue-light)}
+  .base{width:58px;height:8px;border-radius:3px;background:var(--ink)}
+  .labels{position:absolute;left:0;right:0;bottom:0;top:0;pointer-events:none}
+  .lbl{position:absolute;font-size:11px;font-weight:700;color:var(--muted);opacity:.72;transform:translateY(50%);white-space:nowrap;line-height:1}
+  .twr.a .lbl{right:100%;margin-right:8px;text-align:right}
+  .twr.b .lbl{left:100%;margin-left:8px;text-align:left}
+
+  .plank{position:absolute;height:9px;background:var(--wood);border:1px solid #8a5a28;border-radius:4px;display:none;z-index:2;box-shadow:0 2px 4px rgba(120,90,30,.25);transform-origin:left center;transition:transform .35s ease}
+  .flybee{position:absolute;display:none;z-index:4}
+  .flybee.walking svg{animation:walkbob .32s ease-in-out infinite}
+  @keyframes walkbob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-3px) rotate(2deg)}}
+
+  .addrow{display:grid;grid-template-columns:140px 140px;justify-content:center;column-gap:26px;margin-top:10px}
+  .addrow .cell{display:flex;justify-content:center}
+  .predict{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:14px;flex-wrap:wrap;font-size:14px;font-weight:700;color:var(--muted)}
+  .predict input{width:80px;font:inherit;font-size:20px;font-weight:800;text-align:center;padding:6px;border:2px solid var(--line);border-radius:10px;color:var(--ink)}
+  .predict input:focus{outline:none;border-color:var(--honey)}
+
+  .actions{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+  .btn{font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:10px;cursor:pointer;border:2px solid var(--honey);background:var(--honey);color:#fff;transition:transform .1s}
+  .btn.b{border-color:var(--blue);background:var(--blue)}
+  .btn.ghost{background:#fff;color:var(--honey-dark)} .btn:active{transform:translateY(1px)} .btn:disabled{opacity:.4;cursor:not-allowed}
+  .feedback{text-align:center;font-size:14px;font-weight:700;min-height:20px;margin-top:12px}
+  .feedback.ok{color:var(--good)} .feedback.no{color:var(--bad)} .feedback .n{color:var(--good)}
+
+  .lcmcard{margin-top:14px;text-align:center;font-size:15px;font-weight:700;color:var(--ink);background:var(--honey-pale);border:2px solid var(--honey);border-radius:14px;padding:14px;opacity:0;transform:scale(.7);transition:opacity .3s,transform .4s cubic-bezier(.2,1.35,.4,1);display:none}
+  .lcmcard.show{display:block;opacity:1;transform:scale(1)}
+  .lcmcard .big{color:var(--honey-dark);font-size:30px;font-weight:800;display:inline-block;vertical-align:-4px;margin:0 2px}
+  .lcmcard small{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}
+
+  .help{margin-top:18px;font-size:13px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+  .help b{color:var(--ink)}
+  .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
+  .credit a{color:var(--honey-dark);text-decoration:none}
+
+  body{background:url('scene-main.jpg') center center/cover no-repeat fixed, var(--cream);min-height:100vh}
+  .wrap{background:rgba(255,253,247,.86);border-radius:20px;box-shadow:0 8px 30px rgba(120,90,30,.16);backdrop-filter:blur(2px)}
+</style>
+<script src="analytics.js"></script>
+</head>
+<body>
+<a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
+
+<div class="wrap">
+  <header>
+    <h1>Tower <span>Match</span></h1>
+    <span class="tag">lowest common multiple</span>
+  </header>
+  <div class="story">🐝 <b>Buzzy Bee lost his wings!</b> Build the towers level so he can walk home to his hive.</div>
+
+  <div class="bar">
+    <div class="seg" id="seg"><button data-l="easy" class="on">Mild</button><button data-l="medium">Medium</button><button data-l="hard">Spicy</button></div>
+    <span class="streak">Streak <b id="streak">0</b></span>
+  </div>
+
+  <div class="prompt">
+    <span class="chip a"><span class="title"><span id="chipbee"></span> Buzzy's tower</span><span class="grp">groups of <b id="pa">4</b></span></span>
+    <span class="chip b"><span class="title"><span id="chiphive"></span> Hive tower</span><span class="grp">groups of <b id="pb">5</b></span></span>
+  </div>
+  <div class="sub">Keep the shorter tower growing until both are level — the first level height is the LCM.</div>
+
+  <div class="stage" id="stage">
+    <div class="plank" id="plank"></div>
+    <div class="flybee" id="flybee"></div>
+    <div class="twr a"><div class="hero idle" id="heroA"></div><div class="cap" id="capA">0</div><div class="colwrap"><div class="labels" id="labA"></div><div class="col" id="colA"><span class="base"></span></div></div></div>
+    <div class="twr b"><div class="hero" id="heroB"></div><div class="cap" id="capB">0</div><div class="colwrap"><div class="labels" id="labB"></div><div class="col" id="colB"><span class="base"></span></div></div></div>
+  </div>
+
+  <div class="addrow">
+    <div class="cell"><button class="btn" id="addA">+ group of <span id="ba">4</span></button></div>
+    <div class="cell"><button class="btn b" id="addB">+ group of <span id="bb">5</span></button></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn ghost" id="auto">Auto-build</button>
+    <button class="btn ghost" id="newg">New pair</button>
+  </div>
+
+  <div class="predict">Predict the level height: <input type="number" id="pred" inputmode="numeric" placeholder="?"><button class="btn ghost" id="checkp">Check</button></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="lcmcard" id="lcmcard"></div>
+
+  <div class="help">
+    <b>How to play.</b> Buzzy's tower climbs in one group size, the hive's tower in another. Keep the shorter
+    one growing until both are <b>exactly level</b> — then the platform bridges across and Buzzy walks home. The
+    faint numbers up each side count the running total. The first level height is the <b>lowest common multiple</b>.
+  </div>
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+function gcd(a,b){while(b){[a,b]=[b,a%b];}return a;}
+function lcm(a,b){return a*b/gcd(a,b);}
+let level="easy", A,B,LCM, hA=0, hB=0, u=18, streak=0, matched=false, auto=null;
+
+const BEE=`<svg viewBox="0 0 34 24" width="30" height="21" aria-hidden="true">
+  <g stroke="#3B2E1A" stroke-width="1.2" stroke-linecap="round">
+    <line x1="9" y1="18" x2="7" y2="22.5"/><line x1="13" y1="19" x2="12.5" y2="23.5"/><line x1="17" y1="18" x2="18.5" y2="22.5"/>
+  </g>
+  <ellipse cx="14" cy="13" rx="10" ry="7" fill="#F5A623" stroke="#3B2E1A" stroke-width="1.3"/>
+  <g fill="#3B2E1A"><rect x="10.4" y="7.2" width="2.4" height="11.6" rx="1.2"/><rect x="15" y="7.2" width="2.4" height="11.6" rx="1.2"/></g>
+  <circle cx="24" cy="12" r="4.3" fill="#3B2E1A"/>
+  <g stroke="#3B2E1A" stroke-width="1" stroke-linecap="round"><line x1="25.2" y1="8.4" x2="27.4" y2="4.2"/><line x1="22.6" y1="8.4" x2="21.6" y2="4.4"/></g>
+  <circle cx="27.6" cy="4" r="1.2" fill="#3B2E1A"/><circle cx="21.4" cy="4.2" r="1.2" fill="#3B2E1A"/>
+  <circle cx="25.5" cy="11.2" r="0.95" fill="#FFFDF7"/>
+</svg>`;
+const HIVE=`<svg viewBox="0 0 34 30" width="30" height="27" aria-hidden="true">
+  <g fill="#F5A623" stroke="#C77B12" stroke-width="1">
+    <rect x="8" y="3" width="18" height="6" rx="3"/><rect x="5" y="8.5" width="24" height="6" rx="3"/>
+    <rect x="3" y="14" width="28" height="6" rx="3"/><rect x="5" y="19.5" width="24" height="6.5" rx="3.2"/>
+  </g>
+  <ellipse cx="17" cy="22" rx="3.4" ry="4" fill="#3B2E1A"/>
+</svg>`;
+
+function gen(){
+  const cfg={easy:{lo:2,hi:6,cap:24},medium:{lo:2,hi:8,cap:36},hard:{lo:3,hi:12,cap:60}}[level];
+  for(let t=0;t<500;t++){ const a=cfg.lo+Math.floor(Math.random()*(cfg.hi-cfg.lo+1)), b=cfg.lo+Math.floor(Math.random()*(cfg.hi-cfg.lo+1));
+    if(a===b) continue; const l=lcm(a,b); if(l>=8 && l<=cfg.cap) return {A:a,B:b,LCM:l}; }
+  return {A:4,B:5,LCM:20};
+}
+
+function blocksHtml(h, step){
+  let s=""; for(let i=0;i<h;i++){ const grp=Math.floor(i/step)%2;
+    s+=`<span class="block g${grp}" style="height:${u}px"></span>`; }
+  return s;
+}
+function labelsHtml(h, step){
+  let s=""; for(let k=1;k*step<=h;k++){ const y=8+k*step*u;
+    s+=`<span class="lbl" style="bottom:${y}px">${k*step}</span>`; }
+  return s;
+}
+function draw(){
+  $('colA').innerHTML=blocksHtml(hA,A)+`<span class="base"></span>`;
+  $('colB').innerHTML=blocksHtml(hB,B)+`<span class="base"></span>`;
+  $('labA').innerHTML=labelsHtml(hA,A);
+  $('labB').innerHTML=labelsHtml(hB,B);
+  $('capA').textContent=hA; $('capB').textContent=hB;
+}
+function crossBridge(){
+  const s=$('stage').getBoundingClientRect();
+  const a=$('colA').getBoundingClientRect(), b=$('colB').getBoundingClientRect();
+  const topY=a.top-s.top;
+  const ax=a.left-s.left+a.width/2, bx=b.left-s.left+b.width/2;
+  const plank=$('plank');
+  plank.style.left=ax+'px'; plank.style.width=(bx-ax)+'px'; plank.style.top=(topY-9)+'px';
+  plank.style.transform='scaleX(0)'; plank.style.display='block';
+  requestAnimationFrame(()=>{ plank.style.transform='scaleX(1)'; });
+  const bee=$('flybee'); bee.innerHTML=BEE;
+  bee.style.transition='none'; bee.style.top=(topY-30)+'px'; bee.style.left=(ax-13)+'px'; bee.style.display='block';
+  $('heroA').style.visibility='hidden';
+  setTimeout(()=>{
+    bee.classList.add('walking');
+    bee.style.transition='left 2.6s ease-in-out';
+    bee.style.left=(bx-13)+'px';
+  }, 420);
+  setTimeout(()=>{ bee.classList.remove('walking'); revealLCM(); }, 3200);
+}
+function revealLCM(){
+  const card=$('lcmcard');
+  card.innerHTML=`The <b>Lowest Common Multiple</b> of ${A} and ${B} is <span class="big" id="lcmbig">0</span><small>${LCM}÷${A}=${LCM/A} groups · ${LCM}÷${B}=${LCM/B} groups</small>`;
+  card.classList.add('show');
+  const big=$('lcmbig'); let v=0; const steps=18, inc=Math.max(1,Math.round(LCM/steps));
+  const t=setInterval(()=>{ v+=inc; if(v>=LCM){ v=LCM; clearInterval(t);} big.textContent=v; }, 40);
+}
+function checkMatch(){
+  if(hA>0 && hA===hB && !matched){
+    matched=true; stopAuto(); crossBridge();
+    if(hA===LCM){ $('feedback').innerHTML=`🎉 Level at <span class="n">${LCM}</span> — Buzzy's walking home!`; $('feedback').className="feedback ok"; }
+    else { $('feedback').innerHTML=`Buzzy crosses at ${hA} — but he could've got home sooner. The <b>lowest</b> level is <span class="n">${LCM}</span>.`; $('feedback').className="feedback no"; }
+  }
+}
+function addA(){ if(matched) return; hA+=A; draw(); checkMatch(); }
+function addB(){ if(matched) return; hB+=B; draw(); checkMatch(); }
+
+function newRound(){
+  stopAuto(); const g=gen(); A=g.A;B=g.B;LCM=g.LCM; hA=0;hB=0; matched=false;
+  u=Math.max(9, Math.min(20, Math.round(300/LCM)));
+  $('pa').textContent=A; $('pb').textContent=B; $('ba').textContent=A; $('bb').textContent=B;
+  $('pred').value=""; $('feedback').textContent=""; $('feedback').className="feedback";
+  $('lcmcard').classList.remove('show'); $('lcmcard').innerHTML="";
+  $('plank').style.display='none'; $('flybee').style.display='none'; $('flybee').classList.remove('walking');
+  $('heroA').style.visibility='visible'; $('heroA').innerHTML=BEE; $('heroB').innerHTML=HIVE;
+  $('chipbee').innerHTML=`<svg viewBox="0 0 34 24" width="20" height="14" aria-hidden="true"><ellipse cx="14" cy="13" rx="10" ry="7" fill="#F5A623" stroke="#3B2E1A" stroke-width="1.3"/><g fill="#3B2E1A"><rect x="10.4" y="7.2" width="2.4" height="11.6" rx="1.2"/><rect x="15" y="7.2" width="2.4" height="11.6" rx="1.2"/></g><circle cx="24" cy="12" r="4.3" fill="#3B2E1A"/></svg>`;
+  $('chiphive').innerHTML=`<svg viewBox="0 0 34 30" width="16" height="15" aria-hidden="true"><g fill="#4A78D6" stroke="#2F55A6" stroke-width="1"><rect x="8" y="3" width="18" height="6" rx="3"/><rect x="5" y="8.5" width="24" height="6" rx="3"/><rect x="3" y="14" width="28" height="6" rx="3"/><rect x="5" y="19.5" width="24" height="6.5" rx="3.2"/></g><ellipse cx="17" cy="22" rx="3.4" ry="4" fill="#3B2E1A"/></svg>`;
+  draw();
+}
+function autoBuild(){
+  if(matched) return; stopAuto();
+  auto=setInterval(()=>{
+    if(hA===hB && hA>0){ stopAuto(); checkMatch(); return; }
+    if(hA<=hB) hA+=A; else hB+=B;   // grow the shorter one -> converges to LCM
+    draw();
+    if(hA===hB){ stopAuto(); checkMatch(); }
+  }, 420);
+}
+function stopAuto(){ if(auto){ clearInterval(auto); auto=null; } }
+function checkPredict(){
+  const p=parseInt($('pred').value,10);
+  if(isNaN(p)){ $('feedback').textContent="Type a height first."; $('feedback').className="feedback no"; return; }
+  if(p===LCM){ streak++; $('streak').textContent=streak;
+    $('feedback').innerHTML=`Spot on — build it to watch Buzzy walk home!`; $('feedback').className="feedback ok";
+    window.nhTrack&&nhTrack('game_complete',{game:'Tower Match',level:level,lcm:LCM,correct:true}); }
+  else { streak=0; $('streak').textContent=0;
+    $('feedback').innerHTML=`Not quite — build the towers to find the first level height.`; $('feedback').className="feedback no"; }
+}
+
+$('addA').onclick=addA; $('addB').onclick=addB; $('auto').onclick=autoBuild; $('newg').onclick=newRound; $('checkp').onclick=checkPredict;
+$('pred').addEventListener('keydown',e=>{ if(e.key==='Enter') checkPredict(); });
+$('seg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $('seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  level=b.dataset.l; streak=0; $('streak').textContent=0; newRound();
+});
+newRound();
+</script>
+</body>
+</html>

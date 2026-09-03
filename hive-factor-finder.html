@@ -120,8 +120,8 @@
   <div class="help">
     <b>Goal: find the prime factors.</b> Tap a number, then tap one of its <b>factors</b> to split it
     into two branches (split 60 into 2 and 30). Keep splitting the amber numbers until every branch is
-    a green <b>prime</b> — those are the answer. On <b>Easy</b> the buttons show you which factors work;
-    on <b>Medium</b> and <b>Hard</b> you have to pick the right factor yourself, and a wrong pick costs
+    a green <b>prime</b> — those are the answer. On <b>Mild</b> the buttons show you which factors work;
+    on <b>Medium</b> and <b>Spicy</b> you have to pick the right factor yourself, and a wrong pick costs
     a move. Try to match the <b>fewest possible</b> moves shown up top. Stuck? <b>Hint</b> splits one for you.
   </div>
   <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
@@ -350,7 +350,7 @@ function hint(){
 }
 function buildSeg(){
   const seg=document.getElementById("seg"); seg.innerHTML="";
-  [["Easy","easy"],["Medium","medium"],["Hard","hard"]].forEach(([label,t])=>{
+  [["Mild","easy"],["Medium","medium"],["Spicy","hard"]].forEach(([label,t])=>{
     const b=document.createElement("button"); b.textContent=label; b.className=tier===t?"on":"";
     b.onclick=()=>{ tier=t; buildSeg(); newNumber(); }; seg.appendChild(b);
   });

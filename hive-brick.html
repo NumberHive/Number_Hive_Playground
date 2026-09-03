@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Brick Match</title>
+<style>
+  :root{
+    --cream:#FFFDF7;--ink:#3B2E1A;--muted:#8A7A63;--line:#E7DBC5;
+    --honey:#F5A623;--honey-dark:#C77B12;--honey-pale:#FFF6E5;--honey-light:#FBE7BE;
+    --blue:#4A78D6;--blue-dark:#2F55A6;--blue-light:#D5E1F7;--good:#2E9E5B;--bad:#D6534A;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-drag:none}
+  html,body{margin:0;min-height:100vh;background:var(--cream);color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+  .wrap{position:relative;max-width:560px;margin:0 auto;padding:14px 14px 40px;user-select:none;-webkit-user-select:none}
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em} h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px;color:var(--muted)}
+  .story{font-size:13.5px;color:var(--ink);text-align:center;margin:2px 0 8px} .story b{color:var(--honey-dark)}
+
+  .bar{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin:8px 0}
+  .seg{display:flex;background:var(--honey-pale);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:transparent;padding:8px 14px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;min-height:38px;font-weight:700}
+  .seg button.on{background:var(--honey);color:#fff}
+  .streak{font-size:13px;font-weight:700;color:var(--muted)} .streak b{color:var(--good)}
+
+  .prompt{text-align:center;margin:8px 0 4px}
+  .clearrow{display:flex;justify-content:center;margin-top:12px}
+  .clearrow .btn{white-space:nowrap}
+  .chip{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:8px 16px;border-radius:16px;margin:3px 5px;line-height:1.15}
+  .chip.a{background:var(--honey-pale);color:var(--honey-dark);border:1.5px solid var(--honey)}
+  .chip.b{background:var(--blue-light);color:var(--blue-dark);border:1.5px solid var(--blue)}
+  .chip .title{font-size:14px;font-weight:800} .chip .grp{font-size:13px;font-weight:700} .chip .grp b{font-size:18px}
+
+  .stage{display:grid;grid-template-columns:150px 150px;justify-content:center;column-gap:34px;align-items:end;min-height:230px;
+    background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 10px;position:relative;overflow:visible;box-shadow:0 8px 30px rgba(120,90,30,.08)}
+  .twr{position:relative;display:flex;flex-direction:column;align-items:center;justify-self:center}
+  .cap{font-size:16px;font-weight:800;margin-bottom:6px}
+  .twr.a .cap{color:var(--honey-dark)} .twr.b .cap{color:var(--blue-dark)}
+  .tcol{position:relative;width:56px;margin:0 auto;cursor:pointer}
+  .ghost{position:absolute;left:50%;transform:translateX(-50%);width:56px;border:2px dashed var(--line);border-radius:5px;pointer-events:none;box-sizing:border-box}
+  .brick{position:absolute;left:50%;transform:translateX(-50%);width:50px;border:1px solid rgba(0,0,0,.16);border-radius:2px;box-sizing:border-box;animation:drop .16s ease}
+  @keyframes drop{from{opacity:.25}to{opacity:1}}
+  .base{position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:60px;height:8px;border-radius:3px;background:var(--ink)}
+  .bricklbl{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px;min-height:14px}
+
+  .supply{position:relative;margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:12px;
+    background:var(--honey-pale);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .clearrow{display:flex;justify-content:flex-end;margin-top:10px}
+  .clearrow .btn{white-space:nowrap}
+  .stepper{display:flex;align-items:center;justify-content:center;gap:16px}
+  .stepper .sb{width:46px;height:46px;border-radius:12px;border:none;background:var(--honey);color:#fff;font-size:28px;font-weight:800;cursor:pointer;line-height:1;box-shadow:0 2px 6px rgba(120,90,30,.3)}
+  .stepper .sb:active{transform:translateY(1px)}
+  .stepper .sv{font-size:16px;font-weight:800;color:var(--ink);min-width:104px;text-align:center} .stepper .sv b{font-size:24px;color:var(--honey-dark)}
+  .source{touch-action:none;cursor:grab;user-select:none;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .source .sbrick{width:50px;background:var(--honey);border:1.5px solid var(--honey-dark);border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px}
+  .source .grabh{font-size:11px;font-weight:700;color:var(--muted)}
+  .dragbrick{position:fixed;width:50px;background:var(--honey);border:1.5px solid var(--honey-dark);border-radius:3px;z-index:9999;pointer-events:none;opacity:.92;box-shadow:0 4px 12px rgba(120,90,30,.3)}
+
+  .controls{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+  .toolrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .btn{font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:10px;cursor:pointer;border:2px solid var(--honey);background:var(--honey);color:#fff;transition:transform .1s}
+  .supply .btn{font-size:13px;padding:9px 14px}
+  .btn.alt{background:#fff;color:var(--honey-dark)} .btn:active{transform:translateY(1px)}
+  .bar .btn{font-size:13px;padding:8px 13px;white-space:nowrap}
+  .feedback{text-align:center;font-size:14px;font-weight:700;min-height:20px;margin-top:12px}
+  .feedback.ok{color:var(--good)} .feedback.no{color:var(--bad)} .feedback.mid{color:var(--honey-dark)} .feedback .n{color:var(--good)}
+
+  .hcfcard{margin-top:14px;text-align:center;font-size:15px;font-weight:700;color:var(--ink);background:var(--honey-pale);border:2px solid var(--honey);border-radius:14px;padding:14px;opacity:0;transform:scale(.7);transition:opacity .3s,transform .4s cubic-bezier(.2,1.35,.4,1);display:none}
+  .hcfcard.show{display:block;opacity:1;transform:scale(1)}
+  .hcfcard .big{color:var(--honey-dark);font-size:30px;font-weight:800;display:inline-block;vertical-align:-4px;margin:0 2px}
+  .hcfcard small{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}
+
+  .help{margin-top:18px;font-size:13px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:14px} .help b{color:var(--ink)}
+  .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)} .credit a{color:var(--honey-dark);text-decoration:none}
+
+  body{background:url('scene-main.jpg') center center/cover no-repeat fixed, var(--cream);min-height:100vh}
+  .wrap{background:rgba(255,253,247,.92);border-radius:20px;box-shadow:0 8px 30px rgba(120,90,30,.16)}
+</style>
+<script src="analytics.js"></script>
+</head>
+<body>
+<a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18);backdrop-filter:blur(3px)">&larr; Playground</a>
+
+<div class="wrap">
+  <header>
+    <h1>Brick <span>Match</span></h1>
+    <span class="tag">highest common factor</span>
+  </header>
+  <div class="story">🐝 <b>Buzzy is building with equal bricks.</b> Drag bricks onto both towers — find the tallest brick that fills <b>both</b> with nothing left over.</div>
+
+  <div class="bar">
+    <div class="seg" id="seg"><button data-l="easy" class="on">Mild</button><button data-l="medium">Medium</button><button data-l="hard">Spicy</button></div>
+    <span class="streak">Streak <b id="streak">0</b></span>
+    <button class="btn alt" id="clear">Clear bricks</button>
+  </div>
+
+  <div class="prompt">
+    <span class="chip a"><span class="title">Tower one</span><span class="grp"><b id="pa">12</b> tall</span></span>
+    <span class="chip b"><span class="title">Tower two</span><span class="grp"><b id="pb">15</b> tall</span></span>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="twr a"><div class="cap" id="capA">0 / 12</div><div class="bricklbl" id="lblA"></div><div class="tcol" id="colA" data-t="a"><div class="ghost" id="ghostA"></div><span class="base"></span></div></div>
+    <div class="twr b"><div class="cap" id="capB">0 / 15</div><div class="bricklbl" id="lblB"></div><div class="tcol" id="colB" data-t="b"><div class="ghost" id="ghostB"></div><span class="base"></span></div></div>
+  </div>
+
+  <div class="supply">
+    <div class="source" id="source"><span class="grabh">grab &amp; drag onto a tower</span><div class="sbrick" id="sbrick">1</div></div>
+    <div class="stepper">
+      <button class="sb" id="minus" aria-label="Smaller brick">−</button>
+      <span class="sv">brick of <b id="sz">1</b></span>
+      <button class="sb" id="plus" aria-label="Taller brick">+</button>
+    </div>
+  </div>
+
+  <div class="feedback" id="feedback">Pick a brick height, then drag bricks onto each tower.</div>
+  <div class="hcfcard" id="hcfcard"></div>
+
+  <div class="help">
+    <b>How to play.</b> Choose a brick height with − / +, then drag bricks from the tray onto each tower (or tap a
+    tower). If a brick fills a tower to the top exactly, that height <b>divides</b> it. When one brick height fills
+    <b>both</b> towers exactly it's a common factor — try taller ones. The tallest that fills both is the
+    <b>highest common factor</b>. Overshoot the top and you've got a leftover.
+  </div>
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+function gcd(a,b){while(b){[a,b]=[b,a%b];}return a;}
+let level="easy", A=12, B=15, HCF=3, s=1, nA=0, nB=0, streak=0, matched=false, anim=null;
+
+function gen(){
+  const cfg={easy:{g:[2,4],mn:[2,5],cap:20},medium:{g:[2,6],mn:[2,5],cap:30},hard:{g:[3,8],mn:[2,6],cap:44}}[level];
+  const R=(lo,hi)=>lo+Math.floor(Math.random()*(hi-lo+1));
+  for(let t=0;t<800;t++){
+    const g=R(cfg.g[0],cfg.g[1]); let m=R(cfg.mn[0],cfg.mn[1]), n=R(cfg.mn[0],cfg.mn[1]);
+    if(m===n||gcd(m,n)!==1) continue;
+    const a=g*m, b=g*n; if(a>cfg.cap||b>cfg.cap||a<6||b<6) continue;
+    return {A:a,B:b,HCF:g};
+  }
+  return {A:12,B:15,HCF:3};
+}
+function unitPx(){ return Math.max(7, Math.min(20, Math.floor(280/Math.max(A,B)))); }
+
+function renderTower(which){
+  const total=which==='a'?A:B, n=which==='a'?nA:nB, u=unitPx();
+  const base=which==='a'?['#F5A623','#F7BB50']:['#4A78D6','#6E97E3'];
+  const col=$(which==='a'?'colA':'colB');
+  const stackH=Math.max(total, n*s)*u;
+  col.style.height=(stackH+8)+'px';
+  let html=`<div class="ghost" style="height:${total*u}px;bottom:8px"></div>`;
+  for(let k=0;k<n;k++){ const over=(k+1)*s>total; const bg=over?'#E4746B':base[k%2];
+    html+=`<span class="brick" style="height:${s*u}px;bottom:${8+k*s*u}px;background:${bg}"></span>`; }
+  html+=`<span class="base"></span>`;
+  col.innerHTML=html;
+}
+function render(){
+  $('sz').textContent=s; $('sbrick').textContent=s; $('sbrick').style.height=(s*unitPx())+'px';
+  renderTower('a'); renderTower('b');
+  const fA=nA*s, fB=nB*s;
+  $('capA').textContent=`${Math.min(fA,A)} / ${A}`; $('capB').textContent=`${Math.min(fB,B)} / ${B}`;
+  $('lblA').textContent = nA? (fA>A?`over by ${fA-A}`:(fA===A?`${nA} bricks — full!`:`${nA} bricks (${A-fA} to go)`)) : "";
+  $('lblB').textContent = nB? (fB>B?`over by ${fB-B}`:(fB===B?`${nB} bricks — full!`:`${nB} bricks (${B-fB} to go)`)) : "";
+}
+function evaluate(){
+  const fA=nA*s, fB=nB*s, overA=fA>A, overB=fB>B, exactA=fA===A, exactB=fB===B, fb=$('feedback');
+  if(matched) return;
+  if(overA||overB){ const who=(overA&&overB)?'both towers':(overA?'tower one':'tower two');
+    fb.innerHTML=`A brick of ${s} overshoots ${who} — it leaves a leftover, so it doesn't divide evenly. Try another height.`; fb.className="feedback no"; return; }
+  if(exactA&&exactB){
+    if(s===HCF){ win(); }
+    else { fb.innerHTML=`${s} fills both exactly — but a <b>taller</b> brick fits too. Try going higher!`; fb.className="feedback mid"; }
+    return;
+  }
+  fb.innerHTML=`Keep filling — get <b>both</b> towers exactly to the top.`; fb.className="feedback";
+}
+function addBrick(which){
+  if(matched) return;
+  if(which==='a') nA++; else nB++;
+  render(); evaluate();
+}
+function win(){
+  matched=true; streak++; $('streak').textContent=streak;
+  $('feedback').innerHTML=`🎉 The tallest brick that fills both is <span class="n">${HCF}</span>!`; $('feedback').className="feedback ok";
+  const card=$('hcfcard');
+  card.innerHTML=`The <b>Highest Common Factor</b> of ${A} and ${B} is <span class="big" id="hcfbig">0</span><small>${A}÷${HCF}=${A/HCF} bricks · ${B}÷${HCF}=${B/HCF} bricks</small>`;
+  card.classList.add('show');
+  const big=$('hcfbig'); let v=0, inc=Math.max(1,Math.round(HCF/12));
+  const t=setInterval(()=>{ v+=inc; if(v>=HCF){v=HCF;clearInterval(t);} big.textContent=v; }, 45);
+  window.nhTrack&&nhTrack('game_complete',{game:'Brick Match',level:level,hcf:HCF});
+}
+function setSize(ns){
+  s=Math.max(1, Math.min(Math.min(A,B), ns)); nA=0; nB=0; matched=false;
+  $('hcfcard').classList.remove('show'); $('hcfcard').innerHTML="";
+  render(); $('feedback').innerHTML=`Drag bricks of ${s} onto both towers.`; $('feedback').className="feedback";
+}
+function showBiggest(){
+  if(matched) return; if(anim) clearInterval(anim);
+  setSize(HCF);
+  anim=setInterval(()=>{
+    if(nA*s<A) nA++; else if(nB*s<B) nB++; else { clearInterval(anim); anim=null; render(); evaluate(); return; }
+    render();
+  }, 240);
+}
+function clearTowers(){
+  if(anim){clearInterval(anim);anim=null;} nA=0; nB=0; matched=false;
+  $('hcfcard').classList.remove('show'); $('hcfcard').innerHTML="";
+  render(); $('feedback').innerHTML=`Cleared — drag bricks of ${s} onto both towers.`; $('feedback').className="feedback";
+}
+function newRound(){
+  if(anim){clearInterval(anim);anim=null;} const g=gen(); A=g.A;B=g.B;HCF=g.HCF; matched=false;
+  $('pa').textContent=A; $('pb').textContent=B;
+  setSize(1);
+  $('feedback').innerHTML="Pick a brick height, then drag bricks onto each tower."; $('feedback').className="feedback";
+}
+
+// drag from source (robust: one clone, always cleaned up)
+const wrap=document.querySelector('.wrap');
+function inside(ev,r){ return ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom; }
+let dragClone=null, dragH=0;
+function dragMove(ev){ if(!dragClone) return;
+  dragClone.style.left=(ev.clientX-25)+'px'; dragClone.style.top=(ev.clientY-dragH/2)+'px'; }
+function endDrag(){ if(dragClone){ dragClone.remove(); dragClone=null; }
+  document.removeEventListener('pointermove',dragMove); document.removeEventListener('pointerup',dragUp); document.removeEventListener('pointercancel',endDrag); }
+function dragUp(ev){ const ra=$('colA').getBoundingClientRect(), rb=$('colB').getBoundingClientRect();
+  if(inside(ev,ra)) addBrick('a'); else if(inside(ev,rb)) addBrick('b'); endDrag(); }
+$('source').addEventListener('pointerdown',e=>{
+  e.preventDefault(); if(matched) return; endDrag();
+  dragH=s*unitPx(); dragClone=document.createElement('div'); dragClone.className='dragbrick'; dragClone.style.height=dragH+'px';
+  document.body.appendChild(dragClone); dragMove(e);
+  document.addEventListener('pointermove',dragMove); document.addEventListener('pointerup',dragUp); document.addEventListener('pointercancel',endDrag);
+});
+// tap fallback
+$('colA').addEventListener('click',()=>addBrick('a'));
+$('colB').addEventListener('click',()=>addBrick('b'));
+
+$('minus').onclick=()=>setSize(s-1); $('plus').onclick=()=>setSize(s+1);
+$('clear').onclick=clearTowers;
+$('seg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $('seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  level=b.dataset.l; streak=0; $('streak').textContent=0; newRound();
+});
+newRound();
+</script>
+</body>
+</html>

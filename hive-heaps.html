@@ -196,7 +196,7 @@ function tap(heap,to){
 
 function buildSeg(){
   const seg=document.getElementById("modeseg"); seg.innerHTML="";
-  [["2 Players",null],["Easy","easy"],["Medium","medium"],["Hard","hard"]].forEach(([label,m])=>{
+  [["2 Players",null],["Mild","easy"],["Medium","medium"],["Spicy","hard"]].forEach(([label,m])=>{
     const b=document.createElement("button"); b.textContent=label; b.className=botMode===m?"on":"";
     b.onclick=()=>{ botMode=m; buildSeg(); newGame(); }; seg.appendChild(b);
   });

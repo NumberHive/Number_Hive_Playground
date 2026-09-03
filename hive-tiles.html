@@ -380,7 +380,7 @@ function buildPads(){
 }
 function buildModeseg(){
   const seg=document.getElementById("modeseg"); seg.innerHTML="";
-  [["2 Players",null],["Easy","easy"],["Medium","medium"],["Hard","hard"]].forEach(([label,mode])=>{
+  [["2 Players",null],["Mild","easy"],["Medium","medium"],["Spicy","hard"]].forEach(([label,mode])=>{
     const btn=document.createElement("button"); btn.textContent=label; btn.className = botMode===mode?"on":"";
     btn.onclick=()=>{ botMode=mode; buildModeseg(); newGame(); };
     seg.appendChild(btn);

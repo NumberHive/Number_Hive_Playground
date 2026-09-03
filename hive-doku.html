@@ -279,7 +279,7 @@ document.addEventListener("keydown",e=>{
 
 function buildSeg(){
   const seg=document.getElementById("seg"); seg.innerHTML="";
-  [["Easy","easy"],["Medium","medium"],["Hard","hard"]].forEach(([label,t])=>{
+  [["Mild","easy"],["Medium","medium"],["Spicy","hard"]].forEach(([label,t])=>{
     const b=document.createElement("button"); b.textContent=label; b.className=tier===t?"on":"";
     b.onclick=()=>{ tier=t; idx=0; buildSeg(); loadPuzzle(); }; seg.appendChild(b);
   });
