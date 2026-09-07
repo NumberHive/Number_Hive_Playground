@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Bee Keeper</title>
+<style>
+  :root{
+    --cream:#FFFDF7;--ink:#3B2E1A;--muted:#8A7A63;--line:#E7DBC5;
+    --honey:#F5A623;--honey-dark:#C77B12;--honey-pale:#FFF6E5;
+    --blue:#4A78D6;--blue-dark:#2F55A6;--blue-light:#D5E1F7;--good:#2E9E5B;--bad:#D6534A;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-drag:none}
+  html,body{margin:0;min-height:100vh;background:var(--cream);color:var(--ink);
+    font-family:ui-rounded,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+  .wrap{max-width:600px;margin:0 auto;padding:14px 14px 40px;user-select:none;-webkit-user-select:none}
+  header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em} h1 span{color:var(--honey-dark)}
+  .tag{font-size:12px;color:var(--muted)}
+  .story{font-size:13.5px;color:var(--ink);text-align:center;margin:2px 0 8px} .story b{color:var(--honey-dark)}
+
+  .bar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin:8px 0}
+  .oplabel{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .seg{display:flex;background:var(--honey-pale);border:1px solid var(--line);border-radius:10px;overflow:hidden;flex-wrap:wrap}
+  .seg button{border:0;background:transparent;padding:8px 12px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;min-height:38px;font-weight:700}
+  .seg button.on{background:var(--honey);color:#fff}
+
+  .score{display:flex;gap:10px;margin:8px 0}
+  .pcard{flex:1;border:2px solid var(--line);border-radius:12px;padding:8px 12px;background:#fff;display:flex;align-items:center;gap:8px}
+  .pcard .dot{width:14px;height:14px;border-radius:50%}
+  .pcard.p1 .dot{background:var(--honey)} .pcard.p2 .dot{background:var(--blue)}
+  .pcard .who{font-size:13px;font-weight:700;color:var(--muted)}
+  .pcard .pts{margin-left:auto;font-size:22px;font-weight:800}
+  .pcard.turn.p1{border-color:var(--honey);box-shadow:0 0 0 2px var(--honey)}
+  .pcard.turn.p2{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}
+  .pcard.turn .who{color:var(--ink)}
+
+  .boardbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px;box-shadow:0 8px 30px rgba(120,90,30,.08)}
+  svg{display:block;width:100%;height:auto;touch-action:manipulation}
+  .fenceHit{stroke:transparent;stroke-width:15;stroke-linecap:round;cursor:pointer}
+  .guide{stroke:#e9e0cf;stroke-width:2;stroke-linecap:round}
+  .fence{stroke-width:7;stroke-linecap:round;pointer-events:none}
+  .fence.p1{stroke:var(--honey)} .fence.p2{stroke:var(--blue)}
+  .facefill{pointer-events:none} .bee{pointer-events:none;font-size:15px;text-anchor:middle;dominant-baseline:central}
+  .dot{fill:#c9b78e}
+
+  .msg{text-align:center;font-size:14px;font-weight:700;min-height:20px;margin-top:12px}
+  .msg.p1{color:var(--honey-dark)} .msg.p2{color:var(--blue-dark)} .msg.win{color:var(--good)}
+  .actions{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+  .btn{font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:10px;cursor:pointer;border:2px solid var(--honey);background:var(--honey);color:#fff}
+  .btn.alt{background:#fff;color:var(--honey-dark)}
+
+  .help{margin-top:18px;font-size:13px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:14px} .help b{color:var(--ink)}
+  .credit{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)} .credit a{color:var(--honey-dark);text-decoration:none}
+
+  body{background:url('scene-main.jpg') center center/cover no-repeat fixed, var(--cream);min-height:100vh}
+  .wrap{background:rgba(255,253,247,.9);border-radius:20px;box-shadow:0 8px 30px rgba(120,90,30,.16)}
+</style>
+<script src="analytics.js"></script>
+</head>
+<body>
+<a href="index.html" aria-label="Back to Playground" style="position:fixed;top:10px;left:10px;z-index:9999;display:inline-flex;align-items:center;gap:6px;font-family:ui-rounded,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;text-decoration:none;color:#C77B12;background:rgba(255,253,247,.92);border:1px solid #E7D6B0;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(120,90,30,.18)">&larr; Playground</a>
+
+<div class="wrap">
+  <header>
+    <h1>Bee <span>Keeper</span></h1>
+    <span class="tag">area · strategy</span>
+  </header>
+  <div class="story">🐝 Build fences to pen off the meadow. Close a shape and it fills with bees — <b>one bee per triangle</b>. Most bees wins!</div>
+
+  <div class="bar">
+    <span class="oplabel">Opponent</span>
+    <div class="seg" id="oppseg">
+      <button data-o="2p" class="on">2 Players</button>
+      <button data-o="mild">Mild 🤖</button>
+      <button data-o="medium">Medium 🤖</button>
+      <button data-o="spicy">Spicy 🤖</button>
+    </div>
+  </div>
+
+  <div class="score">
+    <div class="pcard p1 turn" id="c1"><span class="dot"></span><span class="who" id="w1">Player 1</span><span class="pts" id="s1">0</span></div>
+    <div class="pcard p2" id="c2"><span class="dot"></span><span class="who" id="w2">Player 2</span><span class="pts" id="s2">0</span></div>
+  </div>
+
+  <div class="boardbox"><svg id="svg" role="img" aria-label="Bee Keeper board"></svg></div>
+
+  <div class="msg" id="msg">Player 1 — draw a fence between two dots.</div>
+  <div class="actions">
+    <button class="btn alt" id="newg">New meadow</button>
+  </div>
+
+  <div class="help">
+    <b>How to play.</b> Take turns drawing one fence between two neighbouring dots. When your fence closes off an
+    area — any shape — every triangle inside becomes yours and fills with bees (a triangle is 1 bee, a rhombus 2,
+    and so on). <b>Turns always alternate</b>, and once a pen has bees it's sealed — no more fences inside. When no
+    fences can be added, whoever has the most bees wins.
+  </div>
+  <div class="credit">by Number Hive · <a href="https://numberhive.app" target="_blank" rel="noopener">numberhive.app</a></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const SVG="http://www.w3.org/2000/svg";
+const R=2;                         // fixed hexagon size (24 triangles)
+let opp="2p";                      // "2p" | "mild" | "medium" | "spicy"
+const S=54, HT=S*Math.sin(Math.PI/3), PAD=22;
+
+let faces, edgeFaces, allEdges, usedPts, bounds, drawn, owner, enclosed, turn, scores, over, elMap;
+
+const pt=(i,j)=>i+','+j;
+const ek=(a,b)=>a<b? a+'~'+b : b+'~'+a;
+const pxy=id=>{const [i,j]=id.split(',').map(Number); return [(i+j*0.5)*S, j*HT];};
+const isBot=()=>opp!=="2p";
+
+function build(){
+  faces=[]; edgeFaces=new Map(); usedPts=new Set();
+  const R2=2*R;
+  const inHex=(i,j)=> i>=0&&i<=R2&&j>=0&&j<=R2&&(i+j)>=R&&(i+j)<=3*R;
+  const add=(e,idx)=>{ if(!edgeFaces.has(e))edgeFaces.set(e,[]); edgeFaces.get(e).push(idx); };
+  const mk=(vv)=>{ if(!vv.every(([a,b])=>inHex(a,b))) return;
+    const vs=vv.map(([a,b])=>pt(a,b)), idx=faces.length, es=[ek(vs[0],vs[1]),ek(vs[0],vs[2]),ek(vs[1],vs[2])];
+    faces.push({verts:vs,edges:es}); es.forEach(e=>add(e,idx)); vs.forEach(v=>usedPts.add(v)); };
+  for(let j=0;j<R2;j++)for(let i=0;i<R2;i++){ mk([[i,j],[i+1,j],[i,j+1]]); mk([[i+1,j],[i,j+1],[i+1,j+1]]); }
+  allEdges=[...edgeFaces.keys()];
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  usedPts.forEach(id=>{const [x,y]=pxy(id); if(x<minX)minX=x; if(y<minY)minY=y; if(x>maxX)maxX=x; if(y>maxY)maxY=y;});
+  bounds={minX,minY,maxX,maxY};
+}
+function computeEnclosed(){
+  const open=new Array(faces.length).fill(false), q=[];
+  faces.forEach((f,idx)=>{ for(const e of f.edges){ if(edgeFaces.get(e).length===1 && !drawn.has(e)){ if(!open[idx]){open[idx]=true;q.push(idx);} break; } } });
+  while(q.length){ const cur=q.pop();
+    for(const e of faces[cur].edges){ if(drawn.has(e)) continue;
+      const fs=edgeFaces.get(e); const other=fs.length===2 ? (fs[0]===cur?fs[1]:fs[0]) : -1;
+      if(other>=0 && !open[other]){ open[other]=true; q.push(other); } } }
+  return open.map(o=>!o);
+}
+const isLocked=e=> edgeFaces.get(e).some(idx=>enclosed[idx]);   // edge sits inside a finished pen
+const legalMoveLeft=()=> allEdges.some(e=>!drawn.has(e) && !isLocked(e));
+
+function newGame(){
+  build();
+  drawn=new Map(); owner=new Array(faces.length).fill(0); enclosed=new Array(faces.length).fill(false);
+  turn=1; scores={1:0,2:0}; over=false;
+  $('w2').textContent = isBot() ? "Bot 🤖" : "Player 2";
+  render(true); updateHUD(); setMsg(1,"Player 1 — draw a fence between two dots.");
+}
+
+function countNew(enc){ let g=0; for(let i=0;i<enc.length;i++){ if(enc[i]&&!enclosed[i]) g++; } return g; }
+
+function playEdge(e){
+  if(over || drawn.has(e) || isLocked(e)) return false;
+  const mover=turn;
+  drawn.set(e,mover);
+  const enc=computeEnclosed(); let gained=0;
+  enc.forEach((v,idx)=>{ if(v && !enclosed[idx]){ enclosed[idx]=true; owner[idx]=mover; gained++; } });
+  scores[mover]+=gained; render(false); updateHUD();
+  if(!legalMoveLeft()){ endGame(); return true; }
+  turn = mover===1?2:1;
+  const moverName=(isBot()&&mover===2)?"Bot":"Player "+mover;
+  const nextName=(isBot()&&turn===2)?"Bot":"Player "+turn;
+  const note = gained>0 ? `${moverName} penned ${gained} 🐝 — ` : "";
+  setMsg(turn, note + nextName + (turn===2&&isBot() ? " is thinking…" : "'s fence."));
+  return true;
+}
+function endGame(){
+  over=true; const a=scores[1], b=scores[2], m=$('msg');
+  if(a===b){ m.textContent=`🐝 It's a tie — ${a} bees each!`; m.className="msg win"; }
+  else { const w=a>b?1:2, nm=(isBot()&&w===2)?"Bot":"Player "+w;
+    m.textContent=`🏆 ${nm} wins ${Math.max(a,b)}–${Math.min(a,b)} bees!`; m.className="msg win"; }
+  window.nhTrack&&nhTrack('game_complete',{game:'Bee Keeper',opp:opp,p1:a,p2:b});
+}
+
+function afterMove(){ if(isBot() && !over && turn===2){ setTimeout(botMove,500); } }
+function botMove(){
+  if(over||turn!==2) return;
+  const avail=allEdges.filter(e=>!drawn.has(e)&&!isLocked(e));
+  if(!avail.length) return;
+  // 1) take the biggest capture available
+  let best=null,bestGain=-1;
+  for(const e of avail){ drawn.set(e,2); const g=countNew(computeEnclosed()); drawn.delete(e); if(g>bestGain){bestGain=g;best=e;} }
+  if(bestGain>0){ playEdge(best); afterMove(); return; }
+  // 2) no capture — behaviour depends on level
+  const rand=arr=>arr[Math.floor(Math.random()*arr.length)];
+  if(opp==="mild"){ playEdge(rand(avail)); afterMove(); return; }
+  // opponent's best reply capture if I play e
+  const oppBest=e=>{ drawn.set(e,2); let mx=0;
+    for(const e2 of allEdges){ if(drawn.has(e2)||isLocked(e2))continue; drawn.set(e2,1); const g=countNew(computeEnclosed()); drawn.delete(e2); if(g>mx){mx=g; if(mx>=99)break;} }
+    drawn.delete(e); return mx; };
+  const safe=[]; let minGive=Infinity,minEdge=avail[0];
+  for(const e of avail){ const gb=oppBest(e); if(gb===0) safe.push(e); if(gb<minGive){minGive=gb;minEdge=e;} }
+  if(safe.length) best=rand(safe);
+  else if(opp==="spicy") best=minEdge;   // forced to give — give away the least
+  else best=rand(avail);                  // medium: random when forced
+  playEdge(best); afterMove();
+}
+
+function render(rebuild){
+  const svg=$('svg');
+  const vbx=bounds.minX-PAD, vby=bounds.minY-PAD, vbw=(bounds.maxX-bounds.minX)+2*PAD, vbh=(bounds.maxY-bounds.minY)+2*PAD;
+  svg.setAttribute('viewBox',`${vbx} ${vby} ${vbw} ${vbh}`);
+  if(rebuild){
+    svg.innerHTML=""; elMap={fence:{},hit:{},face:[],bee:[]};
+    const gFace=document.createElementNS(SVG,'g'),gGuide=document.createElementNS(SVG,'g'),gFence=document.createElementNS(SVG,'g'),gHit=document.createElementNS(SVG,'g'),gDot=document.createElementNS(SVG,'g'),gBee=document.createElementNS(SVG,'g');
+    faces.forEach((f,idx)=>{
+      const p=f.verts.map(pxy); const poly=document.createElementNS(SVG,'polygon');
+      poly.setAttribute('points',p.map(q=>q.join(',')).join(' ')); poly.setAttribute('class','facefill'); poly.setAttribute('fill','transparent');
+      gFace.appendChild(poly); elMap.face[idx]=poly;
+      const cx=(p[0][0]+p[1][0]+p[2][0])/3, cy=(p[0][1]+p[1][1]+p[2][1])/3;
+      const bee=document.createElementNS(SVG,'text'); bee.setAttribute('x',cx); bee.setAttribute('y',cy); bee.setAttribute('class','bee'); bee.textContent=""; gBee.appendChild(bee); elMap.bee[idx]=bee;
+    });
+    allEdges.forEach(e=>{
+      const [ai,bi]=e.split('~'); const A=pxy(ai), B=pxy(bi);
+      const gl=document.createElementNS(SVG,'line'); gl.setAttribute('x1',A[0]);gl.setAttribute('y1',A[1]);gl.setAttribute('x2',B[0]);gl.setAttribute('y2',B[1]); gl.setAttribute('class','guide'); gGuide.appendChild(gl);
+      const fl=document.createElementNS(SVG,'line'); fl.setAttribute('x1',A[0]);fl.setAttribute('y1',A[1]);fl.setAttribute('x2',B[0]);fl.setAttribute('y2',B[1]); fl.setAttribute('class','fence'); fl.style.display='none'; gFence.appendChild(fl); elMap.fence[e]=fl;
+      const hl=document.createElementNS(SVG,'line'); hl.setAttribute('x1',A[0]);hl.setAttribute('y1',A[1]);hl.setAttribute('x2',B[0]);hl.setAttribute('y2',B[1]); hl.setAttribute('class','fenceHit');
+      hl.addEventListener('click',()=>{ if(isBot()&&turn===2)return; if(playEdge(e)) afterMove(); });
+      gHit.appendChild(hl); elMap.hit[e]=hl;
+    });
+    usedPts.forEach(id=>{ const [x,y]=pxy(id); const c=document.createElementNS(SVG,'circle'); c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',3.2);c.setAttribute('class','dot'); gDot.appendChild(c); });
+    svg.append(gFace,gGuide,gFence,gHit,gDot,gBee);
+  }
+  allEdges.forEach(e=>{
+    const fl=elMap.fence[e], hl=elMap.hit[e];
+    if(drawn.has(e)){ fl.style.display=''; fl.setAttribute('class','fence p'+drawn.get(e)); }
+    else fl.style.display='none';
+    const locked = drawn.has(e) || isLocked(e);
+    hl.style.pointerEvents = locked ? 'none' : 'stroke';
+    hl.style.cursor = locked ? 'default' : 'pointer';
+  });
+  faces.forEach((f,idx)=>{ const poly=elMap.face[idx], bee=elMap.bee[idx];
+    if(enclosed[idx]){ poly.setAttribute('fill',owner[idx]===1?'var(--honey)':'var(--blue)'); poly.setAttribute('fill-opacity','0.22'); bee.textContent='🐝'; }
+    else { poly.setAttribute('fill','transparent'); bee.textContent=''; } });
+}
+
+function updateHUD(){ $('s1').textContent=scores[1]; $('s2').textContent=scores[2]; $('c1').classList.toggle('turn',turn===1&&!over); $('c2').classList.toggle('turn',turn===2&&!over); }
+function setMsg(pl,txt){ const m=$('msg'); m.textContent=txt; m.className="msg p"+pl; }
+
+$('oppseg').querySelectorAll('button').forEach(b=>b.onclick=()=>{ $('oppseg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); opp=b.dataset.o; newGame(); });
+$('newg').onclick=newGame;
+newGame();
+</script>
+</body>
+</html>
