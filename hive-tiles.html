@@ -65,6 +65,7 @@
 
   .pads{display:flex;gap:12px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
   .padwrap{flex:1 1 250px;max-width:300px}
+  .padx{flex:0 0 auto;align-self:center;font-size:24px;font-weight:800;color:var(--honey-dark);padding:0 2px}
   .padlabel{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;margin-bottom:5px}
   .pad{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
   .pad button{font:inherit;font-size:15px;font-weight:600;min-height:42px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .08s}
@@ -87,7 +88,7 @@
   /* --- compact one-screen layout: board + both pads visible --- */
   .boardbox{max-width:560px;margin-left:auto;margin-right:auto}
   .boardbox svg{width:100%;height:auto;max-height:46vh}
-  .pads{display:flex!important;flex-wrap:nowrap!important;gap:10px;justify-content:center;align-items:flex-start}
+  .pads{display:flex!important;flex-wrap:nowrap!important;gap:14px;justify-content:center;align-items:flex-start}
   .pad{grid-template-columns:repeat(3,1fr)!important}
   .padwrap{flex:1 1 0!important;min-width:0!important;max-width:220px!important}
   .pads .pad{flex:1 1 0!important;min-width:0!important;max-width:220px!important}
@@ -132,6 +133,7 @@
 
   <div class="pads">
     <div class="padwrap"><div class="padlabel">Width</div><div class="pad" id="padA"></div></div>
+    <div class="padx">×</div>
     <div class="padwrap"><div class="padlabel">Height</div><div class="pad" id="padB"></div></div>
   </div>
 
