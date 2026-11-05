@@ -199,7 +199,7 @@ const ITEMS=[
   {s:"strategies", q:"We can split it: 8 × 13 = 8 × 10 + 8 × 3.<br><br>What is 8 × 13?", o:[["104",1],["80","only used the 8 × 10 part"],["88","added 80 and 8, not 80 and 24"],["813","joined the parts instead of adding"]]},
   {s:"strategies", q:"We know that 3 × 9 = 27.<br><br>What's an efficient way to work out 6 × 9?", o:[["Double 27 → 54",1],["Add 9 → 36","added instead of doubling"],["Add 3 → 30","added instead of doubling"],["Count six 9s","slow, no strategy"]]},
 
-  {s:"flex", q:"We know that 30 = 5 × 6.<br><br>Is 10 a factor of 30?", o:[["Yes — 10 × 3 = 30",1],["No — 10 isn't in the fact","can't chain factor relationships"],["Only if 30 is even","wrong rule"],["Can't tell","can't chain factor relationships"]]},
+  {s:"flex", q:"We know that 40 = 8 × 5.<br><br>Is 4 a factor of 40?", o:[["Yes — 4 divides 8, so it divides 40",1],["No — 4 isn't in the fact","can't chain factor relationships"],["Only if 40 is even","wrong rule"],["Can't tell","can't chain factor relationships"]]},
   {s:"flex", q:"We know that 9 × 4 = 36.<br><br>What is 9 × 40?", o:[["360",1],["3600","scaled by 100, not 10"],["76","added 40 instead of scaling"],["940","joined the numbers"]]},
   {s:"flex", q:"We know that 8 × 9 = 72.<br><br>What is 72 ÷ 8?", o:[["9",1],["8","mixed up the parts"],["64","subtracted"],["81","that's 9 × 9"]]},
 
@@ -343,37 +343,44 @@ function results(){
   function makeReport(){ const btn=$('report'); if(btn){btn.disabled=true;btn.textContent="Preparing…";}
     loadJsPDF(()=>{ try{
       const { jsPDF }=window.jspdf; const d=new jsPDF({unit:'pt',format:'a4'});
-      const M=56, W=d.internal.pageSize.getWidth(), H=d.internal.pageSize.getHeight(); let y=66;
-      d.setFont('helvetica','bold'); d.setFontSize(20); d.setTextColor(35,49,79); d.text("Multiplication Fluency Check", M, y);
-      d.setFont('helvetica','normal'); d.setFontSize(11); d.setTextColor(120); y+=18; d.text("My fluency report", M, y);
-      d.setDrawColor(210); d.line(M, y+12, W-M, y+12); y+=36;
-      d.setTextColor(40); d.setFontSize(11);
-      d.text((initials?("Name / initials: "+initials+"          "):"")+"Date: "+new Date().toLocaleDateString(), M, y); y+=28;
+      const M=56, W=d.internal.pageSize.getWidth(), H=d.internal.pageSize.getHeight(); let y=56;
+      const FCOL={secure:[31,122,77], developing:[181,132,43], needs:[138,43,35]};
+      // header
+      d.setFont('helvetica','bold'); d.setFontSize(19); d.setTextColor(35,49,79); d.text("Multiplication Fluency Check", M, y);
+      d.setFont('helvetica','normal'); d.setFontSize(10.5); d.setTextColor(120); y+=16; d.text("My fluency report", M, y);
+      d.setDrawColor(210); d.line(M, y+10, W-M, y+10); y+=30;
+      // name + date
+      d.setTextColor(40); d.setFontSize(10.5);
+      d.text((initials?("Name / initials: "+initials+"           "):"")+"Date: "+new Date().toLocaleDateString(), M, y); y+=24;
+      // overall + pace
       d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(35,49,79);
-      d.text("Overall fluency: "+overall+"%          Pace: "+pace, M, y); y+=16;
-      d.setFont('helvetica','italic'); d.setFontSize(9.5); d.setTextColor(120);
-      { const el=d.splitTextToSize("Pace is a gentle gauge, not a speed test — the aim is for facts to come to mind readily enough that they don't crowd out the reasoning.", W-2*M); d.text(el, M, y); y+=el.length*12+16; }
-      d.setFont('helvetica','bold'); d.setFontSize(13); d.setTextColor(40); d.text("What I can do", M, y); y+=19;
-      d.setFont('helvetica','normal'); d.setFontSize(11.5); let anyCan=false;
-      ORDER.forEach(s=>{ if(flagFor(pct[s])==='secure'){ anyCan=true; const L=d.splitTextToSize("I can "+CANDO[s].can+".", W-2*M-16); d.text("-", M, y); d.text(L, M+16, y); y+=L.length*15+5; } });
-      if(!anyCan){ d.setTextColor(120); d.text("Not yet — but every area below has a clear next step.", M, y); d.setTextColor(40); y+=19; }
-      y+=10; d.setFont('helvetica','bold'); d.setFontSize(13); d.text("What I'm working on", M, y); y+=19;
-      d.setFont('helvetica','normal'); d.setFontSize(11.5); let anyNext=false;
-      ORDER.forEach(s=>{ if(flagFor(pct[s])!=='secure'){ anyNext=true;
-        const L=d.splitTextToSize(STRANDS[s].nm+" ("+P[s]+"%): "+CANDO[s].next, W-2*M-16);
-        d.setTextColor(40); d.setFont('helvetica','normal'); d.text("-", M, y); d.text(L, M+16, y); y+=L.length*15+1;
-        d.setTextColor(35,49,79); d.setFont('helvetica','bold'); d.textWithLink("> "+STRANDS[s].fix, M+16, y, {url:STRANDS[s].href}); y+=19;
-      } });
-      if(!anyNext){ d.setTextColor(120); d.text("All five areas are solid — excellent work!", M, y); d.setTextColor(40); y+=19; }
-      y+=14; d.setFont('helvetica','bold'); d.setFontSize(11.5); d.setTextColor(26,36,57);
-      const pl=d.splitTextToSize("Priority area: "+STRANDS[focus].nm+" — "+CANDO[focus].next, W-2*M-20);
-      const boxH=pl.length*14+30;
-      d.setFillColor(231,234,241); d.rect(M, y-14, W-2*M, boxH, 'F');
+      d.text("Overall fluency: "+overall+"%            Pace: "+pace, M, y); y+=15;
+      d.setFont('helvetica','italic'); d.setFontSize(9); d.setTextColor(120);
+      { const el=d.splitTextToSize("Pace is not a speed test - it's a sense of whether facts come to mind readily enough to leave room for the reasoning.", W-2*M); d.text(el, M, y); y+=el.length*11+14; }
+      // priority area
+      d.setFont('helvetica','bold'); d.setFontSize(11); d.setTextColor(26,36,57);
+      const pl=d.splitTextToSize("Priority area: "+STRANDS[focus].nm+" - "+CANDO[focus].next, W-2*M-20);
+      const boxH=pl.length*13+26;
+      d.setFillColor(231,234,241); d.rect(M, y-12, W-2*M, boxH, 'F');
       d.text(pl, M+10, y+2);
-      d.setTextColor(35,49,79); d.textWithLink("> "+STRANDS[focus].fix, M+10, y+2+pl.length*14+2, {url:STRANDS[focus].href});
-      y = y-14 + boxH + 18;
-      d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(140);
-      d.text("Generated by Number Hive  -  Multiplication Fluency Check", M, H-40);
+      d.setTextColor(35,49,79); d.textWithLink("> "+STRANDS[focus].fix, M+10, y+2+pl.length*13+2, {url:STRANDS[focus].href});
+      y = y-12 + boxH + 18;
+      // profile
+      d.setFont('helvetica','bold'); d.setFontSize(12); d.setTextColor(40); d.text("Profile", M, y); y+=16;
+      ORDER.forEach(s=>{ const f=flagFor(pct[s]), c=FCOL[f];
+        d.setFont('helvetica','bold'); d.setFontSize(11); d.setTextColor(40); d.text(STRANDS[s].nm, M, y);
+        d.setFontSize(9); d.setTextColor(c[0],c[1],c[2]); d.text(flagLabel(f).toUpperCase()+"    "+P[s]+"%", W-M, y, {align:'right'});
+        y+=6;
+        d.setFillColor(237,228,211); d.rect(M, y, W-2*M, 5, 'F'); d.setFillColor(c[0],c[1],c[2]); d.rect(M, y, (W-2*M)*P[s]/100, 5, 'F'); y+=13;
+        d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(90);
+        const note = (f==='secure') ? ("I can "+CANDO[s].can+".") : (STRANDS[s].ds+"  Next: "+CANDO[s].next);
+        const L=d.splitTextToSize(note, W-2*M); d.text(L, M, y); y+=L.length*11+1;
+        if(f!=='secure'){ d.setFont('helvetica','bold'); d.setTextColor(35,49,79); d.textWithLink("> "+STRANDS[s].fix, M, y, {url:STRANDS[s].href}); y+=12; }
+        y+=9;
+      });
+      // footer
+      d.setFont('helvetica','normal'); d.setFontSize(9); d.setTextColor(140);
+      d.text("Generated by Number Hive  -  Multiplication Fluency Check", M, H-34);
       d.save("MFC-report"+(initials?("-"+initials):"")+".pdf");
       window.nhTrack&&nhTrack('report_download',{overall:overall,focus:focus});
     }catch(e){ console.error(e); alert("Sorry — couldn't make the PDF. Try your browser's Print → Save as PDF."); }
