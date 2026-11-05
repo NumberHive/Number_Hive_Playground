@@ -56,6 +56,7 @@
   .teacherlink{margin-top:14px;font-family:var(--serif);font-size:13.5px;color:var(--muted);text-align:center} .teacherlink a{color:var(--accent-ink);font-weight:600;text-decoration:none}
   .soon{font-family:var(--serif);font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--warn);background:var(--warn-bg);border:1px solid #E6D4AC;border-radius:4px;padding:3px 7px;margin-left:8px;vertical-align:middle}
   .codein:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
+  .pgback{display:inline-block;font-family:var(--serif);font-size:12.5px;color:var(--muted);text-decoration:none} .pgback:hover{color:var(--accent-ink)}
 
   .qtop{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
   .qn{font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
@@ -76,7 +77,8 @@
   .ring .inner{width:100px;height:100px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--line)}
   .ring .num{font-family:var(--disp);font-weight:700;font-size:33px;line-height:1;color:var(--accent-ink)}
   .ring .lab{font-family:var(--serif);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
-  .pace{text-align:center;font-family:var(--serif);font-size:13px;color:var(--muted);margin-bottom:4px}
+  .pace{text-align:center;font-family:var(--serif);font-size:13px;color:var(--muted);margin-bottom:2px}
+  .pacenote{text-align:center;font-family:var(--serif);font-size:11.5px;color:var(--muted);max-width:380px;margin:0 auto 6px;line-height:1.45}
   .sent{text-align:center;font-family:var(--serif);font-weight:600;font-size:13px;color:var(--ok);background:var(--ok-bg);border-radius:5px;padding:9px;margin:6px 0 2px}
   .focus{background:var(--accent-soft);border:1px solid #CDD5E4;border-radius:5px;padding:14px 16px;margin:14px 0 20px}
   .focus .fl{font-family:var(--serif);font-weight:600;font-size:15px} .focus b{color:var(--accent-ink)}
@@ -113,7 +115,7 @@
     <div id="classtag"></div>
   </div>
   <div id="screen"></div>
-  <footer>A diagnostic by <a href="https://numberhive.app" target="_blank" rel="noopener">Number&nbsp;Hive</a></footer>
+  <footer>A diagnostic by <a href="https://numberhive.github.io/Number_Hive_Playground/" target="_blank" rel="noopener">Number&nbsp;Hive</a></footer>
 </div>
 
 <script type="module">
@@ -138,7 +140,6 @@
 <script>
 const $=id=>document.getElementById(id);
 const PG="https://numberhive.github.io/Number_Hive_Playground/";
-const APP="https://play.numberhive.org";
 const CLASS_OPEN=false; // ← set to true once the data & privacy policy is ready to collect class data
 const CANDO={
   recall:{can:"recall my times-table facts quickly and accurately, including x10 and x100", next:"Practise fast, accurate recall of the tables."},
@@ -150,7 +151,7 @@ const CANDO={
 function loadJsPDF(cb){ if(window.jspdf&&window.jspdf.jsPDF){cb();return;} const s=document.createElement('script'); s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"; s.onload=cb; s.onerror=()=>{ alert("Couldn't load the PDF tool. Use your browser's Print → Save as PDF instead."); window.print(); }; document.head.appendChild(s); }
 
 const STRANDS={
-  recall:    {nm:"Number facts",     ds:"Fast, accurate recall of the tables.",                 fix:"Practise fast facts", href:APP},
+  recall:    {nm:"Number facts",     ds:"Fast, accurate recall of the tables.",                 fix:"Practise in Hive-doku", href:PG+"hive-doku.html"},
   models:    {nm:"Models",           ds:"Seeing multiplication as arrays, area and groups.",     fix:"Explore Multiplication Models", href:PG+"multiplication-models.html"},
   strategies:{nm:"Strategies",       ds:"Deriving facts: double & halve, partition, factor.",    fix:"Try the Strategies tool", href:PG+"strategies.html"},
   flex:      {nm:"Flexibility",      ds:"Factor links, scaling by ×10 / ×100, and division.",    fix:"Play with Factor Finder", href:PG+"hive-factor-finder.html"},
@@ -284,7 +285,8 @@ function renderQ(){
     <div class="q">${it.q}</div>
     ${it.arr?`<div class="arr">${arraySVG(it.arr[0],it.arr[1])}</div>`:""}
     <div class="opts" id="opts">${optHTML}</div>
-  </div>`;
+  </div>
+  <div class="center" style="margin-top:14px"><a class="pgback" href="${PG}">← Back to the Playground</a></div>`;
   const btns=[...document.querySelectorAll('.opt')];
   btns.forEach((b,i)=>{ b.onclick=()=>pick(it,opts[i],b); });
   shownAt=performance.now();
@@ -328,13 +330,14 @@ function results(){
     ${sentHTML}
     <div class="ring" style="--p:${overall}"><div class="inner"><span class="num">${overall}%</span><span class="lab">overall</span></div></div>
     <div class="pace">pace · ${pace}</div>
+    <div class="pacenote">Not a race. This is just a sense of whether facts come to mind readily enough to leave room for thinking — so working them out doesn't get in the way of the reasoning.</div>
     <div class="focus"><div class="fl">Priority area: <b>${fm.nm}</b></div>
       <a class="fix" href="${fm.href}" target="_blank" rel="noopener" data-strand="${focus}" style="font-size:13.5px">→ ${fm.fix}</a></div>
     <div class="seclabel">Profile</div>
     ${strandHTML}
-    <div class="center mt"><a class="btn primary" id="cta" href="${APP}" target="_blank" rel="noopener">Keep building fluency →</a></div>
-    <div class="center mt"><button class="btn ghost" id="report">⬇ Download my report (PDF)</button></div>
+    <div class="center mt"><button class="btn primary" id="report">⬇ Download my report (PDF)</button></div>
     <p class="fine">Save it, or email it to your teacher.</p>
+    <div class="center mt"><a class="btn ghost" href="${PG}">← Back to the Playground</a></div>
     ${inClass?"":`<div class="center mt"><button class="btn ghost" id="again">Take it again</button></div>`}
   </div>`;
   function makeReport(){ const btn=$('report'); if(btn){btn.disabled=true;btn.textContent="Preparing…";}
@@ -347,26 +350,36 @@ function results(){
       d.setTextColor(40); d.setFontSize(11);
       d.text((initials?("Name / initials: "+initials+"          "):"")+"Date: "+new Date().toLocaleDateString(), M, y); y+=28;
       d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(35,49,79);
-      d.text("Overall fluency: "+overall+"%          Pace: "+pace, M, y); y+=30;
-      d.setTextColor(40); d.setFont('helvetica','bold'); d.setFontSize(13); d.text("What I can do", M, y); y+=19;
+      d.text("Overall fluency: "+overall+"%          Pace: "+pace, M, y); y+=16;
+      d.setFont('helvetica','italic'); d.setFontSize(9.5); d.setTextColor(120);
+      { const el=d.splitTextToSize("Pace is a gentle gauge, not a speed test — the aim is for facts to come to mind readily enough that they don't crowd out the reasoning.", W-2*M); d.text(el, M, y); y+=el.length*12+16; }
+      d.setFont('helvetica','bold'); d.setFontSize(13); d.setTextColor(40); d.text("What I can do", M, y); y+=19;
       d.setFont('helvetica','normal'); d.setFontSize(11.5); let anyCan=false;
       ORDER.forEach(s=>{ if(flagFor(pct[s])==='secure'){ anyCan=true; const L=d.splitTextToSize("I can "+CANDO[s].can+".", W-2*M-16); d.text("-", M, y); d.text(L, M+16, y); y+=L.length*15+5; } });
       if(!anyCan){ d.setTextColor(120); d.text("Not yet — but every area below has a clear next step.", M, y); d.setTextColor(40); y+=19; }
       y+=10; d.setFont('helvetica','bold'); d.setFontSize(13); d.text("What I'm working on", M, y); y+=19;
       d.setFont('helvetica','normal'); d.setFontSize(11.5); let anyNext=false;
-      ORDER.forEach(s=>{ if(flagFor(pct[s])!=='secure'){ anyNext=true; const L=d.splitTextToSize(STRANDS[s].nm+" ("+P[s]+"%): "+CANDO[s].next, W-2*M-16); d.text("-", M, y); d.text(L, M+16, y); y+=L.length*15+5; } });
+      ORDER.forEach(s=>{ if(flagFor(pct[s])!=='secure'){ anyNext=true;
+        const L=d.splitTextToSize(STRANDS[s].nm+" ("+P[s]+"%): "+CANDO[s].next, W-2*M-16);
+        d.setTextColor(40); d.setFont('helvetica','normal'); d.text("-", M, y); d.text(L, M+16, y); y+=L.length*15+1;
+        d.setTextColor(35,49,79); d.setFont('helvetica','bold'); d.textWithLink("> "+STRANDS[s].fix, M+16, y, {url:STRANDS[s].href}); y+=19;
+      } });
       if(!anyNext){ d.setTextColor(120); d.text("All five areas are solid — excellent work!", M, y); d.setTextColor(40); y+=19; }
-      y+=14; d.setFillColor(231,234,241); d.rect(M, y-14, W-2*M, 40, 'F'); d.setFont('helvetica','bold'); d.setFontSize(11.5); d.setTextColor(26,36,57);
-      d.text(d.splitTextToSize("Priority area: "+STRANDS[focus].nm+" — "+CANDO[focus].next, W-2*M-20), M+10, y+2);
+      y+=14; d.setFont('helvetica','bold'); d.setFontSize(11.5); d.setTextColor(26,36,57);
+      const pl=d.splitTextToSize("Priority area: "+STRANDS[focus].nm+" — "+CANDO[focus].next, W-2*M-20);
+      const boxH=pl.length*14+30;
+      d.setFillColor(231,234,241); d.rect(M, y-14, W-2*M, boxH, 'F');
+      d.text(pl, M+10, y+2);
+      d.setTextColor(35,49,79); d.textWithLink("> "+STRANDS[focus].fix, M+10, y+2+pl.length*14+2, {url:STRANDS[focus].href});
+      y = y-14 + boxH + 18;
       d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(140);
-      d.text("Generated by Number Hive  -  Multiplication Fluency Check  -  numberhive.app", M, H-40);
+      d.text("Generated by Number Hive  -  Multiplication Fluency Check", M, H-40);
       d.save("MFC-report"+(initials?("-"+initials):"")+".pdf");
       window.nhTrack&&nhTrack('report_download',{overall:overall,focus:focus});
     }catch(e){ console.error(e); alert("Sorry — couldn't make the PDF. Try your browser's Print → Save as PDF."); }
       finally{ if(btn){btn.disabled=false;btn.textContent="⬇ Download my report (PDF)";} } });
   }
   document.querySelectorAll('.fix').forEach(a=>a.addEventListener('click',()=>{ window.nhTrack&&nhTrack('remediation_click',{strand:a.dataset.strand}); }));
-  $('cta').addEventListener('click',()=>{ window.nhTrack&&nhTrack('cta_click',{from:'fluency_check'}); });
   $('report').onclick=makeReport;
   if($('again')) $('again').onclick=intro;
   window.nhTrack&&nhTrack('assessment_complete',{overall:overall,recall:P.recall,models:P.models,strategies:P.strategies,flex:P.flex,choice:P.choice,focus:focus,median_s:Math.round(med*10)/10,mode:inClass?'class':'free'});
