@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MFC · Multiplication Fluency Check</title>
+<meta name="description" content="A diagnostic of multiplicative reasoning — facts, models, strategies, flexibility and strategic choice.">
+<link rel="icon" href="mfc-logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4EEE1;--dot:#E0D6C2;--panel:#FFFFFF;--ink:#241B13;--muted:#8C7C67;--line:#E6DCC9;
+    --accent:#23314F;--accent-ink:#1A2439;--accent-soft:#E7EAF1;
+    --ok:#1F7A4D;--warn:#B5842B;--bad:#8A2B23;--ok-bg:#E6F0EA;--warn-bg:#F4ECD9;--bad-bg:#F3E3E0;
+    --brand:'Libre Caslon Display',Georgia,'Times New Roman',serif;
+    --disp:'Space Grotesk',ui-rounded,system-ui,sans-serif; --serif:'Spectral',Georgia,serif;
+    --body:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+    --sh:0 1px 0 rgba(36,27,19,.04),0 12px 34px -14px rgba(36,27,19,.2);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55}
+  body{background-color:var(--bg);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:26px 26px;background-attachment:fixed}
+  .wrap{max-width:600px;margin:0 auto;padding:40px 18px 64px}
+
+  .masthead{margin-bottom:22px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+  .seal{width:52px;height:52px} .seal svg{width:100%;height:100%;display:block}
+  .mfc{font-family:var(--brand);font-weight:400;font-size:clamp(30px,7vw,42px);letter-spacing:.12em;line-height:1;margin:8px 0 0;padding-left:.12em}
+  .expand{font-family:var(--serif);font-weight:500;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);border-top:1px solid var(--line);padding-top:7px;margin-top:9px}
+  .classtag{display:inline-block;margin-top:10px;font-family:var(--serif);font-size:12px;font-weight:500;letter-spacing:.04em;color:var(--accent-ink);background:var(--accent-soft);border:1px solid #CDD5E4;border-radius:4px;padding:5px 12px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:28px;box-shadow:var(--sh);position:relative}
+  .lead{font-family:var(--serif);font-size:17px;line-height:1.6} .lead b{font-weight:600;color:var(--accent-ink)}
+  .muted{color:var(--muted);font-size:14px;line-height:1.6}
+  .areas{margin:18px 0 2px;padding:0;list-style:none;display:grid;gap:0}
+  .areas li{display:flex;gap:14px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--line);font-family:var(--serif);font-size:15px}
+  .areas li:first-child{border-top:0}
+  .areas .n{flex:0 0 auto;width:24px;font-family:var(--brand);font-weight:400;font-size:17px;color:var(--accent);text-align:center}
+  .areas b{font-weight:600}
+  .btn{font-family:var(--serif);font-size:16px;font-weight:600;letter-spacing:.01em;padding:14px 26px;border-radius:5px;cursor:pointer;border:none;background:var(--ink);color:#fff;transition:background .15s,transform .08s;display:inline-flex;align-items:center;gap:8px}
+  .btn:hover{background:#000} .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent)} .btn.primary:hover{background:var(--accent-ink)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)} .btn.ghost:hover{border-color:var(--accent);background:#fbf9f4}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .center{text-align:center} .mt{margin-top:18px}
+  .fine{font-size:12px;color:var(--muted);text-align:center;margin-top:12px}
+
+  .inilabel{font-family:var(--serif);font-weight:600;font-size:12px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+  .iniin,.codein{font-family:var(--disp);font-weight:700;font-size:28px;letter-spacing:.2em;text-align:center;text-transform:uppercase;padding:12px;border:1px solid var(--line);border-radius:5px;color:var(--ink);background:#fff}
+  .iniin{width:170px;max-width:80%;margin:10px auto;display:block} .iniin:focus,.codein:focus{outline:none;border-color:var(--accent)}
+  .codein{width:160px;font-size:23px}
+  .joinrow{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .orline{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:18px 0;font-family:var(--serif)}
+  .orline::before,.orline::after{content:"";height:1px;background:var(--line);flex:1}
+  .teacherlink{margin-top:14px;font-family:var(--serif);font-size:13.5px;color:var(--muted);text-align:center} .teacherlink a{color:var(--accent-ink);font-weight:600;text-decoration:none}
+
+  .qtop{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .qn{font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .pill{font-family:var(--serif);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent-soft);border-radius:4px;padding:5px 11px}
+  .bar{height:5px;background:#EDE4D3;border-radius:0;overflow:hidden;margin-bottom:24px}
+  .bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+  .q{font-family:var(--disp);font-size:22px;font-weight:600;line-height:1.4;letter-spacing:-.01em;margin:0 0 20px}
+  .arr{display:flex;justify-content:center;margin:0 0 22px}
+  .opts{display:grid;gap:10px}
+  .opt{display:flex;align-items:center;gap:14px;text-align:left;font-family:var(--body);font-size:16.5px;font-weight:500;padding:14px 16px;border-radius:5px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:border-color .12s,background .12s}
+  .opt:hover{border-color:var(--accent)}
+  .opt .ltr{flex:0 0 auto;width:28px;height:28px;border-radius:4px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:14px;color:var(--muted);transition:all .12s}
+  .opt:hover .ltr{border-color:var(--accent);color:var(--accent-ink)}
+  .opt.pick{border-color:var(--accent);background:var(--accent-soft)}
+  .opt.pick .ltr{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  .ring{--p:0;width:130px;height:130px;border-radius:50%;margin:2px auto 6px;background:conic-gradient(var(--accent) calc(var(--p)*1%),#EDE4D3 0);display:flex;align-items:center;justify-content:center}
+  .ring .inner{width:100px;height:100px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--line)}
+  .ring .num{font-family:var(--disp);font-weight:700;font-size:33px;line-height:1;color:var(--accent-ink)}
+  .ring .lab{font-family:var(--serif);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+  .pace{text-align:center;font-family:var(--serif);font-size:13px;color:var(--muted);margin-bottom:4px}
+  .sent{text-align:center;font-family:var(--serif);font-weight:600;font-size:13px;color:var(--ok);background:var(--ok-bg);border-radius:5px;padding:9px;margin:6px 0 2px}
+  .focus{background:var(--accent-soft);border:1px solid #CDD5E4;border-radius:5px;padding:14px 16px;margin:14px 0 20px}
+  .focus .fl{font-family:var(--serif);font-weight:600;font-size:15px} .focus b{color:var(--accent-ink)}
+  .seclabel{font-family:var(--serif);font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:2px 0 8px}
+  .srow{padding:13px 0;border-top:1px solid var(--line)} .srow:first-of-type{border-top:0}
+  .shead{display:flex;align-items:center;gap:10px}
+  .snm{font-family:var(--serif);font-weight:600;font-size:16px}
+  .sflag{margin-left:auto;font-family:var(--serif);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:4px}
+  .sflag.secure{background:var(--ok-bg);color:var(--ok)} .sflag.developing{background:var(--warn-bg);color:var(--warn)} .sflag.needs{background:var(--bad-bg);color:var(--bad)}
+  .smeter{display:flex;align-items:center;gap:10px;margin:7px 0 5px}
+  .track{flex:1;height:7px;background:#EDE4D3;overflow:hidden}
+  .track i{display:block;height:100%}
+  .spct{font-family:var(--disp);font-weight:700;font-size:13px;width:40px;text-align:right;color:var(--muted)}
+  .sds{font-family:var(--serif);font-size:13px;color:var(--muted);line-height:1.45}
+  .fix{display:inline-block;margin-top:3px;font-family:var(--serif);font-weight:600;font-size:13px;color:var(--accent-ink);text-decoration:none}
+  .fix:hover{text-decoration:underline}
+  footer{margin-top:24px;text-align:center;font-family:var(--serif);font-size:12px;letter-spacing:.03em;color:var(--muted)}
+  footer a{color:var(--accent-ink);text-decoration:none}
+</style>
+<script>
+  window.NH_GA_ID="G-55T2ZYVKNQ";
+  (function(){var id=window.NH_GA_ID;if(!id||id.indexOf("G-")!==0){window.nhTrack=function(){};return;}
+    var s=document.createElement("script");s.async=true;s.src="https://www.googletagmanager.com/gtag/js?id="+id;document.head.appendChild(s);
+    window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag("js",new Date());gtag("config",id);
+    window.nhTrack=function(n,p){try{gtag("event",n,p||{});}catch(e){}};})();
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <span class="seal"><svg viewBox="0 0 100 100" role="img" aria-label="MFC"><circle cx="50" cy="50" r="47" fill="#fff" stroke="#241B13" stroke-width="1"/><circle cx="50" cy="50" r="41" fill="none" stroke="#241B13" stroke-width="0.7"/><text x="50" y="52.5" font-family="'Libre Caslon Display',Georgia,serif" font-size="27" letter-spacing="1" text-anchor="middle" dominant-baseline="central" fill="#241B13">MFC</text></svg></span>
+    <h1 class="mfc">MFC</h1>
+    <div class="expand">Multiplication Fluency Check</div>
+    <div id="classtag"></div>
+  </div>
+  <div id="screen"></div>
+  <footer>A diagnostic by <a href="https://numberhive.app" target="_blank" rel="noopener">Number&nbsp;Hive</a></footer>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  const code=(new URLSearchParams(location.search).get('class')||'').toUpperCase().trim();
+  window.__class=null; window.__classError=null; window.__submit=async()=>false;
+  if(code){
+    try{
+      const { firebaseConfig } = await import("./firebase-config.js");
+      const db=getFirestore(initializeApp(firebaseConfig));
+      const snap=await getDoc(doc(db,'classes',code));
+      if(snap.exists()){
+        window.__class={code,name:snap.data().name||'Your class'};
+        window.__submit=async(r)=>{ try{ await addDoc(collection(db,'classes',code,'results'),{...r,submittedAt:serverTimestamp()}); return true; }catch(e){ console.error(e); return false; } };
+      } else { window.__classError="That class code wasn't found. Check it with your teacher."; }
+    }catch(e){ window.__classError="Couldn't connect to the class. Try again, or let your teacher know."; console.error(e); }
+  }
+  window.dispatchEvent(new Event('nhfirebase'));
+</script>
+
+<script>
+const $=id=>document.getElementById(id);
+const PG="https://numberhive.github.io/Number_Hive_Playground/";
+const APP="https://play.numberhive.org";
+
+const STRANDS={
+  recall:    {nm:"Number facts",     ds:"Fast, accurate recall of the tables.",                 fix:"Practise fast facts", href:APP},
+  models:    {nm:"Models",           ds:"Seeing multiplication as arrays, area and groups.",     fix:"Explore Multiplication Models", href:PG+"multiplication-models.html"},
+  strategies:{nm:"Strategies",       ds:"Deriving facts: double & halve, partition, factor.",    fix:"Try the Strategies tool", href:PG+"strategies.html"},
+  flex:      {nm:"Flexibility",      ds:"Factor links, scaling by ×10 / ×100, and division.",    fix:"Play with Factor Finder", href:PG+"hive-factor-finder.html"},
+  choice:    {nm:"Strategic choice", ds:"Picking the efficient method for the problem.",         fix:"Try the Strategies tool", href:PG+"strategies.html"},
+};
+const ORDER=["recall","models","strategies","flex","choice"];
+
+const ITEMS=[
+  {s:"recall", q:"7 × 8 = ?", o:[["56",1],["54","slipped to a nearby fact"],["63","that's 7 × 9"],["48","that's 6 × 8"]]},
+  {s:"recall", q:"6 × 9 = ?", o:[["54",1],["45","that's 5 × 9"],["56","slipped to a nearby fact"],["63","that's 7 × 9"]]},
+  {s:"recall", q:"9 × 4 = ?", o:[["36",1],["32","that's 8 × 4"],["45","that's 9 × 5"],["13","added instead"]]},
+  {s:"recall", q:"4 × 10 = ?", o:[["40",1],["400","that's × 100"],["14","added instead"],["44","joined the digits"]]},
+  {s:"recall", q:"30 × 10 = ?", o:[["300",1],["3000","that's × 100"],["40","added instead"],["310","joined the digits"]]},
+  {s:"models", q:"Which fact does this array show?", arr:[4,6], o:[["4 × 6 = 24",1],["4 + 6 = 10","that's adding, not multiplying"],["4 × 4 = 16","miscounted a side"],["6 × 6 = 36","miscounted a side"]]},
+  {s:"models", q:"How many dots altogether?", arr:[3,5], o:[["15",1],["8","added 3 and 5"],["35","joined the digits"],["12","miscounted"]]},
+  {s:"models", q:"A rectangle is 6 units across and 4 units down.<br><br>What is its area?", o:[["24 units²",1],["10 units²","added the sides"],["20 units²","counted only part"],["26 units²","added, then a bit more"]]},
+  {s:"models", q:"This array shows 4 × 6 = 24.<br><br>What is 6 × 4?", arr:[4,6], o:[["24",1],["46","joined the digits"],["10","added instead"],["12","halved it"]]},
+  {s:"models", q:"Which multiplication matches this array?", arr:[2,7], o:[["2 × 7 = 14",1],["2 + 7 = 9","that's adding, not multiplying"],["7 × 7 = 49","miscounted"],["2 × 2 = 4","miscounted"]]},
+  {s:"strategies", q:"What's an efficient way to work out 8 × 5?", o:[["Double 4 × 5",1],["Count eight 5s one by one","no derived-fact strategy yet"],["8 + 5","that's adding"],["8 × 4, then stop","unfinished"]]},
+  {s:"strategies", q:"We know that 6 × 7 = 42.<br><br>What is 6 × 14?", o:[["84",1],["49","added 7 instead of doubling"],["48","guessed"],["420","scaled by ten by mistake"]]},
+  {s:"strategies", q:"We can split it: 7 × 12 = 7 × 10 + 7 × 2.<br><br>What is 7 × 12?", o:[["84",1],["70","only used the 7 × 10 part"],["72","added 70 and 2, not 70 and 14"],["714","joined the parts instead of adding"]]},
+  {s:"strategies", q:"We know that 5 × 6 = 30.<br><br>What's an efficient way to work out 10 × 6?", o:[["Double 30 → 60",1],["Add 6 → 36","added instead of scaling"],["Add 10 → 40","added instead of scaling"],["Count ten 6s","slow, no strategy"]]},
+  {s:"strategies", q:"What's an efficient way to work out 4 × 25?", o:[["Think 25, 50, 75, 100",1],["Long multiplication","harder than needed"],["Add 25 four times slowly","slow, no strategy"],["4 + 25","that's adding"]]},
+  {s:"flex", q:"We know that 42 = 6 × 7.<br><br>Is 3 a factor of 42?", o:[["Yes — 3 divides 6, so it divides 42",1],["No — 3 isn't in the fact","can't chain factor relationships"],["Only if 42 is even","wrong rule"],["Can't tell","can't chain factor relationships"]]},
+  {s:"flex", q:"We know that 6 × 7 = 42.<br><br>What is 6 × 70?", o:[["420",1],["4200","scaled by 100, not 10"],["49","added 7"],["476","joined the numbers"]]},
+  {s:"flex", q:"We know that 8 is a factor of 48.<br><br>Which of these is also a factor of 48?", o:[["4",1],["5","a factor of 8 must divide 48 too"],["7","a factor of 8 must divide 48 too"],["9","a factor of 8 must divide 48 too"]]},
+  {s:"flex", q:"We know that 12 × 7 = 84.<br><br>What is 6 × 7?", o:[["42",1],["77","subtracted 7"],["91","added 7"],["168","doubled instead of halved"]]},
+  {s:"flex", q:"We know that 6 × 7 = 42.<br><br>What is 42 ÷ 7?", o:[["6",1],["7","mixed up the parts"],["35","subtracted"],["49","that's 7 × 7"]]},
+  {s:"flex", q:"What is 600 ÷ 6?", o:[["100",1],["10","lost a place value"],["1000","too many zeros"],["60","lost a place value"]]},
+  {s:"choice", q:"What's an efficient way to work out 99 × 4?", o:[["100 × 4, then take off 4",1],["Long multiplication","doesn't round and adjust"],["Add 99 four times","slow"],["99 × 2, twice","works, but slower"]]},
+  {s:"choice", q:"What's an efficient way to work out 5 × 48?", o:[["10 × 48 = 480, then halve → 240",1],["Add 48 five times","slow"],["Long multiplication","harder than needed"],["5 × 40 only","unfinished"]]},
+  {s:"choice", q:"What's an efficient way to work out 8 × 25?", o:[["Think 4 × 25 = 100, then double → 200",1],["Long multiplication","harder than needed"],["Add 25 eight times","slow"],["8 × 20 only","unfinished"]]},
+  {s:"choice", q:"What's an efficient first step for 6 × 998?", o:[["6 × 1000, then take off 6 × 2",1],["Long multiplication","doesn't round and adjust"],["Add 998 six times","slow"],["6 × 900 only","unfinished"]]},
+];
+
+let queue=[], at=0, answers=[], shownAt=0, initials="";
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function arraySVG(r,c){ const g=22,pad=8,rad=7; const w=pad*2+(c-1)*g+rad*2, h=pad*2+(r-1)*g+rad*2;
+  let s=`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">`;
+  for(let i=0;i<r;i++)for(let j=0;j<c;j++){ s+=`<circle cx="${pad+rad+j*g}" cy="${pad+rad+i*g}" r="${rad}" fill="#23314F"/>`; }
+  return s+`</svg>`; }
+
+function boot(){
+  const code=new URLSearchParams(location.search).get('class');
+  if(!code){ landing(); return; }
+  $('screen').innerHTML=`<div class="panel"><p class="muted">Loading your class…</p></div>`;
+  const go=()=>{
+    if(window.__class){ $('classtag').innerHTML=`Class: ${window.__class.name}`; $('classtag').className='classtag'; joinScreen(); }
+    else { $('screen').innerHTML=`<div class="panel"><p class="lead">${window.__classError||'Class not found.'}</p></div>`; }
+  };
+  if(window.__class||window.__classError) go(); else window.addEventListener('nhfirebase',go,{once:true});
+}
+function landing(){
+  $('screen').innerHTML=`<div class="panel">
+    <p class="lead">A short diagnostic of how flexibly a student understands multiplication — not just recall, but the models, strategies and reasoning behind it.</p>
+    <label class="inilabel" for="jc" style="display:block;margin-top:20px">Join your class</label>
+    <div class="joinrow">
+      <input id="jc" class="codein" maxlength="5" autocomplete="off" placeholder="CODE" aria-label="Class code">
+      <button class="btn primary" id="jgo" disabled>Join →</button>
+    </div>
+    <p class="fine" style="text-align:left;margin-top:6px">Enter the code your teacher gave you.</p>
+    <div class="orline"><span>or</span></div>
+    <div class="center"><button class="btn ghost" id="free">Take it free, no code</button></div>
+  </div>
+  <p class="teacherlink">Teacher? <a href="teacher.html">Create a class →</a></p>`;
+  const jc=$('jc'), jgo=$('jgo');
+  jc.addEventListener('input',()=>{ jc.value=jc.value.replace(/[^a-zA-Z2-9]/g,'').toUpperCase(); jgo.disabled=jc.value.length<4; });
+  jc.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!jgo.disabled) jgo.click(); });
+  jgo.onclick=()=>{ const c=jc.value.trim(); if(c) location.search='?class='+encodeURIComponent(c); };
+  $('free').onclick=intro;
+}
+function intro(){
+  $('screen').innerHTML=`<div class="panel">
+    <p class="lead">This isn't a times-table quiz. It checks how <b>flexibly</b> a student understands multiplication, across five areas:</p>
+    <ul class="areas">
+      <li><span class="n">I</span><span><b>Number facts</b> — reliable recall, including ×10 and ×100.</span></li>
+      <li><span class="n">II</span><span><b>Models</b> — arrays, area and equal groups.</span></li>
+      <li><span class="n">III</span><span><b>Strategies</b> — double & halve, partition, factor.</span></li>
+      <li><span class="n">IV</span><span><b>Flexibility</b> — factor links like "if 6 is a factor of 42, so is 3", and scaling.</span></li>
+      <li><span class="n">V</span><span><b>Strategic choice</b> — picking the efficient method.</span></li>
+    </ul>
+    <p class="muted mt">${ITEMS.length} questions, roughly 10–15 minutes. No timer, no sign-up. You'll get a plain-language profile of where things are solid and where some practice would help.</p>
+    <div class="center mt"><button class="btn primary" id="start">Begin the check →</button></div>
+    <p class="fine">Nothing is stored — your result shows once, on screen.</p>
+  </div>`;
+  $('start').onclick=start;
+}
+function joinScreen(){
+  $('screen').innerHTML=`<div class="panel center">
+    <p class="lead" style="text-align:center">You've joined <b>${window.__class.name}</b>.</p>
+    <p class="muted" style="margin-top:6px">Enter your initials (up to 3 letters) so your teacher can find your result.</p>
+    <label class="inilabel" for="ini" style="display:block;margin-top:14px">Your initials</label>
+    <input id="ini" class="iniin" maxlength="3" autocomplete="off" placeholder="ABC" aria-label="Your initials">
+    <div class="mt"><button class="btn primary" id="join" disabled>Begin the check →</button></div>
+    <p class="fine">Only your initials are stored — never your full name.</p>
+  </div>`;
+  const inp=$('ini'), jb=$('join');
+  inp.addEventListener('input',()=>{ inp.value=inp.value.replace(/[^a-zA-Z]/g,'').toUpperCase(); jb.disabled=inp.value.length<1; });
+  jb.onclick=()=>{ initials=inp.value.slice(0,3); start(); };
+  inp.focus();
+}
+function start(){ queue=shuffle(ITEMS); at=0; answers=[]; window.nhTrack&&nhTrack('assessment_start',{items:queue.length,mode:window.__class?'class':'free'}); renderQ(); }
+function renderQ(){
+  const it=queue[at]; const opts=shuffle(it.o);
+  let optHTML="";
+  opts.forEach((o,i)=>{ optHTML+=`<button class="opt" data-i="${i}"><span class="ltr">${String.fromCharCode(65+i)}</span><span class="txt">${o[0]}</span></button>`; });
+  $('screen').innerHTML=`<div class="panel">
+    <div class="qtop"><span class="qn">Question ${at+1} / ${queue.length}</span><span class="pill">${STRANDS[it.s].nm}</span></div>
+    <div class="bar"><i style="width:${Math.round(at/queue.length*100)}%"></i></div>
+    <div class="q">${it.q}</div>
+    ${it.arr?`<div class="arr">${arraySVG(it.arr[0],it.arr[1])}</div>`:""}
+    <div class="opts" id="opts">${optHTML}</div>
+  </div>`;
+  const btns=[...document.querySelectorAll('.opt')];
+  btns.forEach((b,i)=>{ b.onclick=()=>pick(it,opts[i],b); });
+  shownAt=performance.now();
+}
+function pick(it,o,btn){
+  document.querySelectorAll('.opt').forEach(x=>x.style.pointerEvents='none'); btn.classList.add('pick');
+  const rt=(performance.now()-shownAt)/1000;
+  answers.push({s:it.s, correct:o[1]===1, tag:(o[1]===1?null:o[1]), rt});
+  setTimeout(()=>{ at++; if(at<queue.length) renderQ(); else results(); }, 260);
+}
+function flagFor(p){ return p>=0.8?"secure":p>=0.5?"developing":"needs"; }
+function flagLabel(f){ return f==="secure"?"Solid":f==="developing"?"Developing":"Needs work"; }
+function flagColor(f){ return f==="secure"?"var(--ok)":f==="developing"?"var(--warn)":"var(--bad)"; }
+function results(){
+  const by={}; ORDER.forEach(s=>by[s]={n:0,c:0});
+  answers.forEach(a=>{ by[a.s].n++; if(a.correct)by[a.s].c++; });
+  const pct={}; ORDER.forEach(s=>pct[s]=by[s].n?by[s].c/by[s].n:0);
+  const times=answers.map(a=>a.rt).sort((x,y)=>x-y); const med=times.length?times[Math.floor(times.length/2)]:0;
+  const pace=med<6?"brisk":med<12?"steady":"takes a little time";
+  const rank={flex:0,choice:1,strategies:2,models:3,recall:4};
+  const focus=ORDER.slice().sort((a,b)=> (pct[a]-pct[b]) || (rank[a]-rank[b]) )[0];
+  const overall=Math.round(ORDER.reduce((s,k)=>s+pct[k],0)/ORDER.length*100);
+  const P={}; ORDER.forEach(s=>P[s]=Math.round(pct[s]*100));
+
+  let sentHTML="";
+  if(window.__class){
+    sentHTML=`<div class="sent" id="sent">Sending to ${window.__class.name}…</div>`;
+    window.__submit({initials:initials||"",overall,recall:P.recall,models:P.models,strategies:P.strategies,flex:P.flex,choice:P.choice,focus,median_s:Math.round(med*10)/10})
+      .then(ok=>{ const el=$('sent'); if(el){ el.textContent= ok?`Sent to ${window.__class.name}`:"Couldn't send — show this screen to your teacher."; if(!ok)el.style.color="var(--bad)"; } });
+  }
+  let strandHTML="";
+  ORDER.forEach(s=>{ const f=flagFor(pct[s]); const m=STRANDS[s];
+    strandHTML+=`<div class="srow">
+      <div class="shead"><span class="snm">${m.nm}</span><span class="sflag ${f}">${flagLabel(f)}</span></div>
+      <div class="smeter"><div class="track"><i style="width:${P[s]}%;background:${flagColor(f)}"></i></div><span class="spct">${P[s]}%</span></div>
+      <div class="sds">${m.ds}${f!=="secure"?` &nbsp;<a class="fix" href="${m.href}" target="_blank" rel="noopener" data-strand="${s}">→ ${m.fix}</a>`:""}</div>
+    </div>`; });
+  const fm=STRANDS[focus];
+  $('screen').innerHTML=`<div class="panel">
+    ${sentHTML}
+    <div class="ring" style="--p:${overall}"><div class="inner"><span class="num">${overall}%</span><span class="lab">overall</span></div></div>
+    <div class="pace">pace · ${pace}</div>
+    <div class="focus"><div class="fl">Priority area: <b>${fm.nm}</b></div>
+      <a class="fix" href="${fm.href}" target="_blank" rel="noopener" data-strand="${focus}" style="font-size:13.5px">→ ${fm.fix}</a></div>
+    <div class="seclabel">Profile</div>
+    ${strandHTML}
+    <div class="center mt"><a class="btn primary" id="cta" href="${APP}" target="_blank" rel="noopener">Keep building fluency →</a></div>
+    ${window.__class?"":`<p class="fine">Want to save this or check a whole class? That's coming to Number Hive.</p><div class="center mt"><button class="btn ghost" id="again">Take it again</button></div>`}
+  </div>`;
+  document.querySelectorAll('.fix').forEach(a=>a.addEventListener('click',()=>{ window.nhTrack&&nhTrack('remediation_click',{strand:a.dataset.strand}); }));
+  $('cta').addEventListener('click',()=>{ window.nhTrack&&nhTrack('cta_click',{from:'fluency_check'}); });
+  if($('again')) $('again').onclick=intro;
+  window.nhTrack&&nhTrack('assessment_complete',{overall:overall,recall:P.recall,models:P.models,strategies:P.strategies,flex:P.flex,choice:P.choice,focus:focus,median_s:Math.round(med*10)/10,mode:window.__class?'class':'free'});
+}
+boot();
+</script>
+</body>
+</html>

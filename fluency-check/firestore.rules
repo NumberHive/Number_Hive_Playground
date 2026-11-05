@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // the signed-in teacher who owns a given class
+    function isClassTeacher(code) {
+      return request.auth != null
+        && get(/databases/$(database)/documents/classes/$(code)).data.teacherUid == request.auth.uid;
+    }
+
+    match /classes/{code} {
+      // a student can read the class doc to confirm the code and show the class name
+      // (doc holds no personal data — name + teacher uid only)
+      allow get: if true;
+
+      // only a teacher can list / own their classes
+      allow list: if request.auth != null && resource.data.teacherUid == request.auth.uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.teacherUid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 60;
+
+      allow update, delete: if request.auth != null
+        && resource.data.teacherUid == request.auth.uid;
+
+      match /results/{rid} {
+        // students submit anonymously; validate shape, cap initials at 3 chars
+        allow create: if request.resource.data.initials is string
+          && request.resource.data.initials.size() <= 3
+          && request.resource.data.overall is int
+          && request.resource.data.overall >= 0
+          && request.resource.data.overall <= 100;
+
+        // only the owning teacher can read results
+        allow read, list, update, delete: if isClassTeacher(code);
+      }
+    }
+  }
+}

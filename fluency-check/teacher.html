@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MFC · Teacher dashboard</title>
+<script>
+window.NH_GA_ID="G-55T2ZYVKNQ";
+(function(){var id=window.NH_GA_ID;if(!id||id.indexOf("G-")!==0){window.nhTrack=function(){};return;}
+var s=document.createElement("script");s.async=true;s.src="https://www.googletagmanager.com/gtag/js?id="+id;document.head.appendChild(s);
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag("js",new Date());gtag("config",id);
+window.nhTrack=function(n,p){try{gtag("event",n,p||{});}catch(e){}};})();
+</script>
+<link rel="icon" href="mfc-logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4EEE1;--dot:#E0D6C2;--panel:#FFFFFF;--ink:#241B13;--muted:#8C7C67;--line:#E6DCC9;
+    --accent:#23314F;--accent-ink:#1A2439;--accent-soft:#E7EAF1;--ok:#1F7A4D;--warn:#B5842B;--bad:#8A2B23;
+    --okbg:#E6F0EA;--warnbg:#F4ECD9;--badbg:#F3E3E0;
+    --brand:'Libre Caslon Display',Georgia,serif;--serif:'Spectral',Georgia,serif;--body:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;--disp:'Space Grotesk',ui-rounded,system-ui,sans-serif;
+    --sh:0 1px 0 rgba(36,27,19,.04),0 12px 34px -14px rgba(36,27,19,.2);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.5}
+  body{background-color:var(--bg);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:26px 26px;background-attachment:fixed}
+  .wrap{max-width:860px;margin:0 auto;padding:34px 18px 64px}
+  .masthead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .seal{width:38px;height:38px;flex:0 0 auto} .seal svg{width:100%;height:100%;display:block}
+  .masthead .mfc{font-family:var(--brand);font-weight:400;font-size:26px;letter-spacing:.1em;margin:0;line-height:1;padding-left:.1em}
+  .masthead .dash{font-family:var(--serif);font-weight:600;font-size:15px;color:var(--muted)}
+  .masthead .who{margin-left:auto;font-family:var(--serif);font-size:13px;color:var(--muted)} .masthead .who a{color:var(--accent-ink);cursor:pointer;text-decoration:none;font-weight:600}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:22px;box-shadow:var(--sh);margin-bottom:16px}
+  h2{font-family:var(--serif);font-weight:600;font-size:18px;margin:0 0 12px}
+  .muted{color:var(--muted);font-size:13.5px;font-family:var(--serif)} .lead{font-family:var(--serif);font-size:16px;line-height:1.6}
+  .btn{font-family:var(--serif);font-size:15px;font-weight:600;padding:12px 20px;border-radius:5px;cursor:pointer;border:none;background:var(--ink);color:#fff;transition:background .15s,transform .08s;display:inline-flex;align-items:center;gap:8px}
+  .btn:hover{background:#000} .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent)} .btn.primary:hover{background:var(--accent-ink)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)} .btn.ghost:hover{border-color:var(--accent)}
+  .btn.sm{font-size:13px;padding:8px 13px}
+  .btn.danger{background:#fff;color:var(--bad);border:1px solid #D9BBB5} .btn.danger:hover{background:var(--badbg);border-color:var(--bad)}
+  input[type=text]{font-family:var(--serif);font-size:15px;padding:11px 13px;border:1px solid var(--line);border-radius:5px;width:100%;max-width:320px}
+  input[type=text]:focus{outline:none;border-color:var(--accent)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .codebox{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--accent-soft);border:1px solid #CDD5E4;border-radius:6px;padding:14px 16px;margin-top:12px}
+  .codebox .code{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:.14em;color:var(--accent-ink)}
+  .lk-l{font-family:var(--serif);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .link{font-size:12.5px;color:var(--accent-ink);word-break:break-all;font-family:var(--body)}
+  .classlist{display:grid;gap:8px}
+  .classrow{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:5px;background:#fff;cursor:pointer;transition:border-color .12s}
+  .classrow:hover{border-color:var(--accent)}
+  .classrow .nm{font-family:var(--serif);font-weight:600} .classrow .cd{font-family:var(--disp);font-weight:600;color:var(--muted);letter-spacing:.08em}
+  .classrow .ct{margin-left:auto;font-family:var(--serif);font-size:12.5px;color:var(--muted)}
+  .stat{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+  .stat .box{background:#FBF6EC;border:1px solid var(--line);border-radius:5px;padding:12px 16px;min-width:120px}
+  .stat .box .v{font-family:var(--disp);font-weight:700;font-size:25px} .stat .box .l{font-family:var(--serif);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .strandbars{display:grid;gap:10px;margin:14px 0 6px}
+  .sb{display:flex;align-items:center;gap:12px}
+  .sb .nm{font-family:var(--serif);font-weight:600;font-size:13.5px;width:120px}
+  .sb .track{flex:1;height:8px;background:#EDE4D3;overflow:hidden}
+  .sb .track i{display:block;height:100%}
+  .sb .v{font-family:var(--disp);font-weight:700;font-size:13px;width:40px;text-align:right}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin-top:6px}
+  th,td{padding:8px 9px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-family:var(--serif);font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  th:first-child,td:first-child{text-align:left}
+  td.ini{font-family:var(--disp);font-weight:700;letter-spacing:.06em;font-size:14px}
+  td.cell{font-family:var(--disp);font-weight:600;font-size:13.5px}
+  .c-secure{background:var(--okbg);color:var(--ok)} .c-developing{background:var(--warnbg);color:var(--warn)} .c-needs{background:var(--badbg);color:var(--bad)}
+  .tablewrap{overflow-x:auto}
+  .empty{text-align:center;color:var(--muted);padding:26px 0;font-size:14px;font-family:var(--serif)}
+  .err{background:var(--badbg);color:var(--bad);border-radius:5px;padding:12px;font-size:13.5px;font-family:var(--serif)}
+  .privacy{font-family:var(--serif);font-size:12px;color:var(--muted);margin-top:10px}
+  footer{margin-top:22px;text-align:center;font-family:var(--serif);font-size:11.5px;color:var(--muted)} footer a{color:var(--accent-ink);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <span class="seal"><svg viewBox="0 0 100 100" role="img" aria-label="MFC"><circle cx="50" cy="50" r="47" fill="#fff" stroke="#241B13" stroke-width="1"/><circle cx="50" cy="50" r="41" fill="none" stroke="#241B13" stroke-width="0.7"/><text x="50" y="52.5" font-family="'Libre Caslon Display',Georgia,serif" font-size="27" letter-spacing="1" text-anchor="middle" dominant-baseline="central" fill="#241B13">MFC</text></svg></span>
+    <span class="mfc">MFC</span>
+    <span class="dash">Teacher dashboard</span>
+    <span class="who" id="who"></span>
+  </div>
+  <div id="app"><div class="panel"><p class="muted">Loading…</p></div></div>
+  <script>
+  setTimeout(function(){ var a=document.getElementById('app');
+    if(a && a.textContent.trim()==='Loading…'){
+      a.innerHTML='<div class="panel"><div class="err">'+(location.protocol==='file:'
+        ? 'Open this from your website address (e.g. your GitHub Pages URL), not as a local file — Firebase and Google sign-in don’t work from a file:// path.'
+        : 'Still loading. This usually means Firebase isn’t set up yet — paste your keys into <b>firebase-config.js</b> and publish <b>firestore.rules</b> (see SETUP.md), then reload. The free student check needs none of this.')+'</div></div>';
+    }
+  }, 4500);
+  </script>
+  <footer>Multiplication Fluency Check · <a href="https://numberhive.app" target="_blank" rel="noopener">Number Hive</a></footer>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, setDoc, getDocs, query, where, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const $=id=>document.getElementById(id);
+const app=$('app');
+const ORDER=["recall","models","strategies","flex","choice"];
+const SNAME={recall:"Facts",models:"Models",strategies:"Strategies",flex:"Flexibility",choice:"Choice"};
+let db,auth,user=null;
+
+try{
+  const { firebaseConfig } = await import("./firebase-config.js");
+  if(/^PASTE/.test((firebaseConfig&&firebaseConfig.apiKey)||"")){
+    app.innerHTML=`<div class="panel"><div class="err">Firebase isn't set up yet. Paste your project keys into <b>firebase-config.js</b> and publish <b>firestore.rules</b> (see <b>SETUP.md</b>), then reload.<br><br>The free student check works without any of this — only class mode needs Firebase.</div></div>`;
+  } else {
+    const fb=initializeApp(firebaseConfig); auth=getAuth(fb); db=getFirestore(fb);
+    onAuthStateChanged(auth,u=>{ user=u; if(u)window.nhTrack&&nhTrack('teacher_signin',{from:'mfc_teacher'}); u?dashboard():signedOut(); });
+  }
+}catch(e){ app.innerHTML=`<div class="panel"><div class="err">Couldn't start the dashboard. If you opened this as a local file, open it from your website address instead — Firebase and sign-in need http/https. Otherwise check <b>firebase-config.js</b> (see SETUP.md).</div></div>`; console.error(e); }
+
+function signedOut(){
+  $('who').innerHTML="";
+  app.innerHTML=`<div class="panel">
+    <h2>Sign in to run a class</h2>
+    <p class="lead">Create a class, share the join code with your students, and see the whole class's fluency profile in one place.</p>
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="gin">Sign in with Google</button></div>
+    <p class="privacy">Students join with just their initials — no names or emails are collected from children. You stay the only person who can see your class's results.</p>
+  </div>`;
+  $('gin').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{ alert("Sign-in failed: "+e.message); });
+}
+
+async function dashboard(){
+  $('who').innerHTML=`${user.email} · <a id="out">sign out</a>`;
+  $('out').onclick=()=>signOut(auth);
+  app.innerHTML=`
+    <div class="panel">
+      <h2>Create a class</h2>
+      <div class="row"><input type="text" id="cname" placeholder="e.g. Year 5 Blue" maxlength="60"><button class="btn primary" id="mk">Create class</button></div>
+      <div id="created"></div>
+    </div>
+    <div class="panel">
+      <h2>Your classes</h2>
+      <div id="classes"><p class="muted">Loading…</p></div>
+    </div>
+    <div class="panel" id="resultsPanel" style="display:none"></div>`;
+  $('mk').onclick=createClass;
+  loadClasses();
+}
+
+function randCode(){ const a="ABCDEFGHJKMNPQRSTUVWXYZ23456789"; let s=""; for(let i=0;i<5;i++) s+=a[Math.floor(Math.random()*a.length)]; return s; }
+async function createClass(){
+  const name=$('cname').value.trim(); if(!name){ $('cname').focus(); return; }
+  $('mk').disabled=true; $('mk').textContent="Creating…";
+  try{
+    let code; for(let t=0;t<6;t++){ code=randCode(); const ex=await getDoc(doc(db,'classes',code)); if(!ex.exists()) break; }
+    await setDoc(doc(db,'classes',code),{ name, teacherUid:user.uid, createdAt:serverTimestamp() });
+    window.nhTrack&&nhTrack('class_created',{from:'mfc_teacher'});
+    const link=new URL('index.html?class='+code, location.href).href;
+    $('created').innerHTML=`<div class="codebox">
+      <div><div class="lk-l">Join code</div><div class="code">${code}</div></div>
+      <div style="flex:1;min-width:200px"><div class="lk-l">Share link</div><div class="link" id="lk">${link}</div></div>
+      <button class="btn ghost sm" id="cp">Copy link</button>
+    </div>`;
+    $('cp').onclick=()=>copy(link,$('cp'));
+    $('cname').value="";
+    loadClasses();
+  }catch(e){ $('created').innerHTML=`<div class="err" style="margin-top:12px">Couldn't create the class: ${e.message}</div>`; console.error(e); }
+  $('mk').disabled=false; $('mk').textContent="Create class";
+}
+
+async function loadClasses(){
+  const box=$('classes');
+  try{
+    const qs=await getDocs(query(collection(db,'classes'),where('teacherUid','==',user.uid)));
+    const rows=[]; qs.forEach(d=>rows.push({code:d.id,...d.data()}));
+    rows.sort((a,b)=> (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    if(!rows.length){ box.innerHTML=`<p class="empty">No classes yet — create one above.</p>`; return; }
+    box.innerHTML=`<div class="classlist">${rows.map(r=>`<div class="classrow" data-code="${r.code}" data-name="${(r.name||'').replace(/"/g,'&quot;')}">
+      <span class="nm">${r.name||'Class'}</span><span class="cd">${r.code}</span><span class="ct">view results →</span></div>`).join("")}</div>`;
+    [...box.querySelectorAll('.classrow')].forEach(el=>el.onclick=()=>viewResults(el.dataset.code,el.dataset.name));
+  }catch(e){ box.innerHTML=`<div class="err">Couldn't load classes: ${e.message}</div>`; console.error(e); }
+}
+
+async function viewResults(code,name){
+  const P=$('resultsPanel'); P.style.display=""; P.scrollIntoView({behavior:"smooth",block:"start"});
+  P.innerHTML=`<h2>${name} <span class="muted" style="font-weight:400">· ${code}</span></h2><p class="muted">Loading results…</p>`;
+  try{
+    const qs=await getDocs(collection(db,'classes',code,'results'));
+    const res=[]; qs.forEach(d=>res.push(d.data()));
+    res.sort((a,b)=> (b.submittedAt?.seconds||0)-(a.submittedAt?.seconds||0));
+    const link=new URL('index.html?class='+code, location.href).href;
+    if(!res.length){ P.innerHTML=`<h2>${name} <span class="muted" style="font-weight:400">· ${code}</span></h2>
+      <div class="codebox"><div><div class="lk-l">Share link</div><div class="link">${link}</div></div><button class="btn ghost sm" id="cp2">Copy link</button></div>
+      <p class="empty">No one has taken it yet. Share the code <b>${code}</b> with your class.</p>`;
+      $('cp2').onclick=()=>copy(link,$('cp2'));
+      P.insertAdjacentHTML('beforeend',`<div class="row" style="margin-top:14px"><button class="btn danger sm" id="del0">Delete class</button></div>`);
+      $('del0').onclick=()=>deleteClass(code,name); return; }
+
+    const avg={}; ORDER.forEach(s=>avg[s]=Math.round(res.reduce((t,r)=>t+(r[s]||0),0)/res.length));
+    const overallAvg=Math.round(res.reduce((t,r)=>t+(r.overall||0),0)/res.length);
+    const fcls=p=>p>=80?"secure":p>=50?"developing":"needs";
+    const barcol=p=>p>=80?"var(--ok)":p>=50?"var(--warn)":"var(--bad)";
+    const bars=ORDER.map(s=>{ const p=avg[s];
+      return `<div class="sb"><span class="nm">${SNAME[s]}</span><div class="track"><i style="width:${p}%;background:${barcol(p)}"></i></div><span class="v">${p}%</span></div>`; }).join("");
+    const head=`<tr><th>Initials</th><th>Overall</th>${ORDER.map(s=>`<th>${SNAME[s]}</th>`).join("")}<th>Priority</th></tr>`;
+    const body=res.map(r=>`<tr><td class="ini">${(r.initials||'—')}</td>
+      <td class="cell c-${fcls(r.overall||0)}">${r.overall||0}%</td>
+      ${ORDER.map(s=>`<td class="cell c-${fcls(r[s]||0)}">${r[s]||0}%</td>`).join("")}
+      <td>${SNAME[r.focus]||'—'}</td></tr>`).join("");
+
+    P.innerHTML=`<h2>${name} <span class="muted" style="font-weight:400">· ${code}</span></h2>
+      <div class="stat"><div class="box"><div class="v">${res.length}</div><div class="l">Students</div></div><div class="box"><div class="v">${overallAvg}%</div><div class="l">Class average</div></div></div>
+      <div class="strandbars">${bars}</div>
+      <div class="tablewrap"><table>${head}${body}</table></div>
+      <div class="row" style="margin-top:14px"><button class="btn ghost sm" id="csv">Download CSV</button><button class="btn ghost sm" id="cp3">Copy join link</button><button class="btn ghost sm" id="refresh">Refresh</button><button class="btn danger sm" id="del">Delete class</button></div>
+      <p class="privacy">Only initials are stored, never full names. You are the only person who can see this class. Deleting a class permanently removes it and every result in it.</p>`;
+    $('csv').onclick=()=>downloadCSV(name,code,res);
+    $('cp3').onclick=()=>copy(link,$('cp3'));
+    $('refresh').onclick=()=>viewResults(code,name);
+    $('del').onclick=()=>deleteClass(code,name);
+  }catch(e){ P.innerHTML=`<h2>${name}</h2><div class="err">Couldn't load results: ${e.message}</div>`; console.error(e); }
+}
+
+async function deleteClass(code,name){
+  if(!confirm(`Delete "${name}" and all of its results? This can't be undone.`)) return;
+  try{
+    const qs=await getDocs(collection(db,'classes',code,'results'));
+    for(const d of qs.docs){ await deleteDoc(doc(db,'classes',code,'results',d.id)); }
+    await deleteDoc(doc(db,'classes',code));
+    const P=$('resultsPanel'); P.style.display="none"; P.innerHTML="";
+    loadClasses();
+  }catch(e){ alert("Couldn't delete the class: "+e.message); console.error(e); }
+}
+function downloadCSV(name,code,res){
+  const cols=["initials","overall",...ORDER,"focus","median_s"];
+  const head=["Initials","Overall %","Facts %","Models %","Strategies %","Flexibility %","Choice %","Priority","Median s"];
+  const rows=res.map(r=>cols.map(c=>{ let v=r[c]; if(v==null)v=""; return `"${String(v).replace(/"/g,'""')}"`; }).join(","));
+  const csv=[head.join(","),...rows].join("\n");
+  const blob=new Blob([csv],{type:"text/csv"}); const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=`mfc_${code}.csv`; a.click(); URL.revokeObjectURL(a.href);
+}
+function copy(text,btn){
+  const done=()=>{ const t=btn.textContent; btn.textContent="Copied ✓"; setTimeout(()=>btn.textContent=t,1400); };
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(done).catch(()=>fallback()); } else fallback();
+  function fallback(){ const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");done();}catch(e){} ta.remove(); }
+}
+</script>
+</body>
+</html>
